@@ -1,4 +1,4 @@
-# exp02_online_convex_optimization
+# exp02_online_linear_classification
 
 OCO experiment set comparing FTRL, FTL, SMART, and empirical SMART variants.
 

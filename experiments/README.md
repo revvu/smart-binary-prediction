@@ -17,7 +17,8 @@ Recommended per-experiment structure:
 ## Existing experiments
 
 - `exp01_best_of_all_worlds/`: SMART / AdaHedge / binary prediction experiments and legacy graph outputs.
-- `exp02_online_convex_optimization/`: OCO comparison experiments (FTRL, FTL, SMART variants).
+- `exp02_online_linear_classification/`: OCO comparison experiments (FTRL, FTL, SMART variants).
+- `exp03_time_varying_mu_oco/`: SMART for OCO quadratic losses with time-varying $\mu_t$ and figure generation scripts.
 
 ## Adding a new experiment
 
