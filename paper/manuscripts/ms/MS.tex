@@ -1,0 +1,202 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%	Author Submission Template for Management Science (MNSC)
+%%	INFORMS, <informs@informs.org>
+%%	Ver. 1.00, June 2024
+%%
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Use dblanonrev for Double Anonymous Review submission
+% Use sglanonrev for Single Anonymous Review submission
+% For example, submission to Operations Research, OPRE will have
+% \documentclass[opre,dblanonrev]{informs4}
+%
+\documentclass[mnsc,dblanonrev]{informs4}
+%\documentclass[mnsc,sglanonrev]{informs4}
+% \usepackage{eqndefns-left} % For checking the display equation width and equation environment definitions %
+% \RequirePackage{tgtermes}
+% \RequirePackage{newtxtext}
+% \RequirePackage{newtxmath}
+% \RequirePackage{bm}
+%\RequirePackage{endnotes}
+
+%\OneAndAHalfSpacedXI
+\OneAndAHalfSpacedXII % Current default line spacing
+%%\DoubleSpacedXI
+%%\DoubleSpacedXII
+
+%% Preferred default is the first option.
+\EquationsNumberedThrough    % Default: (1), (2), ...
+%\EquationsNumberedBySection % (1.1), (1.2), ...
+
+%% Setup of theorem styles. Outcomment only one.
+%% Preferred default is the first option.
+\TheoremsNumberedThrough     % Preferred (Theorem 1, Lemma 1, Theorem 2)
+%\TheoremsNumberedByChapter  % (Theorem 1.1, Lema 1.1, Theorem 1.2)
+\ECRepeatTheorems  %  
+
+% For new submissions, leave this number blank.
+% For revisions, input the manuscript number assigned by the on-line
+% system along with a suffix ".Rx" where x is the revision number.
+\MANUSCRIPTNO{}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% My packages not in INFORMS stuff
+
+\usepackage[utf8]{inputenc}
+%\usepackage{mathrsfs}  
+\usepackage{dsfont}
+\usepackage{amssymb}
+ \usepackage{amsmath}
+ \usepackage{bbm}
+\usepackage{amsfonts}
+\usepackage[left=1in,bottom=1in,top=1in,right=1in]{geometry}
+\usepackage[colorlinks=true,citecolor=blue]{hyperref}
+\usepackage{framed}
+\usepackage[ruled]{algorithm2e}
+\usepackage{soul}
+\usepackage{thmtools,thm-restate}
+\usepackage{csquotes}
+\usepackage[nameinlink, noabbrev, capitalize]{cleveref}
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{nicefrac}       
+\usepackage{microtype} 
+\usepackage{commath}
+\usepackage{natbib}
+\allowdisplaybreaks
+
+\input{MS/commands_ms}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+
+\begin{document}
+	%%%%%%%%%%%%%%%%
+	
+	% Outcomment only when entries are known. Otherwise leave as is and
+	%   default values will be used.
+	%\setcounter{page}{1}
+	%\VOLUME{00}%
+	%\NO{0}%
+	%\MONTH{Xxxxx}% (month or a similar seasonal id)
+	%\YEAR{0000}% e.g., 2005
+	%\FIRSTPAGE{000}%
+	%\LASTPAGE{000}%
+	%\SHORTYEAR{00}% shortened year (two-digit)
+	%\ISSUE{0000} %
+	%\LONGFIRSTPAGE{0001} %
+	%\DOI{10.1287/xxxx.0000.0000}%
+	
+	% Author's names for the running heads
+	% Sample depending on the number of authors;
+	% \RUNAUTHOR{Jones}
+	% \RUNAUTHOR{Jones and Wilson}
+	% \RUNAUTHOR{Jones, Miller, and Wilson}
+	% \RUNAUTHOR{Jones et al.} % for four or more authors
+	% Enter authors following the given pattern:
+	%\RUNAUTHOR{}
+	\RUNAUTHOR{Adakroy, Banerjee, Bhatt, and Yu}
+	
+	% Title or shortened title suitable for running heads. Sample:
+	% \RUNTITLE{Predictive Maintenance in Manufacturing}
+	% Enter the (shortened) title:
+	\RUNTITLE{SMART Approach to Instance-Optimal Online Learning}
+	
+	% Full title. Sample:
+	% \TITLE{Optimal Resource Allocation in Humanitarian Logistics: A Stochastic Programming Approach}
+	% Enter the full title:
+	\TITLE{The SMART Approach to Instance-Optimal Online Learning: Assume the Best, Prepare for the Worst}
+	
+	% Block of authors and their affiliations starts here:
+	% NOTE: Authors with same affiliation, if the order of authors allows,
+	%   should be entered in ONE field, separated by a comma.
+	%   \EMAIL field can be repeated if more than one author
+	\ARTICLEAUTHORS{%
+		%\AUTHOR{John Doe,\textsuperscript{a} Jane Smith,\textsuperscript{b}}
+		%\AFF{\textsuperscript{a}Department of Industrial Engineering, University of XYZ, \EMAIL{john.doe@xyz.edu; \textsuperscript{b}Department of Computer Science, University of ABC, \EMAIL{jane.smith@abc.edu}} 
+  \AUTHOR{Reevu Adakroy}
+		\AFF{School of Operations Research and Information Engineering,
+			Cornell University, \EMAIL{ra569@cornell.edu@cornell.edu}}
+		\AUTHOR{Siddhartha Banerjee}
+		\AFF{School of Operations Research and Information Engineering,
+			Cornell University, \EMAIL{sbanerjee@cornell.edu}}
+		\AUTHOR{Alankrita Bhatt}
+		\AFF{Department of Computing and Mathematical Sciences,
+			California Institute of Technology, \EMAIL{abhatt@caltech.edu}}
+		\AUTHOR{Christina Lee Yu}
+	\AFF{School of Operations Research and Information Engineering,
+	Cornell University, \EMAIL{cleeyu@cornell.edu}}
+		% Enter all authors
+	} % end of the block
+
+
+\ABSTRACT{%
+	\input{MS/body/abstract}
+}%
+
+%\FUNDING{This research was supported by [grant number, funding agency].}
+
+%Supplemental Material:
+%Data Ethics & Reproducibility Note:
+
+% Sample
+%\KEYWORDS{Stochastic programming, Decision support,Uncertainty, Disaster response, Optimization}
+
+% Fill in data. If unknown, outcomment the field
+%\KEYWORDS{} 
+%\HISTORY{Received: Month DD, YYYY; Accepted: Month DD, YYYY; Published Online: Month DD, YYYY}
+
+\maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \input{MS/body/introduction}
+% %\input{body/mainresults}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \input{MS/body/relatedwork}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % \input{body/setting}
+% % \input{body/ftl}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{MS/body/twoapprox}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %\input{body/skirental}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{MS/body/converse}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{MS/body/experiments}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{MS/body/small_loss}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{MS/body/conclusion}
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{MS/body/appendix}
+
+% %\THEEndNotes
+% \begingroup \parindent 0pt \parskip 0.0ex \def\enotesize{\normalsize} \theendnotes \endgroup
+
+% Appendix here
+% Options are (1) APPENDIX (with or without general title) or
+%             (2) APPENDICES (if it has more than one unrelated sections)
+% Outcomment the appropriate case if necessary
+%
+% \begin{APPENDIX}{Omitted proofs}
+% \input{MS/body/appendix}
+% \end{APPENDIX}
+%
+%   or
+%
+% \begin{APPENDICES}
+% \section{}
+% \section{}
+% \end{APPENDICES}
+
+% Acknowledgments here
+\ACKNOWLEDGMENT{This work is supported by NSF grants CNS-1955997, CCF-2337796 and ECCS-1847393, and AFOSR grant FA9550-23-1-0301. This work was partially done when the authors were visitors at the Simons Institute for the Theory of Computing, UC Berkeley. }
+
+
+\newcommand{\newblock}{}
+
+ 
+\bibliographystyle{unsrtnat} % outcomment this and next line in Case 1
+\bibliography{bobw} % if more than one, comma separated
+
+\end{document}

@@ -1,0 +1,64 @@
+\documentclass{article}
+
+\usepackage{aistats2024_author_response}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % define colors in text
+\usepackage{xspace}         % fix spacing around commands
+
+
+\begin{document}
+
+
+We thank all the reviewers for their insightful remarks. Before addressing each reviewer's comments, we address a shared concern: the main contributions of our work, and in particular the novelty over [12] (AdaHedge and FlipFlop). 
+
+{\bf Main Contributions.} We present a general framework and analysis for constructing online algorithms that achieve instance-specific best of both world guarantees between follow the leader and any black box algorithm with worst case guarantees. In particular we present a meta-algorithm that interleaves FTL with \emph{any} worst-case algorithm in order to achieve the regret that is at most a factor of $\frac{e}{e-1}$ within the minimum of the FTL regret and the worst-case regret. The guarantees hold for every input sequence without any assumptions beyond boundedness of the loss function. We also draw a connection to the classic ski-rental problem from competitive analysis. 
+
+The generality of this framework and simplicity of the analysis is indeed the surprising and refreshing strength of our solution in comparison to the literature. As the solution is modular (any black box algorithm with worst case guarantees can be used), this framework paves the way to obtain new results for instance-optimal guarantees. Our result also extends beyond the experts problem to online convex optimization, for which best of both world style guarantees has not been studied. 
+
+We also provide the first, to our knowledge, \emph{lower-bound} on the extra multiplicative factor that must be incurred when FTL is combined with the worst-case minmax optimal algorithm. 
+
+Using the aforementioned meta-algorithm as a base, we devise an algorithm to achieve regret within a constant factor of the minimum of the FTL regret and that achieved by any small-loss algorithm, again with essentially no assumptions. 
+
+{\bf Novelty over [12] (AdaHedge and FlipFlop).} While indeed the results obtained in [12] are very similar to ours, we reiterate that our method is much more flexible as it does not require any conditions on the worst-case algorithm being used. FlipFlop hinges on a clever tuning of the learning rate in the base Hedge algorithm. Our method is fundamentally different since the base algorithm could be \emph{any} method that achieves a worst-case/small-loss bound. We see this flexibility and modularity as a significant strength of our result.  Moreover, the lower bound on the competitive ratio that we obtain is not present in [12]. Additionally our framework extends beyond the experts problem to online convex optimization.
+
+{\bf Reviewer 1.} Thank you for your comments! We address the main concerns below:
+
+- Novelty over [12]: Please refer above for a comment on comparision with [12], but we reiterate that our method could use \emph{any} algorithm with a worst-case/small-loss guarantee---in particular, we don't use AdaHedge as a base. It is not clear to us how to directly use [12] to achieve a FlipFlop like combination of FTL and any worst-case algorithm without making any assumptions on the worst-case algorithm beyond a regret guarantee. In the revised manuscript, we will include a more thorough discussion on the novelty of our results vis-a-vis [12].  
+
+- If FTL is unsuitable: By using the worst-case algorithm to be a small-loss algorithm,  we can obtain a small-loss bound without needing to pay the full worst-case regret. This is the same result as obtained by FlipFlop. Thus, one doesn't necessarily need to pay the full worst-case regret. 
+
+{\bf Reviewer 2.} Thank you for your kind words!
+
+{\bf Reviewer 4.} Thank you for your comments! In the revised manuscript we will:
+
+- Add the performance of baseline algorithms such as Hedge for a more thorough comparison in the experiments. 
+
+- Bring up relevant related work earlier, and add a more thorough conclusion/discussion at the end. 
+
+{\bf Reviewer 6.} Thank you for your comments! We address the main concerns below: 
+
+- Hedging/aggregating over FTL and the worst-case algorithm: As we mention in the introduction, such a method would incur a large regret due to the additive overhead of using Hedge to aggregate the two algorithms. Such an observation has also been made in [12].  
+
+- Relevant literature: Thank you for bringing up the relevant related work to our notice, we apologize for overlooking these. The papers you mentioned consider ways of achieving best-of-both-world results that are distinct from the one we consider. In the updated manuscript we will add appropriate citations to these papers.
+
+\newpage
+
+{\bf Reviewer 1: (Score = 1)} There is not much novelty over [12], since the authors use adaHedge as the base for it having the best known regret bounds, and the algorithm they propose otherwise in the paper, but the combination method for FipFlop is not overly reliant on AdaHedge as a base. A major weakness compared to existing best-of-both-worlds algorithms is that you suffer up to the threshold (i.e. worst-case bound) when FTL is not suitable. I don't think there is enough novelty and advantages of this approach compared to prior work. 
+
+{\bf Reviewer 2: (Score = 4)} No Concern 
+
+{\bf Reviewer 4: (Score = 2)} Mixed empirical results (e.g., significant performance in some but not all experiments, missing a baseline). The main paper includes only Figure 1 as a simulation. Additional simulations and experimental results are highly encouraged. The related work is placed in section 6 and the paper lacks conclusion section. Furthermore, there is a noticeable absence of additional simulations and experiments, which could enhance the overall depth of the paper. The paper lacks comparison with the baselines methods. The related work should be introduced earlier.
+
+
+{\bf Reviewer 6: (Score = 2)} The results and method are very similar to the Flip-flop algorithm of [12]. Comparison to other more recent methods for adaptive online learning for the specific problems studied missing. (see references below). The main advantage of the present work over existing methods is that the input worst-case algorithm can be treated as a black box instead of needing its inner workings exposed to the meta-algorithm. it is not clear, however that this cannot be achieved by merely hedging/aggregating over FTL and the black box algorithm. Minor point about uncited related work. 
+
+
+\end{document}

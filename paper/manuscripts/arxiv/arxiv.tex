@@ -1,0 +1,115 @@
+\documentclass[11pt,letterpaper]{article}
+
+
+\usepackage[utf8]{inputenc}
+\usepackage{mathrsfs}  
+\usepackage{sansmath}
+\usepackage{dsfont}
+\usepackage{amssymb}
+ \usepackage{amsmath}
+ \usepackage{amsthm}
+ \usepackage{bbm}
+\usepackage{amsfonts}
+\usepackage[left=1in,bottom=1in,top=1in,right=1in]{geometry}
+\usepackage[colorlinks=true,citecolor=blue]{hyperref}
+\usepackage{framed}
+\usepackage[ruled]{algorithm2e}
+\usepackage{soul}
+\usepackage{thmtools,thm-restate}
+\usepackage{csquotes}
+\usepackage[nameinlink, noabbrev, capitalize]{cleveref}
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{nicefrac}       
+\usepackage{microtype} 
+\usepackage{commath}
+\usepackage{natbib}
+\allowdisplaybreaks
+\input{commands}
+
+\author{%
+Siddhartha Banerjee \\ORIE, Cornell\\\texttt{sbanerjee@cornell.edu} \\
+ \and
+ Alankrita Bhatt \\CMS, Caltech\\\texttt{abhatt@caltech.edu}\\
+\and
+ Christina Lee Yu\\ORIE, Cornell\\ \texttt{cleeyu@cornell.edu}
+}
+
+%\newcommand{\norm}[1]{\left| \left| #1 \right| \right|}
+\newcommand{\ip}[2]{\left\langle #1, #2 \right\rangle}
+\newcommand{\Secref}[1]{\hyperref[#1]{Section \ref*{#1}}}
+\newcommand{\Appref}[1]{\hyperref[#1]{Appendix \ref*{#1}}}
+\crefname{equation}{}{}
+\crefrangeformat{equation}{(#3#1#4) --~(#5#2#6)}
+\crefmultiformat{equation}{(#2#1#3)}{, (#2#1#3)}{, (#2#1#3)}{, (#2#1#3)}
+\crefname{lemma}{Lemma}{Lemmas}
+\crefname{section}{Section}{Sections}
+\crefname{subsubsubsection}{Section}{Sections}
+\crefname{remark}{Remark}{Remarks}
+\crefname{figure}{Figure}{Figures}
+\crefname{table}{Table}{Tables}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{theorem}{Theorem}{Theorems}
+\Crefname{theorem}{Theorem}{Theorems}
+
+
+    \newtheorem{theorem}{Theorem}
+    \newtheorem{corollary}{Corollary}
+    \newtheorem{remark}{Remark}
+    \newtheorem{example}{Example}
+    \newtheorem{definition}{Definition}
+    \newtheorem{proposition}{Proposition}
+    \newtheorem{lemma}{Lemma}
+    \newtheorem{metaalg}{Meta-Algorithm}
+    \newtheorem{conjecture}{Conjecture}
+
+\newcommand{\stepa}[1]{\overset{\rm (a)}{#1}}
+\newcommand{\stepb}[1]{\overset{\rm (b)}{#1}}
+\newcommand{\stepc}[1]{\overset{\rm (c)}{#1}}
+\newcommand{\stepd}[1]{\overset{\rm (d)}{#1}}
+\newcommand{\stepe}[1]{\overset{\rm (e)}{#1}}
+
+
+
+\title{\textbf{The $\mathsf{SMART}$ Approach to Instance-Optimal Online Learning}}
+\date{\vspace{-1em}}
+
+\begin{document}
+
+\maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}%
+ \input{arxiv/arxiv_body/abstract_arxiv}
+\end{abstract}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{arxiv/arxiv_body/introduction_arxiv}
+%\input{body/mainresults}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{arxiv/arxiv_body/relatedwork_arxiv}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \input{body/setting}
+% \input{body/ftl}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{arxiv/arxiv_body/twoapprox_arxiv}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{body/skirental}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{arxiv/arxiv_body/converse_arxiv}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{arxiv/arxiv_body/extensions_arxiv}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{arxiv/arxiv_body/conclusion_arxiv}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Acknowledgements}
+
+This work is supported by NSF grants CNS-1955997, CCF-2337796 and ECCS-1847393, and AFOSR grant FA9550-23-1-0301. This work was partially done when the authors were visitors at the Simons Institute for the Theory of Computing, UC Berkeley. 
+
+\appendix
+
+\input{arxiv/arxiv_body/appendix_arxiv}
+ 
+\bibliographystyle{unsrtnat}
+ \bibliography{bobw}
+
+
+\end{document}

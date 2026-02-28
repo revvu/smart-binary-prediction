@@ -1,0 +1,79 @@
+\section{Setting and Preliminaries}
+\label{ssec:setting}
+
+%We formally describe the general online learning setting and the $\ftl$ algorithm in such settings.
+
+%\subsection{Online Learning, Regret, and Instance Optimality}
+
+We consider a general online learning problem with horizon of $n$ rounds: at the start of each round $t \in [n]$, a policy $\alg$ first plays an action $a_t$ from some action set $\Ac$, following which, a loss function $\ell_t: \Ac \to [0,1]$ is revealed, resulting in a loss of $\ell_t(a_t)$. 
+The aim is to minimize the \emph{regret} (i.e., additive loss) compared to the best fixed action in hindsight:
+\begin{align}
+\label{eq:RegDefnGeneral}
+    \Reg(\alg,\ell^n) = \textstyle\sum_{t=1}^n \ell_t(a_t) - \inf_{a \in \Ac} \textstyle\sum_{t=1}^n \ell_t(a).
+\end{align} 
+While the setting can be defined over general action set $\Ac$ and additive loss functions $\ell_t(\cdot)$, the most common case considered  is that online convex optimization (OCO), where the action set $\Ac$ is convex, and loss functions $\ell_t(\cdot)$ are convex and bounded. 
+% Given loss functions $\ell^{t}$, the hindsight optimal action is defined as  
+% \begin{align} \label{eq:HindsightOPTdef}
+%     a^*_t \defeq \argmin_{a \in \Ac} \textstyle\sum_{i=1}^{t} \ell_i(a) 
+% \end{align}
+% where we note that the right hand side of~\cref{eq:HindsightOPTdef} might be a set if multiple minimizers exist.
+Given the above setting, one performance measure of an algorithm is the \emph{worst-case} regret $\Reg(\alg) \defeq \sup_{\ell^n} \Reg(\alg,\ell^n)$. 
+A low (sublinear) worst-case regret ensures outcomes are robust to inputs. On the other hand, if the $\ell_t$ are stochastic -- in particular, drawn i.i.d. from a fixed (unknown) distribution $\dist$ -- then a reasonable figure of merit is the \emph{pseudoregret}
+\begin{align*} %\label{eq:DefpseudoReg}
+    \PseudoReg(\alg) \defeq \sup_{\dist}\Big(\textstyle\sum_{t=1}^n \E[\ell_t(a_t)] - \inf_{a \in \Ac} \textstyle\sum_{t=1}^n \E[\ell_t(a)]\Big)
+\end{align*}
+\cite{kotlowski2018minimaxity}
+
+\sbcomment{Need some segue here}
+Next, we review the follow the leader (FTL) strategy and establish its regret. 
+\begin{definition}[$\ftl$] \label{def:FTL}
+Given loss functions $\ell^{t}$, the hindsight optimal action is defined as  
+\begin{align} \label{eq:HindsightOPTdef}
+    a^*_t \defeq \argmin_{a \in \Ac} \textstyle\sum_{i=1}^{t} \ell_i(a) 
+\end{align}
+where we note that the right hand side of~\cref{eq:HindsightOPTdef} might be a set if multiple minimizers exist. 
+Then, the $\ftl$ action $a^{\mathsf{FTL}}_t = a^*_{t-1}$ with ties broken \abedit{according to an arbitrary rule.}
+\end{definition}
+
+A canonical example of an online learning problem is that of \emph{prediction with expert advice}. This is the setting where the action set $\Ac = \Delta^{m-1}$ and the loss function is of the form (with slight abuse of notation) $\ell_t(a) = a^T \ell_t$ for a vector $\ell_t \in \mathbb{R}^m_{+}$. Therefore, the problem can be interpreted as assigning a weight over $m$ experts at each time step in order to achieve low regret against the best fixed expert in hindsight, with regret given by
+\begin{align}\label{eq:PWERegDef}
+    \Reg(\alg,\ell^n) = \textstyle\sum_{t=1}^n a_t^T \ell_t - \min_{j \in [m]} \textstyle\sum_{t=1}^n \ell_{tj}
+\end{align}
+since $\min_{a \in \Delta^{m-1}} a^T\left(\sum_{t=1}^n \ell_t \right)$ always occurs at a corner point of the simplex. \abedit{Then, we set}
+\begin{align} \label{eq:FTLPWEDef}
+    \aftl_t =  u_{j^*_{t-1}} \defeq \Unif({j^*_{t-1}})
+    ~\text{ where }
+    j^*_{t} \defeq \argmin_{j \in [m]} \textstyle\sum_{i=1}^{t} \ell_{ij},
+ \end{align}
+i.e. $\ftl$ chooses the expert that has incurred the least loss so far, breaking ties uniformly at random.  
+A special case of this setting is the binary prediction problem from~\cref{sec:intro}, where recall $\ftl$ chooses $\widehat{Y}_t = \mathsf{Majority}(y^{t-1})$, with $\widehat{Y}_t \sim \mathrm{Bern}(1/2)$ in case of a tie. 
+%, where given the sequence so far $y^{t-1}, \ftl$ chooses
+% \begin{align}\label{eq:binpredRegDef}
+%     \Reg(\alg, y^n) = \sum_{t=1}^n |a_t - y_t| - \min\left\{\sum_{t=1}^n y_t, n - \sum_{t=1}^n y_t\right\}.
+% \end{align}
+% In this case, FTL chooses 
+% \begin{align} \label{eq:BinFTL}
+% \aftl_t = a^*_{t-1} =
+% \begin{cases}
+%     0 & \text{if Majority}\{y_1,\dotsc,y_{t-1}\} = 0 \\
+%     1 & \text{if Majority}\{y_1,\dotsc,y_{t-1}\} = 1 \\
+%     \frac{1}{2} & \text{otherwise}.
+% \end{cases}
+% \end{align}
+
+
+Typically, algorithms and guarantees differ starkly for these two cases---optimal worst-case algorithms (henceforth $\wcalg$) typically have similar worst-case regret and pseudoregret, whereas optimal algorithms for stochastic inputs such as $\ftl$ have much lower pseudoregret, but can have much higher regret on adversarial inputs. 
+Best-of-both-worlds policies aim to bridge these two by adapting to the input to achieve regret which is both within constant factor of the pseudoregret of $\ftl$ on stochastic inputs, and within constant factor of a worst-case bound on the regret of $\wcalg$.
+
+A stronger objective is to devise an algorithm $\alg$, that on \emph{every} input $\ell^n$ is within a constant factor of the minimum of the regret of $\ftl$ and the regret of $\wcalg$ on any given input.
+However, showing such a property requires the ability to understand the fine-grained performance of $\wcalg$ on any given input, which is often not possible. Thus we consider a slightly weaker variant of \emph{instance optimality} with respect to the regret of $\ftl$ and a regret upper bound $g(n)$ as stated in Definition \ref{def:instanceopt_wc}. In particular, for a regret bound $g(n)$ such that $\Reg(\wcalg, \ell^n) \leq g(n)$ for all $\ell^n$, we desire $\alg$ to satisfy
+\begin{align} 
+\label{eq:instoptdef}
+    \Reg(\alg,\ell^n)
+    \le
+    \gamma\min\Big\{\Reg(\ftl, \ell^n), g(n)\Big\}
+    %replaced \sup_{\tilde{\ell}^n}\big(\Reg(\wcalg, \tilde{\ell}^n)\big) with g(n)
+\end{align}
+for some absolute constant $\gamma$. We reiterate that such a guarantee entails a constant factor guarantee on the minimum \emph{regret} rather than the minimum \emph{loss}.
+%We also note that while Eq.~\cref{eq:instanceopt} is not truly instance-optimal (in that we are comparing against the worst-case regret bound for $\wcalg$ rather than the regret on instance $\ell^n$), the two are the same if $\wcalg$ is the true minimax optimal algorithm for a given setting \abcomment{is the minmax opt always an equalizer?} (for example, $\cover$ for binary prediction), as in this case the regret is equalized over all inputs. However, the modification is necessary for a generic algorithm $\wcalg$ with (near optimal) worst-case regret guarantees, as such a $\wcalg$ may achieve very low regret on some inputs, and there is no way to match it on these.
+ 

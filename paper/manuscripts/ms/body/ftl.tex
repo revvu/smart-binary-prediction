@@ -1,0 +1,53 @@
+\subsection{A Regret Decomposition for $\ftl$} 
+\label{ssec:FTL}
+
+Our results rely on the following regret decomposition for the $\ftl$ policy in any online learning setting. This decomposition was first introduced in~\cite[Section 3]{kalai2005efficient}, and is well-known in the literature, where it is often referred to as the `be-the-leader lemma'. \abcomment{Kalai--Vempala doesn't have this regret equality for FTL, does it?.. Actually I don't think I have this regret equality result before when people use the be the leader lemma} We note in particular that Lemma~\ref{lem:FTLRegret} requires no assumptions on the loss function such as boundedness and convexity. 
+
+\begin{lemma}[Regret of $\ftl$] \label{lem:FTLRegret}
+If $L_t(\cdot) \defeq \sum_{i=1}^t \ell_t(\cdot)$, i.e. the cumulative loss function, then
+\begin{align} \label{eq:FTLRegEquality}
+    \Reg(\ftl, \ell^n) = \sum_{t=1}^n (L_t(a^*_{t-1}) - L_t(a^*_t)). 
+\end{align}
+  % \begin{itemize}
+  %       \item (OCO) If $\ell_t(\cdot)$ is strictly convex (implying that a unique minimizer in~\cref{eq:HindsightOPTdef} exists) then 
+  %       \begin{align} \label{eq:FTLRegOCO}
+  %           \Reg(\ftl, \ell^n) = \textstyle\sum_{t=1}^n (L_t(a^*_{t-1}) - L_t(a^*_t))
+  %       \end{align}
+  %       \item (Prediction with experts) Recall the problem defined in~\cref{eq:PWERegDef}. In this case, 
+  %       \begin{align*}%\label{eq:RegPWEFTL}
+  %           \Reg(\ftl,\ell^n) = \textstyle\sum_{t=1}^n (u_{j^*_{t-1}}^T L_t - u_{j^*_{t}}^T L_t)
+  %       \end{align*}
+  %   \end{itemize} 
+\end{lemma}
+
+% \begin{proof}
+%     We establish the result for the OCO case---the proof is identical for PWE. Recalling $\aftl_t = a^*_{t-1}$ we have 
+%     \begin{align*}
+%         \Reg(\ftl, \ell^n) &= \sum_{t=1}^n \ell_t(a^*_{t-1})  - \inf_{a \in \Ac} \sum_{t=1}^n \ell_t(a) \\
+%         &= \sum_{t=1}^n \ell_t(a^*_{t-1})  - L_n(a^*_n) \\
+%         &= \sum_{t=1}^n (L_t(a^*_{t-1}) - L_{t-1}(a^*_{t-1})) -  L_n(a^*_n) \\
+%         &= \sum_{t=1}^n (L_t(a^*_{t-1}) - L_t(a^*_t)) + \sum_{t=1}^n (L_t(a^*_t) - L_{t-1}(a^*_{t-1})) - L_n(a^*_n) \\
+%         &\stackrel{(a)}{=} \sum_{t=1}^n (L_t(a^*_{t-1}) - L_t(a^*_t))
+%     \end{align*}
+%     where $(a)$ follows since $\sum_{t=1}^n (L_t(a^*_t) - L_{t-1}(a^*_{t-1})) = L_n(a^*_n)$ by a telescoping sum. 
+% \end{proof}
+
+Upon instantiating the regret bound obtained in~\cref{lem:FTLRegret} for binary prediction, we observe that the $\ftl$ regret admits a geometric interpretation. 
+\begin{definition}[Line crossings]\label{defn:StateLineCross}
+    For $y_1^n\in\{0,1\}^n$, let  $S_t(y^t) = \textstyle\sum_{i=1}^t y_i - (t-\textstyle\sum_{i=1}^t y_i) = 2\textstyle\sum_{i=1}^t y_i - t$. 
+ For any $t$, 
+%  \begin{align*}
+% %\label{eq:NumCrossingsDefn}
+     $c(y^t) \defeq \left|\left\{0 \le j \le t | S_j = 0\right\}\right|$,
+     % \end{align*}
+ and each $j$ such that $S_j = 0$ is called a line crossing. 
+\end{definition}
+
+\begin{corollary}[$\ftl$ for binary prediction] \label{cor:BinPred}
+    In binary prediction,
+    %\label{eq:BinPredReg}[]
+        $\Reg(\ftl, y^n) = \frac{c(y^{n-1})}{2}.$
+\end{corollary}
+% \begin{proof}
+%     Follows from~\cref{eq:RegPWEFTL}, since the sum in the RHS is zero if $t-1$ is not a line crossing, and is $\frac{1}{2}$ when $t-1$ is a line crossing. 
+% \end{proof}

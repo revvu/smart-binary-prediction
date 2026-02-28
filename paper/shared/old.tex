@@ -1,0 +1,599 @@
+ \documentclass[11pt,letter]{article}
+
+\makeatletter
+\usepackage{mathrsfs}  
+
+\makeatother
+%\pagestyle{headings}
+\addtolength{\footskip}{0\baselineskip}
+\addtolength{\textheight}{-1\baselineskip}
+\renewcommand{\baselinestretch}{0.99}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{graphicx,colordvi,psfrag}
+\usepackage{amsmath,amssymb}
+\usepackage{epstopdf}
+\usepackage[caption=false]{subfig}
+\usepackage{epsfig,cite}
+\usepackage{calc,pstricks, pgf, xcolor}
+\usepackage{nicefrac}
+\usepackage{enumerate}
+\usepackage{dsfont}
+\usepackage{bm}
+\usepackage{color}
+\usepackage{bbold}
+\usepackage{bbm}
+
+\allowdisplaybreaks
+
+% %make margins 1-inch
+% 	\addtolength{\oddsidemargin}{-.875in}
+% 	\addtolength{\evensidemargin}{-.875in}
+% 	\addtolength{\textwidth}{1.75in}
+
+% 	\addtolength{\topmargin}{-.875in}
+% 	\addtolength{\textheight}{1.75in}
+	
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{conjecture}{Conjecture}
+\newenvironment{proof}[1][Proof]{\noindent\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+
+\newcommand{\Ind}{\mathds{1}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bY}{\mathbf{Y}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bh}{\mathbf{h}}
+\newcommand{\bH}{\mathbf{H}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\ba}{\mathbf{a}}
+\newcommand{\bc}{\mathbf{c}}
+\newcommand{\bC}{\mathbf{C}}
+\newcommand{\bd}{\mathbf{d}}
+\newcommand{\bB}{\mathbf{B}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\bU}{\mathbf{U}}
+\newcommand{\bu}{\mathbf{u}}
+\newcommand{\bV}{\mathbf{V}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\CV}{\mathcal{V}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bt}{\mathbf{t}}
+\newcommand{\bT}{\mathbf{T}}
+\newcommand{\be}{\mathbf{e}}
+\newcommand{\bE}{\mathbf{E}}
+\newcommand{\bR}{\mathbf{R}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\bP}{\mathbf{P}}
+\newcommand{\bL}{\mathbf{L}}
+\newcommand{\Xc}{\mathcal{X}}
+\newcommand{\Yc}{\mathcal{Y}}
+\newcommand{\Wc}{\mathcal{W}}
+\newcommand{\bg}{\mathbf{g}}
+\newcommand{\bG}{\mathbf{G}}
+\newcommand{\Zc}{\mathcal{Z}}
+\newcommand{\bs}{\mathbf{s}}
+\newcommand{\bS}{\mathbf{S}}
+\newcommand{\bl}{\mathbf{l}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\Zp}{\mathbb{Z}_p}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\Tsnr}{\mathsf{SNR}}
+\newcommand{\Tinr}{\mathsf{INR}}
+\newcommand{\Ql}{Q_{\Lambda}}
+\newcommand{\Mod}{\bmod\Lambda}
+\newcommand{\Enc}{\mathcal{E}}
+\newcommand{\Dec}{\mathcal{D}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\csym}{C_{\text{SYM}}}
+\newcommand{\rsym}{R_{\text{SYM}}}
+\newcommand{\diag}{\mathop{\mathrm{diag}}}
+\newcommand{\Span}{\mathop{\mathrm{span}}}
+\newcommand{\sign}{\mathop{\mathrm{sign}}}
+\newcommand{\Vol}{\mathrm{Vol}}
+\newcommand{\Ber}{\mathrm{Bernoulli}}
+\newcommand{\Bin}{\mathrm{Binomial}}
+\newcommand{\map}{\theta}
+\newcommand{\Unif}{\mathrm{Uniform}}
+\newcommand{\defeq}{\mathrel{\mathop{:}}=}
+\def\eg{{\it e.g.\ }}
+\def\etc{{\it etc}}
+\def\wt{\widetilde}
+\def\Expt{\mathbb{E}}
+\def\b{\mathbf}
+\newcommand{\m}{\mathcal}
+\def\eg{{\it e.g.\ }}
+\def\etc{{\it etc}}
+\def\wt{\widetilde}
+\def\Expt{\mathbb{E}}
+\def\bpi{\bm{\pi}}
+\def\ev{{\bf e}}
+\def\H{\mathrm{H}}
+\newcommand{\ch}{\textcolor{blue}}
+\newcommand{\redt}{\textcolor{red}}
+\newcommand{\bec}{\mathrm{BEC}}
+\newcommand{\bsc}{\mathrm{BSC}}
+\newcommand{\indi}{\mathbbm{1}}
+\newcommand{\Lap}{\mathrm{L}}
+\newcommand{\g}{\gamma}
+\newcommand{\e}{\epsilon}
+\newcommand{\Reg}{\mathrm{Reg}}
+\newcommand{\pcov}{p^{\mathrm{Cover}}}
+\newcommand{\pftl}{p^{\mathrm{FTL}}}
+\newcommand{\pwc}{\overline{p}}
+\newcommand{\yftl}{\widehat{Y}^{\mathrm{FTL}}}
+\newcommand{\ycov}{\widehat{Y}^{\mathrm{Cover}}}
+\newcommand{\maj}{\mathrm{Majority}}
+\newcommand{\wcalg}{\overline{\text{ALG}}}
+\newcommand{\pbobw}{p^{\mathrm{BOBW}}}
+\newcommand{\ttil}{\widetilde{\tau}}
+\newcommand{\zlast}{z_{\mathrm{last}}}
+\newcommand{\pstar}{p^{\mathrm{BOBW*}}}
+\renewcommand{\thefigure}{\arabic{figure}}
+\DeclareMathOperator*{\argmin}{\arg\!\min}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+\DeclareMathOperator*{\argsup}{\arg\!\sup}
+\DeclareMathOperator\E{\textsf{E}}
+
+
+
+\title{Best of both worlds}
+\date{\today}
+%\author{}
+\begin{document}
+
+\maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Problem formulation}
+We consider the problem of \emph{prediction with expert advice} for $m \ge 2$ experts. This problem can be considered a sequential game between the player (predictor) and the environment, where at time step $t$: 
+\begin{itemize}
+    \item The predictor chooses a set of weights $p_t \in \Delta^{m-1}$, possibly dependent on the history. 
+    \item A loss vector $\ell_t \in [0,1]^{m-1}$ is revealed.
+    \item The predictor incurs a loss of $p_t^T \ell_t$.  
+\end{itemize} 
+The aim of the predictor is to minimize the \emph{regret} incurred against the best fixed expert in hindsight, i.e. for any strategy $p := (p_1,\dotsc,p_n)$ (where each $p_i$ maps $\ell^{i-1}$ to $\Delta^{m-1}$)\footnote{For clarity, we suppress the dependence of $p_i$ on the history, i.e. we write $p_i$ instead of $p_i(\ell^{i-1})$.} we have
+\begin{equation}\label{eq:PWERegDefn}
+    \Reg(p, \ell^n) \defeq \sum_{t=1}^n p_t^T \ell_n  - \min_{i\in [m]} \sum_{t=1}^n \ell_{i,t}
+\end{equation}
+where the second term on the right hand side denotes the loss incurred by the best fixed expert in hindsight. 
+
+In this work, the question we study is the following: Given two strategies $p_1$ and $p_2$, can we combine them in a way so as to achieve regret $\min\{\Reg(p_1, \ell^n), \Reg(p_2, \ell^n)\}$ without knowing anything about $\ell^n$ a priori? In particular, we will be interested in $p_1$ being the follow-the-leader (FTL) strategy and $p_2$ being any \emph{worst-case} strategy \redt{(explain what FTL does in both $m-$expert and simpler binary case. Motivate these two as being stochastic vs worst case)}. 
+
+\subsection{Main results}
+
+\subsection{Organization and notation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Binary prediction with two experts}
+
+In this section, we considerably simplify our task by considering the basic problem of binary prediction. We build best of both worlds algorithms for this task and uncover some fundamental principles and intuition which carry on further to the problem of prediction with arbitrary experts.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Binary prediction and Cover's method}
+
+The problem of binary prediction (universal prediction/prediction with absolute loss) is simply, given a binary sequence $y^{t-1} \in \{0,1\}^{t-1}$ assigning a probability $p_t(y^{t-1})$ to the upcoming bit $y_t$ (in other words, predicting $\widehat{Y}_t \sim \Ber(p_t)$); after $y_t$ is revealed, the predictor incurs a loss of $\E[\Ind\{\widehat{Y}_t \neq y_t\}] = |p_t(y^{t-1})-y_t|$. The regret is measured against the all-0 and all-1 predictors, and is given by 
+\begin{align}\label{eq:BinPredReg}
+    \Reg(p,y^n) = \sum_{t=1}^n |p_t(y^{t-1})-y_t| - \min\left\{\sum_{t=1}^n y_t, n - \sum_{t=1}^n y_t\right\}.
+\end{align}
+
+Cover's elegant result exactly characterizes the set of achievable loss functions. For completeness, a proof is provided in Appendix~\ref{appendix:CoverThmPf}.
+\begin{theorem}[Achievable loss functions in binary prediction.] \label{thm:CoverBinPred}
+    \redt{To-do}.
+\end{theorem}
+
+In particular, applying Cover's result to the loss function $\phi(y^n) = \min\{\sum_{t=1}^n y_t, n - \sum_{t=1}^n y_t\}$, yields the predictor that selects 
+\begin{align}\label{eq:CoverPredictor}
+   \ycov = \mathrm{Majority}\{y_1,\dotsc,y_{t-1},\e_{t+1},\dotsc,\e_n\}
+\end{align}
+where $\e_{t+1}^n \sim \Ber(1/2)$ i.i.d.; ties are broken uniformly at random. This method, yielding the probability assignment which we term $\pcov$ is \emph{exactly} minmax optimal, and yields regret 
+\begin{align}\label{eq:CoverRegret}
+   \max_{y^n} \Reg(\pcov,y^n) = \sqrt{\frac{n}{2 \pi}} + o(n).
+\end{align}
+
+\begin{definition}\label{def:SumOfRademachers}
+Let $Z_1,\dotsc,Z_n \sim \Unif\{-1,1\}$ iid. Then,
+\[
+f_n \defeq \frac{1}{2} \E\left|\sum_{t=1}^n Z_i\right|.
+\]  
+\end{definition}
+We note that $f_n$ is the expected length of a uniform random walk after $n$ steps, and is given by $f_n = \sqrt{\frac{n}{2 \pi}} + o(n)$. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Switching between FTL and Cover: a meta-principle}
+
+We now consider the problem of constructing a binary predictor $p$ which achieves, for each $y^n \in \{0,1\}^n$ and an absolute constant $\g$,
+\[
+\Reg(p,y^n) = \g \min\{\Reg(\pftl, y^n), \Reg(\pcov, y^n)\} = \g \min\left\{\Reg(\pftl, y^n), \sqrt{\frac{n}{2\pi}} + o(n)\right\}
+\]
+where the second inequality follows since $\pcov$ is an \emph{equalizer}, i.e. $\Reg(\pcov,y^n)$ is constant irrespective of $y^n$. One simple way to switch between these two methods is the following: keep a count of the \emph{regret} of FTL, and as soon as it exceeds $\sqrt{\frac{n}{2\pi}}$, switch to $\pcov$. However, since the sequence $y^n$ is not known apriori and subsequently neither is the best fixed action in hindsight (0 or 1 depending on whether or not $\sum_{t=1}^n y_t \le n/2$ respectively), the regret incurred incurred by FTL up until some time $t < n$ cannot be calculated (note that the \emph{loss} incurred by FTL up to time $t$ can be calculated). Nonetheless, the structure of the FTL method allows for an online calculation of the regret up to time $t$, as the following proposition shows. 
+\begin{definition}[Line crossings]\label{defn:StateLineCross}
+    For a binary sequence $y_1^n$, let 
+    \begin{align}\label{eq:StateDefn} 
+        S_t(y^t) = \sum_{i=1}^t y_i - (t-\sum_{i=1}^t y_i) = 2\sum_{i=1}^t y_i - t.
+    \end{align}
+ For any $t$, 
+ \begin{align}\label{eq:NumCrossingsDefn}
+     c_t(y^t) \defeq \left|\left\{0 \le j \le t | S_j = 0\right\}\right|
+ \end{align}
+ and each $j$ such that $S_j = 0$ is called a line crossing. 
+\end{definition}
+\begin{proposition}[FTL regret] \label{prop:FTLReg}
+   For any sequence $y^n$, if $t$ is a line crossing,
+   \begin{align}\label{eq:FTLRegAtCrossing}
+        \sum_{j=1}^n (\E[\indi\{\widehat{y}^{\mathrm{FTL}}_j \neq y_j\}] - \indi\{y^* \neq y_j\}) = \frac{c_t(y^{t})}{2}
+   \end{align}
+where, recall $\yftl = \maj\{y_1^{t-1}\}$ with ties broken uniformly at random. Moreover,
+\begin{align}\label{eq:FTLRegN}
+    \Reg(\pftl, y^n) = \frac{c_{n-1}(y^{n-1})}{2}.
+\end{align}
+\end{proposition}
+
+\begin{proof}
+    Let $t_1,\dotsc,t_k$ denote the line crossings encountered up to $t$. We will first argue that 
+    \[
+    \sum_{t= t_i+1}^{t_{i+1}} (\E[\indi\{\widehat{y}^{\mathrm{FTL}}_t \neq y_t\}] - \indi\{y^* \neq y_t\}) = \frac{1}{2}
+    \]
+    regardless of whether $y^* = 0$ or 1, which directly yields~\eqref{eq:FTLRegAtCrossing}. By definition, $S_t > 0$ or $S_t < 0$ for all $t_{i}+1 \le t < t_{i+1}$.
+    Assume that $S_t > 0$ (the other case is exactly analogous), so that $\yftl_t = 1$ for all $t_i+2 \le t \le t_{i+1}$, and $\yftl_{t_i+1} \sim \Ber(1/2)$. Now, note that since $S_{t_i} = S_{t_{i+1}} = 0$, we have 
+    \[
+    S_{t_i} - S_{t_{i+1}} = 0 \implies \sum_{t=t_i}^{t_{i+1}} y_i = \frac{t_{i+1}-t_i}{2}
+    \]
+    implying there are equal number of zeros and ones in the subsequence $y_{t_i+1}^{t_{i+1}}$. Because of this, we have 
+    \[
+    \sum_{t= t_i+1}^{t_{i+1}}  \indi\{y^* \neq y_t\} = \frac{t_{i+1}-t_i}{2}
+    \]
+    regardless of $y^*$. Moreover, 
+    \begin{align*}
+         \sum_{t= t_i+1}^{t_{i+1}} \E[\indi\{\widehat{y}^{\mathrm{FTL}}_t \neq y_t\}] &= \frac{1}{2} +  \sum_{t= t_i+2}^{t_{i+1}} \E[\indi\{\widehat{y}^{\mathrm{FTL}}_t \neq y_t\}]  \\
+         &= \frac{1}{2} + \sum_{t= t_i+2}^{t_{i+1}}  \indi\{y_t \neq 1\} \\
+         &\stackrel{\text{(a)}}{=} \frac{1}{2} + \frac{t_{i+1}-t_i}{2}
+    \end{align*}
+where (a) follows since for $S_t > 0$ in $t_{i}+1 \le t \le t_{i+1}, y_{t_i+1}$ must necessarily be 1. 
+To see~\eqref{eq:FTLRegN}, we directly have (let $t^*$ denote the position of the $c_{n-1}(y^{n-1})$-th line crossing)
+\begin{align*}
+    \Reg(\pftl, y^n) &= \sum_{t= 1}^{n} (\E[\indi\{\widehat{y}^{\mathrm{FTL}}_t \neq y_t\}] - \indi\{y^* \neq y_t\}) \\
+    &= \frac{c_{n-1}(y^{n-1})}{2} + \sum_{t=t^*+2}^n (\indi\{\widehat{y}^{\mathrm{FTL}}_t \neq y_t\} - \indi\{y^* \neq y_t\}) \\
+    &= \frac{c_{n-1}(y^{n-1})}{2} 
+\end{align*}
+since after the last line crossing $\widehat{y}^{\mathrm{FTL}}_t = y^*$.
+\end{proof}
+
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        {\bf Meta-Algorithm$_1$(Threshold$_n, \wcalg$)}
+        \begin{itemize}
+            \item Select a number Threshold$_n$, and an algoritm $\wcalg$.
+            \item Play the FTL action as long as $c_t(y^t) \le \text{Threshold}_n$ 
+            \item Let $\tau \defeq \min_{1 \le t \le n-1} c_t(y^t) >$ Threshold$_n$. Starting from $t = \tau+1$, switch to playing $\wcalg$.
+        \end{itemize}
+    }%
+}
+
+\begin{lemma}[Best of both worlds: FTL and Cover] \label{lem:BOBWFTLandCov}
+    Let BOBW be Meta-Algorithm$_1$ instantiated with threshold $2f_n$ and $\wcalg$ being Cover's predictor (from Theorem~\ref{thm:CoverBinPred}), we have 
+    \begin{align}\label{eq:BinBOBWReg}
+        \Reg(\pbobw, y^n) \le 2 \min\{\Reg(\pftl,y^n),\Reg(\pcov,y^n)\} + \frac{1}{2}.
+    \end{align}
+\end{lemma}
+\begin{proof}
+    For clarity, we drop the dependence of $c_t$ on $y^t$. For any sequence $y^n$ such that $\frac{c_{n-1}}{2} = \Reg(\pftl,y^n) \le \Reg(\pcov,y^n) = f_n$, then $\tau \ge n$ and therefore BOBW plays FTL throughout (the switch never occurrs). In this case, 
+    \[
+     \Reg(\pbobw, y^n) = \Reg(\pftl,y^n) \le \Reg(\pcov,y^n) 
+    \]
+    and~\eqref{eq:BinBOBWReg} holds.
+    
+    If $c_{n-1} > 2f_n$, then let $\ttil \le n-1$ denote the point where the switch occurs (i.e. BOBW starts playing $\pcov$ starting with $\pbobw_{\ttil+1} = \pcov_{\ttil+1}$). Since the count $c_t$ is only updated at line crossings, the $\ttil$ is necessarily a line crossing, i.e. $S_{\ttil} = 0$ implying that $\sum_{i=1}^{\ttil} = \frac{\ttil}{2}$ and indeed by the switching conditon,
+    \[
+    2f_n \le c_{\ttil} \le 2f_n + 1
+    \]
+    We then have
+    \begin{align}
+        \Reg(\pbobw, y^n) &= \sum_{t=1}^{\ttil} \left(\E[\indi\{\yftl \neq y_t\}] - \indi\{y^* \neq y_t\}\right) + \sum_{t = \ttil+1}^n \left(\E[\indi\{\ycov \neq y_t\}] - \indi\{y^* \neq y_t\}\right) \nonumber \\
+        &= \frac{c_{\ttil}}{2} + \sum_{t = \ttil+1}^n \left(\E[\indi\{\ycov \neq y_t\}] - \indi\{y^* \neq y_t\}\right) \label{eq:BibBOBWRegTwoTerms}. 
+    \end{align}
+    We now claim that 
+    \begin{align}\label{eq:CovSwitchReg}
+    \sum_{t = \ttil+1}^n \left(\E[\indi\{\ycov \neq y_t\}] - \indi\{y^* \neq y_t\}\right) = f_{n - \ttil}.
+    \end{align}
+    To see this, note that since $y_1,\dotsc,y_{\ttil}$ has equal number of zeros and ones, we have (where $\e_{t+1}^n \sim \Ber(1/2)$ iid)
+    \begin{align*}
+        \ycov_t &= \maj\{y_1,\dotsc,y_{\ttil},y_{\ttil+1},\dotsc,y_{t-1},\e_{t+1},\dotsc,\e_n\} \\
+        &= \maj\{y_1,\dotsc,y_{\ttil},y_{\ttil+1},\dotsc,y_{t-1},\e_{t+1},\dotsc,\e_n\}
+    \end{align*}
+    and 
+    \begin{align*}
+        y^* &= \maj\{y_1,\dotsc,y_{\ttil},y_{\ttil+1},\dotsc,y_{n}\}\\
+        &= \maj\{y_{\ttil+1},\dotsc,y_n\}.
+    \end{align*}
+    Therefore, the expression on the left hand side of~\eqref{eq:CoverRegret} becomes simply $\Reg(\pcov,y_{\ttil+1}^n) = f_{n-\ttil}$ by Theorem~\ref{thm:CoverBinPred}. Therefore, from~\eqref{eq:BibBOBWRegTwoTerms} we get 
+    \begin{align*}
+        \Reg(\pbobw, y^n) &= \frac{c_{\ttil}}{2} + f_{n-\ttil} \\
+        &\le f_n + \frac{1}{2} + f_{n-\ttil} \\
+        &\le 2f_n + \frac{1}{2} = 2\Reg(\pcov,y^n) + \frac{1}{2}
+    \end{align*}
+    yielding~\eqref{eq:BinBOBWReg} for the sequences for which $\Reg(\pcov,y^n) < \Reg(\pftl,y^n)$. 
+\end{proof}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Using any $\sqrt{n}$ algorithm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Prediction with $m$ experts}
+\begin{definition}[Leader change]\label{defn:LeaderChanges}
+    For a sequence of losses $\ell_1^n$, where each $\ell_i \in [0,1]^m$, and any $t \in [n]$, a leader change is said to occur at time $t$ if there exists a $k \in [m]$ such that $k \in \arg \min_{i \in [m]} \sum_{j=1}^{t-1} \ell_{ij}$, but $k \notin \arg\min_{i \in [m]} \sum_{j=1}^t \ell_{ij}$. Furthermore, 
+    \begin{align}\label{eq:LeaderChangesCountDefn}
+        c_t(\ell^t) \defeq \left|\left\{1 \le j \le t : \text{ Leader change occurs at }j\right\}\right|
+    \end{align}
+\end{definition}
+
+\begin{proposition}[FTL regret in the $m-$experts setting] \label{prop:FTLRegExperts}
+    For any $\ell_1^n$, 
+    \begin{align}\label{eq:FTLReg}
+        \Reg(\pftl,\ell_1^n) \le c_n(\ell_1^n).
+    \end{align}
+\end{proposition}
+\begin{proof}
+    \redt{TODO. Equality case and lower bounds on $\Reg(\pftl, \ell_1^n)$ in terms of $c_n(\ell_1^n)$?}
+\end{proof}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        {\bf Meta-Algorithm$_2$(Threshold$_{m,n}, \wcalg$)}
+        \begin{itemize}
+            \item Select a number Threshold$_{m,n}$, and an algorithm $\wcalg$.
+            \item Play the FTL action as long as $c_t(\ell^t) \le \text{Threshold}_{m,n}$ 
+            \item Let $\tau \defeq \min_{1 \le t \le n-1} c_t(y^t) >$ Threshold$_{m,n}$. Starting from $t = \tau+1$, start playing $\wcalg$ disregarding the sequence $\ell_{1}^{\tau}$.
+        \end{itemize}
+    }%
+}
+
+\begin{lemma}[Best of both worlds: FTL and worst-case regret] \label{lem:BOBWmExperts}
+    Let $\wcalg$ be any algorithm with regret 
+    \[
+    \max_{\ell_1^n} \Reg(\wcalg, \ell_1^n) \le g_m(n) 
+    \]
+    where $g_m(\cdot)$ is monotone increasing. Let BOBW be  Meta-Algorithm$_2$($g_m(n), \wcalg$). Then for any $\ell^n$
+    \begin{align}\label{eq:BOBWRegExperts}
+        \Reg(\pbobw, \ell_1^n) \le 2 \max\{c_n(\ell_1^n), g_m(n)\} + 1.
+    \end{align}
+\end{lemma}
+
+\begin{proof}
+    The proof parallels that of Lemma~\ref{lem:BOBWFTLandCov} with some changes. For any sequence $\ell^n$ such that $c_{n} \le g_m(n)$, then $\tau \ge n$ and therefore BOBW plays FTL throughout. In this case, 
+    \[
+     \Reg(\pbobw, \ell^n) = \Reg(\pftl,\ell^n) \le c_n 
+    \]
+    where the second inequality follows from Proposition~\ref{prop:FTLRegExperts}, so~\eqref{eq:BOBWRegExperts} holds.
+
+    If $c_n \ge g_m(n)$, then let $\ttil$ denote the point of switch; by the switching condition we have $g_m(n) \ge c_{\ttil} \le g_m(n)+1$. We for any $t_1,t_2$ we define 
+    \[
+    a^*_{t_1:t_2} = \argmin_{i \in [m]} \sum_{t=1}^n \ell_{it} 
+    \]
+    with ties broken in favour of the smaller index; i.e. $a^*_{t_1:t_2}$ is the best expert on the loss sequence $\ell_{t_1},\dotsc,\ell_{t_2}$. We then have (where $\pwc$ denotes the actions of $\wcalg$ after the switch)
+    \begin{align} \label{eq:SwitchRegTwoTerms}
+        \Reg(\pbobw, \ell^n) = \sum_{t=1}^{\ttil} \left( \langle \pftl_t,\ell_t \rangle  - \ell_{a^*_{1:n}t}\right) + \sum_{t=\ttil+1}^{n} \left( \langle \pwc_t,\ell_t \rangle - \ell_{a^*_{1:n}t} \right). 
+    \end{align}
+    Now,
+    \begin{align}
+       \sum_{t=1}^{\ttil} \langle \pftl_t,\ell_t \rangle  - \ell_{a^*_{1:n}t} &= \sum_{t=1}^{\ttil} \langle \pftl_t,\ell_t \rangle - \sum_{t=1}^{\ttil} \ell_{a^*_{1:n}t} \nonumber\\
+       &\stackrel{\text{(a)}}{\le}  \sum_{t=1}^{\ttil} \langle \pftl_t,\ell_t \rangle - \sum_{t=1}^{\ttil} \ell_{a^*_{1:\ttil}t} \nonumber\\
+       &= \Reg(\pftl,\ell_1^{\ttil}) \nonumber\\
+       &\le c_{\ttil}  \label{eq:FTLRegPreSwitchUB}
+    \end{align}
+    where (a) follows because by definition of $a^*_{1:\ttil}$, for all $j \in [m]$ (including $a^*_{1:n}$) 
+    \[
+    \sum_{t=1}^{\ttil} \ell_{a^*_{1:\ttil}t}  \le \sum_{t=1}^{\ttil} \ell_{jt}
+    \]
+    and~\eqref{eq:FTLRegPreSwitchUB} follows by Proposition~\ref{prop:FTLRegExperts}.
+    By the same argument, and recalling that $\pwc_t$ is in fact a function of $\pwc(\ell_{\ttil+1}^t)$ because of the reset, we can claim that 
+    \begin{align} \label{eq:WCAlgRegSwitchUB}
+        \sum_{t=\ttil+1}^{n} \left( \langle \pwc_t,\ell_t \rangle - \ell_{a^*_{1:n}t} \right) \le  \sum_{t=\ttil+1}^{n} \langle \pwc_t,\ell_t \rangle - \sum_{t=\ttil+1}^{n} \ell_{a^*_{\ttil+1:n}t} = \Reg(\pwc, \ell_{\ttil+1}^n) \le g_m(n-\ttil).
+    \end{align}
+    Using~\eqref{eq:FTLRegPreSwitchUB} and~\eqref{eq:WCAlgRegSwitchUB} in~\eqref{eq:SwitchRegTwoTerms} we get 
+    \begin{align*}
+        \Reg(\pbobw, \ell^n)  &\le c_{\ttil} + g_m(n-\ttil) \\
+        &\le g_m(n) + 1 + g_m(n-\ttil) \\
+        &\le 2g_m(n) + 1
+    \end{align*}
+   where the last inequality uses the monotonicity of $g_m(\cdot)$; this establishes~\eqref{eq:BOBWRegExperts} in the case when $c_n \ge g_m(n)$.
+\end{proof}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Small loss bounds}
+\begin{definition}[$L^*$] \label{def:Lstar}
+For any $\ell_1^n$, 
+    \begin{align}
+        L^*_{t_1:t_2} &\defeq \min_{i \in [m]} \sum_{t=t_1}^{t_2} \ell_{it} \label{eq:LstarBtwnTs} \\
+        L^* &\defeq L^*_{1:n} \label{eq:LStarn}.
+    \end{align}
+\end{definition}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Known $L^*$} 
+In this case, an instantitation of Meta-Algorithm$_2$ suffices. 
+
+\begin{lemma}[Best of both worlds: FTL and small-loss algorithm with known $L^*$]\label{lem:BOBWKnownLStar}
+    Let $\wcalg$ be any algorithm that achieves, for any $\ell_1^n$ (where $\pwc$ denotes the predictions made by $\wcalg$) 
+    \begin{align}\label{eq:LStarAlgRegUB}
+    \Reg(\pwc, \ell_1^n) \le g_m(L^*)
+    \end{align}
+    with $g_m(\cdot)$ being a monotonically increasing function. Then, we have for any $\ell^n$ if BOBW is Meta-Algorithm$_2(g_m(L^*),\wcalg)$
+    \begin{align}\label{eq:RegBOBWKnownLstar}
+        \Reg(\pbobw, \ell^n) \le 2\min\{c_n(\ell^n), g_m(L^*)\} + 1
+    \end{align}
+\end{lemma}
+
+\begin{proof}
+    The proof largely parallels that of Lemma~\ref{lem:BOBWmExperts}. When $c_n(\ell^n) \le g_m(L^*)$ (no switch), \eqref{eq:RegBOBWKnownLstar} follows directly since $\Reg(\pbobw, \ell^n) = \Reg(\pftl, \ell^n) \le c_n(\ell^n)$ from Proposition~\ref{prop:FTLRegExperts}. In the other case, denoting the switch point by $\ttil$ and following the reasoning used to obtain~\eqref{eq:FTLRegPreSwitchUB} and~\eqref{eq:WCAlgRegSwitchUB} we have 
+    \begin{align}
+        \Reg(\pbobw,\ell^n) &\le \Reg(\pftl, \ell^{\ttil}) + \Reg(\pwc, \ell_{\ttil+1}^n) \nonumber\\
+        &\le c_{\ttil} + g_m(L^*_{\ttil+1:n}) \label{eq:RegBdsFTLLstar}\\
+        &\le 2g_m(L^*)+1 \label{eq:MonotonictyOfLStar}
+    \end{align} 
+    where~\eqref{eq:RegBdsFTLLstar} follows from Proposition~\ref{prop:FTLRegExperts} and~\eqref{eq:LStarAlgRegUB}, and~\eqref{eq:MonotonictyOfLStar} follows since $L^*_{\ttil+1:n} \le L^*_{1:n}$ and $g_m(\cdot)$ is monotonic.
+\end{proof}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Unknown $L^*$}
+In this case, we will interleave the known $L^*$ algorithm with the doubling trick to achieve a bound similar to that obtained in Lemma~\ref{lem:BOBWKnownLStar} up to constant factors. As in the previous subsection, let $\wcalg$ be any algorithm achieving for any $\ell_1^n$
+\[
+\Reg(\pwc, \ell^n) \le g_m(L^*)
+\]
+where $g_m(\cdot)$ is monotone increasing. Now consider the following algorithm: 
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        For $z = 0, 1, \dotsc, \infty$ (epochs) 
+        \begin{itemize}
+            \item $t_z \defeq $ The time step of the start of the $z-$th epoch 
+            \item $L^*_z \defeq 2^z \log m$ (guess the value of $L^*$)
+            \item Disregard $\ell$ observed so far and play the small-loss BOBW method, i.e. Meta-Algorithm$_2(g_m(L^*_z), \wcalg)$
+            \item At each time step, keep track of: 
+            \begin{itemize}
+                \item $\sum_{t=t_z}^t \langle \pbobw_t, \ell_t \rangle$ ( loss incurred in this epoch) 
+                \item $L_z^* + 2\min\{c(\ell_{t_z}^t), g_m(L_z^*)\} + 1$ (provable upper bound on loss from Lemma~\ref{lem:BOBWKnownLStar} if $L_z^*$ is correct)
+            \end{itemize}
+            \item When 
+            \[
+            L_z^* + 2\min\{c(\ell_{t_z}^t), g_m(L_z^*)\} > \sum_{t=t_z}^t \langle \pbobw_t, \ell_t \rangle
+            \]
+            start new epoch. 
+        \end{itemize}
+    }%
+}
+
+\begin{theorem}[Best of both worlds: FTL and small-loss algorithm with known $L^*$] \label{thm:BOBWUnknownLStar}
+    The algorithm outlined above achieves, for any $\ell^n$
+    \begin{align}\label{eq:BOBWUnknownLstarReg}
+    \Reg(\pstar, \ell^n) \le 2 \min\left\{c_n(\ell^n), \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)} g_m(2^z \log m)\right\} + 2\log\left(1+\frac{L^*}{\log m}\right).
+    \end{align}
+\end{theorem}
+
+
+\begin{corollary}\label{cor:SqrtLStarInstantiation}
+    If $g_m(l) = \alpha \sqrt{l \log m} + \beta \log m$ for a positive absolute constant $\alpha$, then 
+    \begin{align}\label{eq:BOBWSqrtLstarRegDoubling}
+        \Reg(\pstar, \ell^n) &\le 2 \min\left\{c_n(\ell^n), 4\alpha \sqrt{L^* \log m} + \left(\beta\log\left(1+\frac{L^*}{\log m}\right) + 4\alpha\right)\log m \right\} \nonumber\\
+        &\qquad\qquad\qquad\qquad\qquad+ 2 \log\left(1+ \frac{L^*}{\log m}\right).
+    \end{align}
+\end{corollary}
+
+\begin{proof}
+    Let $\zlast \le n$ denote the number of the last epoch, and let $t_z$ denote the beginning of the $z-$th epoch (so, $t_0 = 1$) and the $z-$th epoch lasts from $t_z \le t \le t_{z+1}-1$. By the loop exit condition, the total loss incurred by the algorithm (whose action at time $t$ is denoted by $\pstar_t$) in the $z-$th loop is at most 
+    \begin{align}\label{eq:LossInEpochUB}
+        \sum_{t=t_z}^{t_{z+1}-1} \langle \pstar_t , \ell_t \rangle \le L^*_{z} + 2 \min\{c(\ell_{t_z}^{t_{z+1}-1}), g_m(L_z^*)\} + 2 
+    \end{align}
+    where we define $t_{\zlast+1}-1 \defeq n$. Therefore, we have 
+    \begin{align}
+        \sum_{t=1}^n \langle \pstar_t , \ell_t \rangle &\le \sum_{z=0}^{\zlast} \left(L^*_{z} + 2 \min\{c(\ell_{t_z}^{t_{z+1}-1}), g_m(L_z^*)\} + 2 \right) \nonumber\\
+        &= \sum_{z=0}^{\zlast} L_z^* + \sum_{z=0}^{\zlast} 2 \min\{c(\ell_{t_z}^{t_{z+1}-1}), g_m(L_z^*)\} + 2\zlast \nonumber\\
+        &\le  \sum_{z=0}^{\zlast} L_z^* + 2 \min\left\{\sum_{z=0}^{\zlast} c(\ell_{t_z}^{t_{z+1}-1}),  \sum_{z=0}^{\zlast} g_m(L_z^*)\right\} + 2\zlast \label{eq:MinOfSum} \\
+        &=  \sum_{z=0}^{\zlast} L_z^* + 2 \min\left\{c(\ell_{1}^{n}),  \sum_{z=0}^{\zlast} g_m(L_z^*)\right\} + 2\zlast \label{eq:ZeroCrossingsAddup}  
+    \end{align}
+    where~\eqref{eq:MinOfSum} follows since for any $a_1,\dotsc,a_k$ and $b_1,\dotsc,b_k$ we have 
+    \[
+    \sum_{i=1}^k \min\{a_i,b_i\} \le \min\left\{\sum_{i=1}^k a_i, \sum_{i=1}^k b_i\right\}
+    \]
+    and~\eqref{eq:ZeroCrossingsAddup} follows by the definition of leader changes in Definition~\ref{defn:LeaderChanges}. Now, let $i^*_{1:n} \in \argmin_i \sum_{t=1}^n \ell_{it}$. We then have 
+    \begin{align}
+       \Reg(\pstar, \ell^n) &= \sum_{t=1}^n \langle \pstar_t, \ell_t \rangle - \sum_{t=1}^n \ell_{i^*_{1:n}t} \nonumber\\
+       &= \sum_{t=1}^n \langle \pstar_t, \ell_t \rangle - \sum_{z=0}^{\zlast} \sum_{t = t_z}^{t_{z+1}-1} \ell_{i^*_{1:n}t} \nonumber\\
+       &\le \sum_{z=0}^{\zlast}\left( L_z^* - \sum_{t = t_z}^{t_{z+1}-1} \ell_{i^*_{1:n}t}\right)  + 2 \min\left\{c(\ell_{1}^{n}),  \sum_{z=0}^{\zlast} g_m(L_z^*)\right\} + 2\zlast   \label{eq:EpochWiseLossUB}
+    \end{align}
+    where~\eqref{eq:EpochWiseLossUB} follows from~\eqref{eq:ZeroCrossingsAddup}. We now argue that 
+    \begin{align}\label{eq:LzLBdonLoss}
+        L^*_{z} < \sum_{t=t_z}^{t_{z+1}-1} \ell_{i^*_{1:n}t}
+    \end{align}
+    by establishing a contradiction if $L^*_{z} \ge \sum_{t=t_z}^{t_{z+1}-1} \ell_{i^*_{1:n}t}$. If indeed $L^*_z$ is such an upper bound, the loss incurred by the optimal action in epoch $z$ (i.e. for $i^*_{t_z:t_{z+1}-1}$) is a lower bound on the loss of any action in epoch $z$ (an in particular for action $i^*_{1:n}$) and we have 
+    \begin{align}\label{eq:LossBestArmUB}
+    \sum_{t=t_z}^{t_{z+1}-1} \ell_{i^*_{t_z:t_{z+1}-1}t} \le \sum_{t=t_z}^{t_{z+1}-1} \ell_{i^*_{1:n}t} \le L^*_z.  
+     \end{align}
+    But Lemma~\ref{lem:BOBWKnownLStar} establishes that
+    \begin{align}\label{eq:LossInEpochContradiction}
+    \Reg(\pbobw, \ell_{t_z}^{t_{z+1}-1}) \le 2\min\left\{c(\ell_{t_z}^{t_{z+1}-1}), g_m(L^*_{t_{z}:t_{z+1}})\right\} + 1 \stackrel{\text{(a)}}{\le} 2\min\left\{c(\ell_{t_z}^{t_{z+1}-1}), g_m(L^*_z)\right\} + 1
+    \end{align}
+    where (a) follows from~\eqref{eq:LossBestArmUB} and monotonicity. However,~\eqref{eq:LossInEpochContradiction} violates the loop exit condition and implies that the time step $t_{z+1}$ is also within epoch $z$, which is not the case. Therefore, we have arrived at a contradiction and established that~\eqref{eq:LzLBdonLoss} holds. Using this in~\eqref{eq:EpochWiseLossUB} yields 
+    \begin{align}\label{eq:RegUBZlast}
+        \Reg(\pstar,\ell^n) \le  2 \min\left\{c(\ell_{1}^{n}),  \sum_{z=0}^{\zlast} g_m(L_z^*)\right\} + 2\zlast. 
+    \end{align}
+    To finish the proof, we need a bound on $\zlast$. For this, we use~\eqref{eq:LzLBdonLoss} again. Summing up~\eqref{eq:LzLBdonLoss} over all epochs yields 
+    \[
+        \sum_{z=0}^{\zlast} L^*_z < \sum_{z=0}^{\zlast} \sum_{t=t_z}^{t_{z+1}-1} \ell_{i^*_{1:n}t} = L^*
+    \]
+    and since $L^*_z = 2^z \log m$, we have 
+    \[
+    \log m \sum_{z=0}^{\zlast} 2^z \le L^* 
+    \]
+    implying that 
+    \begin{align} \label{eq:zLastUB}
+       \zlast \le \log\left(1+\frac{L^*}{m}\right).
+    \end{align}
+    Substituting~\eqref{eq:zLastUB} into~\eqref{eq:RegUBZlast} and using $L_z^* = 2^z \log m$ yields the Theorem.
+\end{proof}
+
+\begin{proof}[Proof of Corollary~\ref{cor:SqrtLStarInstantiation}]
+    This follows simply by calculating 
+    \begin{align}
+        \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)} g_m(2^z \log m) &= \alpha\log m \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)} 2^{z/2} + \beta \log m \log\left(1+\frac{L^*}{\log m}\right)\nonumber\\
+        &= \alpha \log m \frac{\sqrt{2}}{\sqrt{2}-1}\sqrt{1+\frac{L^*}{\log m}} + \beta \log m \log\left(1+\frac{L^*}{\log m}\right) \nonumber \\
+        &\le 4\alpha \sqrt{\log^2 m + L^* \log m} + \beta \log m \log\left(1+\frac{L^*}{\log m}\right) \nonumber\\
+        &\stackrel{\text{(a)}}{\le} 4\alpha \sqrt{L^* \log m} + \left(\beta\log\left(1+\frac{L^*}{\log m}\right) + 4\alpha\right)\log m \nonumber
+    \end{align}
+    where (a) follows since for nonnegative $a,b$ $\sqrt{a+b} \le \sqrt{a}+ \sqrt{b}$.
+\end{proof}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Lower bounds}\label{sec:LBs}
+In this section, we revisit the binary prediction problem and investigate the \emph{smallest} value of $\gamma$ such that there exists a predictor such that for every $y^n$,
+\begin{align}
+    \Reg(p, y^n) \le \g_n \min\{\Reg(\pftl,y^n),\Reg(\pcov,y^n)\} = \g_n \min\{\frac{1}{2}c_{n-1}(y^{n-1}), f_n\}
+\end{align}
+or equivalently, 
+\begin{align}
+   \sum_{t=1}^n |p_t(y^{t-1})-y_t| \le \g_n \min\{\frac{1}{2}c_{n-1}(y^{n-1}), f_n\} + \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\}. 
+\end{align}
+To do this, we will use Theorem~\ref{thm:CoverBinPred} again and ask for what values of $y^n$ the loss function 
+\[
+\phi(y^n) = \g_n \min\{\frac{1}{2}c_{n-1}(y^{n-1}), f_n\} + \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\}
+\]
+is achievable. In particular, $\g_n$ must satisfy the balance condition and therefore we need 
+\[
+\g_n\E[ \min\{\frac{1}{2}c_{n-1}(Y^{n-1}), f_n\}] + \E\left[ \min\left\{\sum_{t=1}^n Y_i, n-\sum_{t=1}^n Y_i\right\}\right] = \frac{n}{2} 
+\]
+and using the definition of $f_n$, we have 
+\begin{align}\label{eq:LowerBdCRProcess}
+    \g_n = \frac{f_n}{\E[ \min\{\frac{1}{2}c_{n-1}(Y^{n-1}), f_n\}]} =  \frac{2f_n}{\E[ \min\{c_{n-1}(Y^{n-1}), 2f_n\}]}.
+\end{align}
+The bound~\eqref{eq:LowerBdCRProcess} yields that $\g_n \ge 1$ as expected.
+\begin{theorem}
+    \[
+    \liminf_{n \to \infty} \gamma_n \ge \frac{1}{1-e^{-1/\pi}+Q\left(\sqrt{2/\pi}\right)}.
+    \]
+\end{theorem}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Further directions}
+
+\begin{itemize}
+    \item Bandits
+    \item Does our result say anything about corruptions? 
+    \item Cover's algorithm for "small loss bounds": if we have prior information that certain binary sequences will not occur (e.g. $\max\{\# 0s, \# 1s\} \le k$) then how to use Cover's result on achievable losses to get the minmax optimal algorithm? 
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+
+\section{Proof of Theorem~\ref{thm:CoverBinPred}} \label{appendix:CoverThmPf}
+
+
+\bibliography{bobw} 
+
+\end{document}

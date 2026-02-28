@@ -1,0 +1,431 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{Fundamental limits of binary prediction: Cover's result}
+
+% In this section, we restate the result of~\cite{Cover1966} on binary prediction.
+
+% \begin{theorem} 
+% Let a function $\phi : \{0,1\}^n \to \mathbb{R}+$ be \emph{achievable} in binary prediction if there exists a predictor/strategy $a_t: y^{t-1} \mapsto [0,1]$ that achieves 
+% \begin{align}\label{eq:AchievabilityDefn}
+%     \sum_{t=1}^n |a_t(y^{t-1})-y_t| = \phi(y^n)
+% \end{align}
+% for all $y^n$. Then, the following are necessary conditions for a loss function to be achievable:
+% \begin{itemize}
+%     \item Balance: For $\e^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d., 
+%     \begin{align}\label{eq:BalanceCondn}
+%         \E[\phi(Y^n)] = \frac{n}{2} 
+%     \end{align}
+%     \item Stability: Let $\phi_t(y^t) \equiv \E[\phi(y^{t}\e_{t+1}^n)]$ where $\e_{t+1}^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d. Then
+%     \begin{align}\label{eq:StabilityCondn}
+%         |\phi_t(y^{t-1}0)-\phi_t(y^{t-1}1)| \le 1. 
+%     \end{align}
+%     Furthermore, if a function $\phi$ is satisfies the above two conditions, then the predictor 
+%     \begin{align} 
+%     a_t(y^{t-1}) = \frac{1+\phi_t(y^{t-1}0)-\phi_t(y^{t-1}1)}{2}
+%     \end{align}
+%     achieves it. 
+% \end{itemize}
+% \end{theorem}
+
+% A particularly illuminating question is whether the loss of the hindsight-optimal action, i.e. $\phi(y^n) = \min\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\}$ is achievable, which is answered in the negative by Cover's result. 
+
+% \begin{corollary}\label{cor:BinPredOptReg}
+%     The loss function $y^n \mapsto \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\}$ violates the balance condition and therefore is not achievable. However, the function 
+%     \begin{align}\label{eq:CoverLossFn}
+%     y^n \mapsto \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\} + \frac{\E|\sum_{t=1}^n Z_t|}{2}
+%     \end{align}
+%     where $Z^n \sim \Unif\{+1,-1\}$ i.i.d. is achievable. The predictor that achieves~\cref{eq:CoverLossFn} chooses $\widehat{Y}_t$ (equivalently, $a_t = \mathsf{P}[\widehat{Y_t} = 1]$)
+%     \begin{align}\label{eq:CoverPredictor}
+%         \widehat{Y}_t = \Majority\{y^{t-1},\e_{t+1}^n\}
+%     \end{align} 
+%     where $\e_{t+1}^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d., with ties broken uniformly at random. Finally, Cover's predictor~\cref{eq:CoverPredictor} is \emph{minmax optimal} in the sense that for any other predictor $\alg$, 
+%     \[
+%     \max_{y^n} \Reg(\alg, y^n) \ge \max_{y^n} \Reg(\Cover, y^n).
+%     \]
+% \end{corollary}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% \section{Proof of Lemma~\ref{lem:FTLRegret}} \label{appendix:FTLRegProof}
+
+%    Recalling $\aftl_t = a^*_{t-1}$ we have 
+%     \begin{align*}
+%         \Reg(\ftl, \ell^n) &= \sum_{t=1}^n \ell_t(a^*_{t-1})  - \inf_{a \in \Ac} \sum_{t=1}^n \ell_t(a) \\
+%         &= \sum_{t=1}^n \ell_t(a^*_{t-1})  - L_n(a^*_n) \\
+%         &= \sum_{t=1}^n (L_t(a^*_{t-1}) - L_{t-1}(a^*_{t-1})) -  L_n(a^*_n) \\
+%         &= \sum_{t=1}^n (L_t(a^*_{t-1}) - L_t(a^*_t)) + \sum_{t=1}^n (L_t(a^*_t) - L_{t-1}(a^*_{t-1})) - L_n(a^*_n) \\
+%         &\stackrel{(a)}{=} \sum_{t=1}^n (L_t(a^*_{t-1}) - L_t(a^*_t))
+%     \end{align*}
+%     where $(a)$ follows since $\sum_{t=1}^n (L_t(a^*_t) - L_{t-1}(a^*_{t-1})) = L_n(a^*_n)$ by a telescoping sum. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{Pseudocode for Unknown Small-Loss Algorithm} 
+
+% The intuitive idea behind the algorithm is to guess the value of $L^*$, and play $\bob$ with this guessed value while simultaneously keeping track of the regret incurred. Whenever the regret incurred exceeds the guarantee established by $\bob$ with known $L^*$ double the guessed value and start again. We use the notation $\wcalg(\ell_{t_1}^{t_2})$ to refer to the worst-case algorithm when the previously observed sequence is $\ell_{t_1}^{t_2}$; in particular this would be equivalent to the action recommended at time $t_2 + 1$ after throwing away all the observed losses before $t_1$. 
+% We let $\ftlsum_{t_1:t_2} = 
+% \sum_{i=t_1}^{t_2} (L_i(a^*_{i-1}) - L_i(a^*_i))$, which grows as the number of leader changes within $i \in [t_1, t_2]$. The algorithm's pseudocode is given below.
+
+% \label{appendix:SmallLossSmartPesudocode}
+% \begin{tcolorbox}[size=title]
+% %\label{alg:SmallLossBob}
+% %\label{metaalg:UnknownSmallLoss}
+% \begin{center}
+% {\textbf{Algorithm 2:} $\bob$ for Small-Loss}
+% \end{center}
+% \textbf{Input:} Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$
+
+% \textbf{For} $z = 0, 1, \dotsc$ (epochs) \textbf{do}
+
+% {\color{white}.}\; Define $t = t_z\defeq$start time of $z^{th}$ epoch
+
+% {\color{white}.}\; Set $L^*_z \defeq 2^z \log m$ (current guess for $L^*$), $\ftlsum_{t_z:t_z-1}=0$ 
+
+% {\color{white}.}\; \textbf{While:} $\ftlsum_{t_z:t-1} \le g(L^*_z)$
+
+% {\color{white}.}\quad\; Set $a_t = a_{t-1}^{*}$; observe $\ell_t(\cdot)$
+%              \hfill\texttt{Play $\ftl$}
+
+% {\color{white}.}\quad\; Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$, $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$
+
+% {\color{white}.}\; \textbf{end}
+
+% {\color{white}.}\; Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$
+
+% {\color{white}.}\; \textbf{While:} $\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$
+    
+% {\color{white}.}\quad\; Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$\hfill \texttt{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+
+% {\color{white}.}\quad\; Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$
+
+% {\color{white}.}\; \textbf{end}
+
+% \textbf{end}
+% \end{tcolorbox}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Omitted proofs from Section~\ref{sec:SmallLoss}} \label{appendix:smallLossPf}
+In this Section, we will establish the proofs of Theorem~\ref{thm:Regret_small_loss} and Corollary~\ref{cor:SqrtLStarInstantiation}. 
+
+Recall Algorithm 2, where $\wcalg(\ell_{t_1}^{t_2})$ refers to the worst-case algorithm when the previously observed sequence is $\ell_{t_1}^{t_2}$; in particular this would be equivalent to the action recommended at time $t_2 + 1$ after throwing away all the observed losses before $t_1$. 
+We let $\ftlsum_{t_1:t_2} = 
+\sum_{i=t_1}^{t_2} (L_i(a^*_{i-1}) - L_i(a^*_i))$, which grows as the number of leader changes within $i \in [t_1, t_2]$.
+% \abdelete{\begin{algorithm}[!ht]
+% \SetAlgoNoLine
+% \caption{$\bob$ for Small-Loss with unknown $L^*$}
+% \label{metaalg:UnknownSmallLoss}
+% \KwIn{Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$} 
+% %\textbf{Initialize} $\ftlsum_0=0$, $t=1$ \;
+% \For{$z = 0, 1, \dotsc$ (epochs)}
+% {
+%     Let $t = t_z\defeq$start time of $z^{th}$ epoch, $L^*_z \defeq 2^z \log m$ (current guess for $L^*$), $\ftlsum_{t_z:t_z-1}=0$ \;
+%     %Disregard past losses $\ell^{t_z-1}$\;
+%     %Play $\bob$ (\cref{metaalg:2approx}) with threshold $\theta = g_m(L^*_z)$ and $\wcalg$\;
+
+%     \While{$\ftlsum_{t_z:t-1} \le g(L^*_z)$}
+%     {
+%         Set $a_t = a_{t-1}^{*}$%
+%              \tcp*{Play $\ftl$}
+%         Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+%     }
+
+%     Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$\;
+%     \tcp{Check if regret of $\wcalg$ in this epoch violates the small loss bound $g(L_z^*)$}
+%     \While{$\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$}
+%     {
+%         Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$ \tcp*{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+%         Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ % and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+%     }    
+    
+% %     \uIf{$|\mathcal N| = 0$}{
+% %         Let $i^* = \varnothing$%
+% %         \tcp*{No winner}
+% %     }\Else{
+% %         Let $i^* \in \min_{i \in \mathcal N}\frac{A_i[t-1] + 1}{\a_i}$%
+% %         \tcp*{Agent with minimum normalized allocation}
+
+% %         Allocate item to agent $i^*$ for round $t$\;
+% %     }
+    
+% %     Let $A_i[t] = A_i[t-1] + \One{i = i^*} \quad \forall \, i\in [n]$%
+% %     \tcp*{Calculate agents' total allocations}
+% }
+% \end{algorithm}}
+
+We first have the following decomposition of the regret for any algorithm $\alg$ that plays the sequence of actions $a^{\alg}_t$ at time $t$.
+\begin{lemma} \label{regret_decomp}
+The regret incurred by any sequence of actions $(a^\alg_t)_{t\in[n+1]}$ can be written as
+\begin{align}
+\Reg(\alg, \ell^n)
+&= \sum_{t=1}^{n} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right),
+\end{align}
+where we let $a_{n+1}^{\alg} := a_n^*$.
+\end{lemma}
+
+\begin{proof}
+\begin{align}
+L_n(\alg)
+&= \sum_{t=1}^n \ell_t(a^{\alg}_t) \\
+&= \sum_{t=1}^n \left(L_t(a^{\alg}_t) - L_{t-1}(a^{\alg}_t) \right) \\
+&= L_n(a^{\alg}_n) + \sum_{t=1}^{n-1} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right) - L_0(a^{\alg}_1).
+\end{align}
+% In general it is also true that 
+% \[\sum_{t=1}^n \ell_t(a^{\pi}_t) 
+% = L_{t_2}(a^{\pi}_{t-2}) + \sum_{t=t_1}^{t_2-1} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right) - L_{t_1 - 1}(a^{\pi}_{t_1}). \]
+This implies a regret decomposition of
+\begin{align}
+\Reg(\alg, \ell^n)
+&= L_n(\alg) - L_n(a_n^*) \\
+&= L_n(a^{\alg}_n) - L_n(a_n^*) + \sum_{t=1}^{n-1} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right) - L_0(a^{\alg}_1)
+\end{align}
+As $L_0(a^{\alg}_1) = 0$, and $a_{n+1}^{\alg} := a_n^*$, it follows that 
+\begin{align}
+\Reg(\alg, \ell^n)
+&= \sum_{t=1}^{n} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right).
+\end{align}
+\end{proof}
+
+Next, we use this decomposition to establish the regret of any algorithm $\alg$ that alternates between playing $\ftl$ and another algorithm $\wcalg$.
+
+\begin{lemma} \label{small_loss_regret_lemma}
+Consider an algorithm $\alg$ which alternates between playing $\ftl$ and $\wcalg$, where $\ftl$ is played in the intervals $\{[t_z, \tau_z]\}_{z\in[\zlast]}$, and $\wcalg$ is played in intervals $\{[\tau_z +1, t_{z+1}-1]\}_{z\in[\zlast]}$. The regret of $\alg$ is bounded by
+\begin{align}
+\Reg(\alg, \ell^n) \leq
+\sum_z \left(\ftlsum_{t_z:\tau_z-1} + \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) + 1\right).
+\end{align}
+\end{lemma}
+
+\begin{proof}
+We let $t_{\zlast} = n+1$, and $a_{n+1} = a_n^*$. We use~\cref{regret_decomp} and rearrange the terms by grouping them by the FTL periods and the $\wcalg$ periods.
+\begin{align}
+\Reg&(\alg, \ell^n) \nonumber\\
+&= \sum_z \left( \sum_{t=t_z}^{t_{z+1}-1} (L_t(a_t) - L_t(a_{t+1})) \right) \nonumber\\
+&= \sum_z \left( \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*))
++ L_{\tau_z}(a_{\tau_z-1}^*) - L_{\tau_z}(a_{\tau_z+1}) + \sum_{t=\tau_z+1}^{t_{z+1}-1} (L_t(a_t) - L_t(a_{t+1})) \right) \nonumber\\
+&= \sum_z \left( \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_t^*)) + L_{\tau_z}(a_{\tau_z-1}^*) + \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) - L_{t_{z+1}-1}(a_{t_{z+1}}) \right) \nonumber\\
+&= \sum_z \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*)) + \sum_z \left(\sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z-1}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) \right). \nonumber
+\end{align}
+
+We bound the first term by the FTL regret. Recall the notation
+\begin{align}
+\ftlsum_{t_z:\tau_z-1} := \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*)).
+\end{align}
+Because we are playing FTL at both time $\tau_z$ and $\tau_z - 1$, it holds that 
+\[L_{\tau_z}(a_{\tau_{z}-1}^*) = L_{\tau_z-1}(a_{\tau_{z}-1}^*) + \ell_{\tau_z}(a_{\tau_{z}-1}^*) \leq L_{\tau_z}(a_{\tau_{z}}^*) + 1.\]
+
+To bound the second term, we will show that 
+\begin{align}
+\sum_{t=\tau_z+1}^{t_{z+1}-1} &\ell_t(a_t) + L_{\tau_z}(a_{\tau_{z-1}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) 
+\nonumber\\
+&\leq \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) + 1 \\ 
+&= \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + \min_a L_{\tau_z}(a)  - \min_a L_{t_{z+1}-1}(a) +1\\ 
+&\leq \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) - \min_a \left(L_{t_{z+1}-1}(a) - L_{\tau_z}(a)\right) + 1 \\
+&= \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) +1. 
+\end{align}
+\end{proof}
+
+We now complete the proof of Theorem 3 by showing that the conditions that determine the switching time between $\ftl$ and $\wcalg$ are appropriately chosen to upper bound $\ftlsum_{t_z:\tau_z-1}$ and $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1})$.
+Firstly, note that for any $z < \zlast$, $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) > g(L_z^*)$, which implies that $L^* > L_z^*$. In particular, the epoch $\zlast-1$ was exited, which implies that\footnote{Here we have implicitly assumed that $L^* > \log m$---if not, then there is only one epoch, $\zlast = 0$ and the result is readily implied by Corollary 2.} 
+\[
+2^{\zlast-1} \log m \le L^* \implies \zlast \le \log\left(\frac{L^*}{\log m}\right) + 1
+\]
+
+By the stopping condition of the epoch, $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) \leq \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-2}) + 1 \leq g(L_z^*) + 1$, such that substituting into~\cref{small_loss_regret_lemma} implies
+\begin{align}
+\Reg(\bob, \ell^n)  \leq \sum_z \left(\ftlsum_{t_z:\tau_z-1} + g(L_z^*) + 2\right).
+\end{align}
+
+% Furthermore if $L^* \leq L_z^*$, then the minimum loss on the sequence $\ell_{\tau_z+1}^{t_z-1}$ must also be bounded above by $L_z^*$, satisfying the small loss condition such that by the small loss bounds $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) \leq g(L_z^*)$, ensuring that the stopping condition of the epoch will not be reached. As a result, $\zlast$ must be the smallest $z$ such that $L^* \leq L_z^*$, $\zlast = \lceil \log(L^*/\log m) \rceil$.
+
+Also, it always holds that $\ftlsum_{t_z:\tau_z-1} \leq g(L_z^*)$ and for $z < \zlast$, $\ftlsum_{t_z:\tau_z} > g(L_z^*)$. Therefore 
+\[\sum_z^{\zlast-1} g(L_z^*) < \sum_z \ftlsum_{t_z:\tau_z-1} \leq \Reg(\ftl, \ell^n)\]
+and $\sum_z \ftlsum_{t_z:\tau_z-1} \leq \sum_z^{\zlast} g(L_z^*)$.
+
+To put it all together, if $\sum_z^{\zlast} g(L_z^*) \leq \Reg(\ftl,\ell^n)$, then 
+\begin{align}
+\Reg(\bob, \ell^n)  \leq 2 \sum_z g(L_z^*) + 2 \zlast.
+\end{align}
+
+If $\Reg(\ftl,\ell^n) < \sum_z^{\zlast} g(L_z^*)$, then it must be that in the last epoch the algorithm never switches to $\wcalg$. If it switched to $\wcalg$ it would imply that $\Reg(\ftl,\ell^n) \geq \sum_z \ftlsum_{t_z:\tau_z} > \sum_z^{\zlast} g(L_z^*)$ which would violate the assumption that $\Reg(\ftl,\ell^n) < \sum_z^{\zlast} g(L_z^*)$. Therefore it must be that
+\begin{align}
+\Reg(\bob, \ell^n)  \leq 2 \Reg(\ftl, \ell^n) + 2 \zlast.
+\end{align}
+
+As a result, it follows that (putting the $L^* \le \log m$ and the $L^* > \log m$ cases together) 
+\begin{align}
+\Reg&(\bob, \ell^n)  \nonumber\\
+&\leq 2 \min\left(\Reg(\ftl, \ell^n), \sum_{z = 0}^{\log\left(1+\frac{L^*}{\log m}\right)+1} g(2^z \log m)\right) + 2 \log\left(1+\frac{L^*}{\log m}\right)+2.
+\end{align}
+
+
+\subsection{Proof of Corollary~\ref{cor:SqrtLStarInstantiation}}
+ This follows from Theorem~\ref{thm:Regret_small_loss} and by calculating 
+    \begin{align}
+        \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)+1} &g(2^z \log m) \nonumber\\
+        &= 2\sqrt{2}\log m \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)+1} 2^{z/2} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right) + \kappa \log m\nonumber\\
+        &\le  \log m \frac{4\sqrt{2}}{\sqrt{2}-1}\sqrt{1+\frac{L^*}{\log m}} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right)+ \kappa \log m \nonumber \\
+        &\le 10 \sqrt{2\log^2 m + 2L^* \log m} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right) + \kappa \log m \nonumber\\
+        &\stackrel{\text{(a)}}{\le} 10 \sqrt{2L^* \log m} + \kappa\log\left(1+\frac{L^*}{\log m}\right)\log m + 10\sqrt{2} \log m + \kappa \log m \nonumber
+    \end{align}
+    where (a) follows since for nonnegative $a,b$ $\sqrt{a+b} \le \sqrt{a}+ \sqrt{b}$.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Theorem~\ref{thm:LowerBdCR}} \label{appendix:ConversePf}
+    Consider a large even $n$. We then have for horizon size $n+1$, $\Reg(\ftl,y^{n+1}) = \frac{c(y^n)}{2}$.  Moreover, $\Reg(\Cover,y^{n+1}) = f_{n+1}$. Let\footnote{Note that $k$ in this definition does not counting the origin as as a line crossing.}
+    \begin{align}\label{eq:PnkDefn}
+        p_{n,k} \defeq \Prob[c(\e^{n}) = k+1].
+    \end{align}
+    We then have,
+    \begin{align}
+     \E[\min\{c(\e^n), 2f_{n+1}\}] &= \sum_{k=1}^n \min\{k, 2f_{n+1}\} \Pr[c(\e^n) = k]\nonumber\\
+        &= \sum_{k=1}^n \min\{k, 2f_{n+1}\} p_{n,k-1} \nonumber\\
+        &= \sum_{k=0}^n \min\{k+1,2f_{n+1}\}p_{n,k} \nonumber\\
+        &= \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} (k+1)p_{n,k} + 2f_{n+1} \Prob[c(\e^n) \ge 2f_{n+1}] \nonumber\\
+        &= \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} (k+1)p_{n,k} + 2f_{n+1} \Prob[c(\e^n) \ge 2f_{n+1}] + \Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor] \nonumber\\
+        &=  \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k} + 2f_{n+1} \left(1-\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}\right) +  \Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor] \label{eq:ConvSplit}
+    \end{align} 
+    Upon dividing~\cref{eq:ConvSplit} by $2f_{n+1}$, we get 
+    \begin{align} \label{eq:ConvThreeTerms}
+      \frac{\E[\min\{c(\e^n), 2f_{n+1}\}]}{2f_{n+1}}  = \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k}}{2f_{n+1}} +  \left(1-\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}\right) +  \frac{\Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor]}{2f_{n+1}}.
+    \end{align}
+    Note that the third term vanishes since $f_{n+1} \to \infty$ and $0 \le \Prob[\cdot] \le 1$. We will now separately evaluate the first two terms in~\cref{eq:ConvThreeTerms}. To do this, we require an auxiliary lemma, the proof of which is provided later.
+    \begin{lemma}\label{lem:pnkasymptotics}
+        If $k \le C\sqrt{n}$ for an absolute constant $C$, then for large enough $n$ ($n \ge 32C^2$ suffices) we have
+        \begin{align}\label{eq:pnkDensityApprox}
+            e^{-\frac{16C^3}{\sqrt{n}}} \le \frac{p_{n,k}}{\sqrt{\frac{2}{n\pi}}e^{-k^2/2n}} \le \sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} e^{\frac{16C^3}{\sqrt{n}}}.
+        \end{align}
+        That is,
+        \[
+        p_{n,k} = \sqrt{\frac{2}{n\pi}}e^{-k^2/2n} (1+o(1)).
+        \]
+    \end{lemma}
+    We now evaluate the first term in~\cref{eq:ConvThreeTerms}. Since $\lfloor 2f_{n+1} \rfloor - 1 \le 2\sqrt{n}$, we invoke~\cref{lem:pnkasymptotics} to evaluate 
+    \begin{align}
+        \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k} &=    (1+o(1))\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k \sqrt{\frac{2}{n\pi}} e^{-\frac{k^2}{2n}} \\
+        &= (1+o(1)) \sqrt{\frac{2}{n\pi}} \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} \label{eq:PartialSum}
+    \end{align}
+    Now, we note that since $x \mapsto xe^{-\frac{x^2}{2n}}$ is increasing on $(0,\lfloor 2f_{n+1} \rfloor-1)$ %because \lfloor 2f_{n+1} \rfloor-1 \le \sqrt{n} 
+    , by a Riemann approximation, we have that 
+    \begin{align} \label{eq:RiemannApprox}
+    \int_{0}^{2f_{n+1}-2} x e^{-\frac{x^2}{2n}} dx - 1 \le\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} \le \int_{0}^{2f_{n+1}} x e^{-\frac{x^2}{2n}} dx 
+    \end{align}
+    and evaluating
+    \begin{align}
+        \int_{0}^{2f_{n+1}} x e^{-\frac{x^2}{2n}} dx &= \frac{1}{2} \int_{0}^{4f_{n+1}^2} e^{-\frac{t}{2n}} dt \nonumber\\
+        &= n\left(1-e^{-\frac{4f_{n+1}^2}{2n}}\right) \nonumber\\
+        &= n\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right).
+    \end{align}
+    Evaluating the lower bound in~\cref{eq:RiemannApprox} analogously we have 
+    \begin{align}\label{eq:ExptZCLowRegime}
+        \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} = (1+o(1)) n\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right)
+    \end{align}
+    and therefore from~\cref{eq:PartialSum}, 
+    \begin{align}
+        \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k p_{n,k}}{2f_{n+1}} &= (1+o(1))\frac{\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right) n \sqrt{\frac{2}{n \pi}}}{\sqrt{\frac{2(n+1)}{\pi}}} \nonumber\\
+      &= (1+o(1))\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right) \label{eq:LittleOPartialSum}
+    \end{align}
+    and therefore, from~\cref{eq:LittleOPartialSum}, we have that 
+    \begin{align}\label{eq:LimFirstTermConverse}
+        \lim_{n \to \infty}  \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k p_{n,k}}{2f_{n+1}}  = 1-e^{-\frac{1}{\pi}}.
+    \end{align}
+    We now address the second term in~\cref{eq:ConvThreeTerms} by invoking~\cref{lem:pnkasymptotics} and noting that 
+    \begin{align}
+       \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k} &= (1+o(1)) \sqrt{\frac{2}{n \pi}}\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} e^{-\frac{k^2}{2n}} \nonumber\\
+       &\stackrel{(a)}{=} (1+o(1)) \int_{0}^{2f_{n+1}} e^{-\frac{x^2}{2n}} dx \nonumber\\
+       &= (1+o(1)) \sqrt{\frac{2}{\pi}} \int_{0}^{\sqrt{\frac{2}{\pi}}} e^{-\frac{t^2}{2}} dt \nonumber\\
+       &= \frac{1}{\sqrt{2\pi}} \int_{-\sqrt{\frac{2}{\pi}}}^{\sqrt{\frac{2}{\pi}}} e^{-\frac{t^2}{2}} dt \nonumber \\
+        &= \Prob\left(-\sqrt{\frac{2}{\pi}} \le X \le \sqrt{\frac{2}{\pi}}\right) \label{eq:StandardNormalConfInt}
+    \end{align}
+    where in~\cref{eq:StandardNormalConfInt} $X \sim \mathcal{N}(0,1)$. Then, 
+    \begin{align}
+        1- \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}  &\to 1-\Prob\left(-\sqrt{\frac{2}{\pi}} \le X \le \sqrt{\frac{2}{\pi}}\right) \nonumber\\
+        &= 2Q\left(\sqrt{\frac{2}{\pi}}\right) \label{eq:LimSecTermConverse}. 
+    \end{align}
+    Substituting~\cref{eq:LimFirstTermConverse} and~\cref{eq:LimSecTermConverse} in~\cref{eq:ConvThreeTerms} yields that 
+    \begin{align}
+     \frac{1}{\g_n} = \frac{\E[\min\{c(\e^n), 2f_{n+1}\}]}{2f_{n+1}} \to 1-e^{-\frac{1}{\pi}} + 2Q\left(\sqrt{\frac{2}{\pi}}\right)
+    \end{align}
+    and therefore 
+    \begin{align}\label{eq:finalGammaLimit}
+        \g_n \to \frac{1}{1-e^{-\frac{1}{\pi}} + 2Q\left(\sqrt{\frac{2}{\pi}}\right)}. 
+    \end{align}
+
+
+\subsection{Proof of Lemma \ref{lem:pnkasymptotics}}
+    We first note the following. 
+    \begin{proposition}[\cite{Feller1991}, Chapter 3, Exercise 11]\label{prop:pnkexact}
+        \[
+        p_{n,k} = \frac{1}{2^{n-k}} \binom{n-k}{n/2}.
+        \]
+    \end{proposition}
+    Therefore, 
+    \[
+    \frac{p_{n,k}2^n}{2^k} = \binom{n-k}{n/2} = \frac{(n-k)!}{\frac{n}{2}!\left(\frac{n}{2}-k\right)!}.
+    \]
+    We now use the Stirling approximation:
+    \begin{align}\label{eq:stirling}
+        \sqrt{2\pi m} \left(\frac{m}{e}\right)^m e^{\frac{1}{12m+1}} \le m! \le     \sqrt{2\pi m} \left(\frac{m}{e}\right)^m e^{\frac{1}{12m}}.
+    \end{align}
+    Using~\cref{eq:stirling} we have 
+    \begin{align}
+         \frac{p_{n,k}2^n}{2^k} &\le \frac{\sqrt{2\pi(n-k)}}{\sqrt{2\pi(n/2)} \sqrt{2\pi(n/2-k)}} \cdot \frac{(n-k)^{n-k}}{(n/2)^{n/2} (n/2-k)^{n/2-k}} \nonumber\\
+         &\qquad\qquad\qquad\qquad\qquad\qquad\cdot \exp{\left(\frac{1}{12(n-k)}-\frac{1}{6n+1}-\frac{1}{6n-12k+1}\right)} \nonumber\\
+         &= \sqrt{\frac{2}{n\pi}} \sqrt{\frac{n-k}{n-2k}} \frac{(n-k)^{n-k}2^{n-k}}{n^{n/2}(n-2k)^{n/2-k}}\cdot\exp{\left(\frac{1}{12n-k}\right)} \nonumber\\
+         &\stackrel{(a)}{\le} \sqrt{\frac{2}{n\pi}} \cdot 2^{n-k} \cdot\frac{(n-k)^{n-k}}{n^{n/2}(n-2k)^{n/2-k}} \exp\left(\frac{1}{12n-k}\right) \cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+         &=  \sqrt{\frac{2}{n\pi}} \cdot 2^{n-k} \underbrace{\frac{(1-k/n)^{n-k}}{(1-2k/n)^{n/2-k}}}_{=: T}\exp\left(\frac{1}{12n-k}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}}.  \label{eq:SubstituteT}
+    \end{align}
+    We now analyze the term $T$ in~\cref{eq:SubstituteT} in more detail. 
+    \begin{proposition}\label{prop:TaylorSeriesT}
+    \begin{align} \label{eq:LnTBds}
+            -\frac{k^2}{2n^2} - c\frac{k^3}{n^2} \le \ln T \le  -\frac{k^2}{2n^2} + c\frac{k^3}{n^2}
+    \end{align}
+    where $c \le 15$. 
+    \end{proposition}
+    \begin{proof}
+        By Taylor theorem, we have 
+        \begin{align}\label{eq:lnXBds}
+            \ln(1-x) = -x - \frac{x^2}{2} - \frac{x^3}{3(1-\mu)^2} \text{ for } \mu \in (0,x).
+        \end{align}
+        Therefore, for $k \le C\sqrt{n}$ and $n \ge 16C^2$ we have 
+        \begin{align}
+            \ln\left(1-\frac{k}{n}\right) &= -\frac{k}{n} - \frac{k^2}{2n^2} - \frac{\alpha_1k^3}{n^3} \label{eq:OneTermT}\\
+            \ln\left(1-\frac{2k}{n}\right) &= -\frac{2k}{n} - \frac{2k^2}{2n^2} - \frac{\alpha_2k^3}{n^3} \label{eq:SecondTermT}
+        \end{align}
+        for $\alpha_1,\alpha_2 \in \Big(\frac{1}{3},\frac{8}{3}\Big]$. Evaluating $\ln T$ we have 
+        \begin{align}
+            \ln T &= (n-k)\ln\left(1-\frac{k}{n}\right) - \left(n-\frac{k}{2}\right)\ln\left(1-\frac{2k}{n}\right)  \nonumber\\
+            &\stackrel{(a)}{=} (n-k)\left(-\frac{k}{n} - \frac{k^2}{2n^2} - \frac{\alpha_1k^3}{n^3}\right) - \left(n-\frac{k}{2}\right)\left(-\frac{2k}{n} - \frac{2k^2}{2n^2} - \frac{\alpha_2k^3}{n^3}\right) \nonumber\\
+            &= \left(-\frac{k^2}{2n}+\frac{k^2}{n}+\frac{k^2}{n}-\frac{2k^2}{n}\right)+\left(-\alpha_1+\frac{1}{2}+\frac{\alpha_2}{2}-2\right)\frac{k^3}{n^2}+\left(\alpha_1-\alpha_2\right)\frac{k^4}{n^3} \nonumber\\
+            &= -\frac{k^2}{2n^2} + c_1\frac{k^3}{n^2} + c_2\frac{k^4}{n^3} \label{eq:subc1c2}
+        \end{align}
+        where $(a)$ follows by substituting~\cref{eq:OneTermT} and~\cref{eq:SecondTermT}. Now, since $\frac{k^4}{n^3} \le \frac{k^3}{n^2}$ we have 
+        \begin{align}
+         \ln T  \le  -\frac{k^2}{2n^2} +  (|c_1|+|c_2|)\frac{k^3}{n^2}
+        \end{align}
+        and on the other hand for the same reason 
+        \begin{align}
+            \ln T \ge -\frac{k^2}{2n} - (|c_1|+|c_2|)\frac{k^3}{n^2}
+        \end{align}
+        The proposition follows by noticing $|c_1|+|c_2| \le 15$ by using that $\alpha_1, \alpha_2 \in \left(\frac{1}{3},\frac{8}{3}\right]$.
+    \end{proof}
+Using~\cref{prop:TaylorSeriesT} in~\cref{eq:SubstituteT} we have the upper bound 
+\begin{align}
+    p_{n,k} &\le \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}+\frac{15k^3}{n^2}\right)\cdot \exp\left(\frac{1}{12n-k}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+    &\stackrel{(a)}{\le} \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}\right)\cdot \exp\left(\frac{16k^3}{n^2}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+    &\stackrel{(b)}{\le}  \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}\right)\cdot \exp\left(\frac{16C^3}{\sqrt{n}}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \label{eq:pnkAsympUB}
+\end{align}
+where $(a)$ uses $\frac{1}{12n-k}+\frac{15k^3}{n^2} \le \frac{16k^3}{n^2}$, and $(b)$ uses the fact that $k \le C\sqrt{n}$, which yields the upper bound in~\cref{eq:pnkDensityApprox}. The lower bound follows analogously by the Stirling approximation~\cref{eq:stirling} and~\cref{prop:TaylorSeriesT}.
+
+
+% \section{Related work}
+% In this section, we cover related work more extensively. Apart from the stated papers on smoothness and corruptions, there are several papers that consider best-of-both-worlds guarantees for partial information settings like bandits~\cite{agarwal2017corralling} and reinforcement learning~\cite{Dann-Wei--Zimmert2023}. 
+
+% A line of work~\cite{Koolen--VanErven--Grunwald2014LLR, VanErven--Grunwald--Mehta--Reid--Williamson2015FastRates, VanErven--Koolen2016Metagrad} investigates the problem of designing online learning algorithms that can adapt to different types of data sequences and achieve multiple performance guarantees simultaneously. The main idea is to use multiple learning rates that are weighted according to their empirical performance on the data, as was done in $\mathsf{FlipFlop}$ in~\cite{de2014follow}. The paper~\cite{VanErven--Koolen2016Metagrad} introduces $\mathsf{Metagrad}$, a generalization of $\mathsf{AdaHedge}$ that simultaneously considers matching the performance guarantee attained by multiple learning rates for the exponential weights algorithm simultaneously. The work~\cite{VanErven--Grunwald--Mehta--Reid--Williamson2015FastRates} bridges the gap between stochastic and worst-case by quantifying ``simpler" sequences to predict via the Bernstein condition, which implies fast learning rates in statistical learning. 
+
+% {\bf Comparision with $\mathsf{FlipFlop}$.} While $\mathsf{FlipFlop}$ and $\bob$ achieve similar guarantees, the approaches taken by both seem to be different. $\mathsf{FlipFlop}$ relies on keeping track of the \emph{mix loss}, which is essentially $\frac{1}{\eta} \log \left(\frac{\sum_{j \in [m]}\exp(-\eta L_{tj})}{\sum_{j \in [m]}\exp(-\eta L_{t-1,j})}\right)$ where $L_{tj} \defeq \sum_{i=1}^t \ell_{tj}$. The learning rate $\eta$ is then carefully tuned dynamically depending on the cumulative mix loss. We see our two results as complementary. While $\mathsf{FlipFlop}$ dynamically tunes the learning rate in Hedge, our method is adaptable to any worst-case algorithm that can be used off-the-shelf. In light of advanced versions of $\mathsf{FlipFlop}$ and $\mathsf{AdaHedge}$ such as $\mathsf{MetaGrad}$ which can adapt to multiple learning rates, the natural question which we take for future work is whether the idea behind $\bob$ can be extended to achieve a ``best of many worlds" guarantee.
+
+

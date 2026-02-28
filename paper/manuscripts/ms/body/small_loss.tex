@@ -1,0 +1,640 @@
+%\section{Extensions} \label{sec:extensions}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% In this section, we discuss extensions to the (meta)algorithms discussed in the previous sections. 
+\section{Instance-Optimal Algorithms in Small-Loss Settings} \label{sec:SmallLoss}
+%\label{eq:unknownSmallLoss}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% In~\cref{subsubsec:FTLSmallLoss}, we instantiated~\cref{alg:bob} to achieve the smaller of the FTL regret, and the regret achieved on that sequence by a small-loss algorithm. However,~\cref{alg:bob} uses the value of the loss of the best expert $L^*$ in order to set the threshold to switch from FTL. In many cases, this might be an unreasonable assumption. In this section, we remove this assumption via the so-called doubling trick and provide an algorithm that to essentially recover a variant of the guarantees in~\cref{subsubsec:FTLSmallLoss} (albeit at the cost of a larger competitive ratio). 
+% So far, we have achieved regret guarantees that match the better of the FTL regret and a worst-case \emph{upper bound} on the regret achieved by $\wcalg$ (as opposed to $\Reg(\wcalg, \ell^n)$). However, if $\wcalg$ is designed to be able to achieve low regret for benign sequences $\ell^n$, then it is desirable to match, if not exactly $\Reg(\wcalg, \ell^n)$, some upper bound that depends on $\ell^n$. We devise an algorithm that uses $\bob$ as a subroutine and achieves such a result.
+
+% \cycomment{missing connecting narrative here}
+
+So far, we have presented specializations of $\bob$ that achieve instance-optimality between $\ftl$ and the \emph{worst-case} regret $g(n)$. However, many worst-case algorithms can still adapt to the instance $\ell^n$ and achieve regret guarantees that are a function of the ``difficulty" of the instance $\ell^n$~\citep{Cesa-Bianchi--Lugosi2006, de2014follow, koolen2015second, luo2015achieving, orabona2018scale}. A common way to quantify this is difficulty is via \emph{small-loss bounds}, where the regret is upper bounded by $g(L^*)$ where $g(\cdot)$ as earlier is a monotonic increasing function and $L^* \defeq \min_{a \in \Ac} \sum_{t=1}^n \ell_{t}(a)$ is the loss achieved by the best action. Thus, a natural question is whether $\bob$ can be specialized to yield an algorithm that is constant competitive with respect to $\min\{\Reg(\ftl, \ell^n), g(L^*)\}$.  
+
+\bluet{In this section, we address this problem for the special online learning setting of \emph{prediction with expert advice}. In this case, there are $m$ ``experts", each of which chooses an action to take at each time step. The objective of the decision-maker is to aggregate these potentially-different actions in a way so as to achieve total loss approaching the loss of the best fixed expert in hindsight at the end of the time horizon, without knowing the identity of this expert which will be optimal in the future. In this setting, known strategies (such as variants of the exponential weights algorithm) are known to achieve regret that scales with $L^*$ (typically $O(\sqrt{L^*\log m}$ \citep[Chapter 2]{Cesa-Bianchi--Lugosi2006}). We now turn our attention to the question of how to use such adaptive algorithms with sequence-dependent guarantees in place of $\wcalg$ in SMART.
+}
+
+As a starting point, if $L^*$ is known apriori, it is easy to achieve a $\frac{e}{e-1}$ approximation by simply using $\bob$ with (random) threshold $\theta = g(L^*)\ln(1+(e-1)U), U \sim \mathrm{Unif}[0,1]$. When $L^*$ is not known, we use a guess-and-double argument to devise an algorithm that achieves the following instance-optimality guarantee. The intuitive idea behind the algorithm is to guess the value of $L^*$, and play $\bob$ with this guessed value while simultaneously keeping track of the regret incurred. Whenever the regret incurred exceeds the guarantee established by $\bob$ with known $L^*$ double the guessed value and start again. We use the notation $\wcalg(\ell_{t_1}^{t_2})$ to refer to the worst-case algorithm when the previously observed sequence is $\ell_{t_1}^{t_2}$; in particular this would be equivalent to the action recommended at time $t_2 + 1$ after throwing away all the observed losses before $t_1$. 
+We let $\ftlsum_{t_1:t_2} = 
+\sum_{i=t_1}^{t_2} (L_i(a^*_{i-1}) - L_i(a^*_i))$, which grows as the number of leader changes within $i \in [t_1, t_2]$. The algorithm's pseudocode is given below.
+
+% \begin{tcolorbox}[size=title]
+% %\label{alg:SmallLossBob}
+% %\label{metaalg:UnknownSmallLoss}
+% \begin{center}
+% {\textbf{Algorithm 2:} $\bob$ for Small-Loss}
+% \end{center}
+% \textbf{Input:} Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$
+
+% \textbf{For} $z = 0, 1, \dotsc$ (epochs) \textbf{do}
+
+% {\color{white}.}\; Define $t = t_z\defeq$start time of $z^{th}$ epoch
+
+% {\color{white}.}\; Set $L^*_z \defeq 2^z \log m$ (current guess for $L^*$), $\ftlsum_{t_z:t_z-1}=0$ 
+
+% {\color{white}.}\; \textbf{While:} $\ftlsum_{t_z:t-1} \le g(L^*_z)$
+
+% {\color{white}.}\quad\; Set $a_t = a_{t-1}^{*}$; observe $\ell_t(\cdot)$
+%              \hfill\texttt{Play $\ftl$}
+
+% {\color{white}.}\quad\; Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$, $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$
+
+% {\color{white}.}\; \textbf{end}
+
+% {\color{white}.}\; Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$
+
+% {\color{white}.}\; \textbf{While:} $\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$
+    
+% {\color{white}.}\quad\; Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$\hfill \texttt{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+
+% {\color{white}.}\quad\; Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$
+
+% {\color{white}.}\; \textbf{end}
+
+% \textbf{end}
+% \end{tcolorbox}
+
+\begin{algorithm}[!ht]
+\SetAlgoNoLine
+\caption{$\bob$ for Small-Loss}
+\label{metaalg:UnknownSmallLoss}
+\KwIn{Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$} 
+%\textbf{Initialize} $\ftlsum_0=0$, $t=1$ \;
+\For{$z = 0, 1, \dotsc$ (epochs)}
+{
+    Let $t = t_z\defeq$start time of $z^{th}$ epoch\;
+    $L^*_z \defeq 2^z \log m$ (current guess for $L^*$)\;
+    $\ftlsum_{t_z:t_z-1}=0$ \;
+    %Disregard past losses $\ell^{t_z-1}$\;
+    %Play $\bob$ (\cref{metaalg:2approx}) with threshold $\theta = g_m(L^*_z)$ and $\wcalg$\;
+    \While{$\ftlsum_{t_z:t-1} \le g(L^*_z)$}
+    {
+        Set $a_t = a_{t-1}^{*}$%
+             \tcp*{Play $\ftl$}
+        Observe $\ell_t(\cdot)$\; 
+        Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+    }
+
+    Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$\;
+    \tcp{Check if loss incurred by $\wcalg$ in this epoch violates the upper bound from $L_z^*$ is correct}
+    \While{$\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$}
+    {
+        Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$ \tcp*{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+        Observe $\ell_t(\cdot)$\; 
+        Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+    }    
+    
+%     \uIf{$|\mathcal N| = 0$}{
+%         Let $i^* = \varnothing$%
+%         \tcp*{No winner}
+%     }\Else{
+%         Let $i^* \in \min_{i \in \mathcal N}\frac{A_i[t-1] + 1}{\a_i}$%
+%         \tcp*{Agent with minimum normalized allocation}
+
+%         Allocate item to agent $i^*$ for round $t$\;
+%     }
+    
+%     Let $A_i[t] = A_i[t-1] + \One{i = i^*} \quad \forall \, i\in [n]$%
+%     \tcp*{Calculate agents' total allocations}
+}
+\end{algorithm}
+
+
+\begin{theorem}[Regret of $\bob$ for unknown small loss]  
+\label{thm:Regret_small_loss}
+      Let $\wcalg$ have small loss regret guarantees satisfying $\Reg(\wcalg, \ell^n) \le g(L^*)$ 
+    for any $\ell^n$ where \bluet{$L^* = \min_{j \in [m]} \sum_{t=1}^n \ell_{tj}$}, i.e. the loss achieved by the best expert in hindsight. Then, if we play $\bob$ for Small-Loss as stated in~Algorithm $2$, we have 
+    \begin{align*}
+    \Reg(\bob, \ell^n) 
+    &\leq 2 \min\big(\Reg(\ftl, \ell^n), \textstyle\sum_{z=1}^{\log(1+L^*/\log m) +1} g(2^z \log m)\big) + O(\log L^*/\log m)%+ 2 \log(1+L^*/\log m) +2 .
+    \end{align*}
+\end{theorem}
+In the experts setting, we know that Hedge which sets the time-varying learning rate to be
+\begin{align}\label{eq:AnytimeSmallLossHedgeLR}
+\eta_t = \sqrt{\frac{\ln m}{\min_{j \in [m]}\sum_{i=1}^{t-1}\ell_{ij}}}
+\end{align}
+achieves regret $\le g(L^*) \equiv 2\sqrt{2 L^* \log m} + \kappa \log m$ (where $\kappa > 0$ is an absolute constant)~\citep{Auer--Cesa-Bianchi--Gentile2002, cesa2007improved}. By choosing $\wcalg$ to be Hedge with the learning rate~\eqref{eq:AnytimeSmallLossHedgeLR} with $g(L^*) \equiv 2\sqrt{2 L^* \log m} + \kappa \log m$ and applying Theorem~\ref{thm:Regret_small_loss}, we get the following concrete small loss bound.
+\begin{corollary}
+\label{cor:SqrtLStarInstantiation}
+    Let $L^* \defeq \min_j \sum_{t=1}^n \ell_{tj}$. An instantiation of $\bob$ achieves
+    \begin{align*}
+    %\label{eq:BOBWSqrtLstarRegDoubling}
+        % \Reg(\pstar, \ell^n) &\le 2 \min\left\{\Reg(\ftl, \ell^n), 8 \sqrt{2L^* \log m} + \kappa\log\left(1+\frac{L^*}{\log m}\right)\log m + 8\sqrt{2}\log m \right\} \nonumber\\
+        % &\qquad\qquad\qquad\qquad\qquad+ 2 \log\left(1+ \frac{L^*}{\log m}\right)
+        \Reg(\bob, \ell^n) 
+        &\le 2 \min\left\{ \Reg(\ftl,\ell^n), 10 \sqrt{2L^* \log m} \right\}
+        + O(\log L^* \log m). 
+    \end{align*}
+\end{corollary}
+
+\proof{\bf Proof of~\cref{cor:SqrtLStarInstantiation}.}
+From Theorem~\ref{thm:Regret_small_loss} and the known loss bounds of Hedge it follows that
+    \begin{align}
+        \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)+1} g(2^z \log m) 
+        &= 2\sqrt{2}\log m \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)+1} 2^{z/2} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right) + \kappa \log m\nonumber\\
+        &\le  \log m \frac{4\sqrt{2}}{\sqrt{2}-1}\sqrt{1+\frac{L^*}{\log m}} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right)+ \kappa \log m \nonumber \\
+        &\le 10 \sqrt{2\log^2 m + 2L^* \log m} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right) + \kappa \log m \nonumber\\
+        &\stackrel{\text{(a)}}{\le} 10 \sqrt{2L^* \log m} + \kappa\log\left(1+\frac{L^*}{\log m}\right)\log m + 10\sqrt{2} \log m + \kappa \log m \nonumber
+    \end{align}
+    where (a) follows since for nonnegative $a,b$ $\sqrt{a+b} \le \sqrt{a}+ \sqrt{b}$.
+\hfill \Halmos
+\endproof
+
+
+
+\bluet{Our small-loss bounds are comparable to existing results in the literature while maintaining the desired instance-optimal flavor. The bound in Corollary~\ref{cor:SqrtLStarInstantiation} gracefully interpolates between $O(1)$ regret when $\ftl$ performs well and $O\left(\sqrt{L^*\log m}\right)$ when the instance difficulty $L^*$ is the limiting factor; thereby in the latter case matching the scaling of small-loss Hedge and other related algorithms, though with different constants. While we lose the careful $e/(e-1)$ competitive ratio control from our main result (due to the guess-and-double approach across epochs), we retain the fundamental property that SMART adapts to the easier of $\ftl$ or the small-loss regime. This represents a natural extension of our instance-optimality framework to settings where the algorithm can exploit not just $\ftl$'s good performance, but also the intrinsic difficulty of the sequence as measured by $L^*$.}
+
+
+
+\begin{remark}
+    We note that the small-loss $\bob$ algorithm, and Corollary~\ref{cor:SqrtLStarInstantiation} automatically provides a way to implement $\bob$ when the time horizon $n$ is unknown---indeed, since $L^* \le n$ by virtue of the loss being bounded, small-loss $\bob$ is constant competitive with respect to $\min\{\Reg(\ftl,\ell_1^n) ,\sqrt{n\log m}\}$. 
+\end{remark}
+
+% \begin{corollary}\label{cor:SqrtLStarInstantiation}
+%     If $g(L^*) \equiv 2\sqrt{2 L^* \log m} + \kappa \log m$ for a positive absolute constant $\kappa$, then 
+%     \begin{align*}
+%     %\label{eq:BOBWSqrtLstarRegDoubling}
+%         % \Reg(\pstar, \ell^n) &\le 2 \min\left\{\Reg(\ftl, \ell^n), 8 \sqrt{2L^* \log m} + \kappa\log\left(1+\frac{L^*}{\log m}\right)\log m + 8\sqrt{2}\log m \right\} \nonumber\\
+%         % &\qquad\qquad\qquad\qquad\qquad+ 2 \log\left(1+ \frac{L^*}{\log m}\right)
+%         \Reg(\bob, \ell^n) 
+%         &\le 2 \min\left\{ \Reg(\ftl,\ell^n), 10 \sqrt{2L^* \log m} \right\} + O(\log L^* \log m).
+%     \end{align*}
+% \end{corollary}
+
+% \cycomment{Somewhere in this section we should do a detailed discussion of FlipFlop and explain the relationship of their bound with ours and instance optimal guarantees}
+
+%recall the example of small-loss algorithms for prediction with expert advice, which achieve regret $O(\sqrt{L^*\log m})$ if 
+
+
+% \begin{algorithm}[!ht]
+% \SetAlgoNoLine
+% \caption{Switching via Monotone Adapted Regret Traces (SMART)}
+% \label{metaalg:2approx}
+% \KwIn{Policies $\ftl, \wcalg$, threshold $\theta$} 
+% \textbf{Initialize} $\ftlsum_0=0$, $t=1$ \;
+% \While{$\ftlsum_{t-1} \le \theta$}
+% {
+%     Set $a_t = a_{t-1}^{*}$%
+%          \tcp*{Play $\ftl$}
+%     Observe $\ell_t(\cdot)$\; 
+%     Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ and $\ftlsum_t=\ftlsum_{t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$\;
+% }
+% Reset losses to $0$ and play $\wcalg$ for remaining rounds\;
+% \end{algorithm}
+
+% The intuitive idea behind the algorithm is to guess the value of $L^*$, and play $\bob$ with this guessed value while simultaneously keeping track of the regret incurred. Whenever the regret incurred exceeds the guarantee established by $\bob$ with known $L^*$ double the guessed value and start again. We use the notation $\wcalg(\ell_{t_1}^{t_2})$ to refer to the worst-case algorithm when the previously observed sequence is $\ell_{t_1}^{t_2}$; in particular this would be equivalent to the action recommended at time $t_2 + 1$ after throwing away all the observed losses before $t_1$. 
+% We let $\ftlsum_{t_1:t_2} = 
+% \sum_{i=t_1}^{t_2} (L_i(a^*_{i-1}) - L_i(a^*_i))$, which grows as the number of leader changes within $i \in [t_1, t_2]$. The algorithm's pseudocode is given in~\cref{appendix:SmallLossSmartPesudocode}.
+%below. 
+
+
+% \begin{tcolorbox}[size=title]
+% %\label{alg:SmallLossBob}
+% %\label{metaalg:UnknownSmallLoss}
+% \begin{center}
+% {\textbf{Algorithm 2:} $\bob$ for Small-Loss}
+% \end{center}
+% \textbf{Input:} Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$
+
+% \textbf{For} $z = 0, 1, \dotsc$ (epochs) \textbf{do}
+
+% {\color{white}.}\; Define $t = t_z\defeq$start time of $z^{th}$ epoch
+
+% {\color{white}.}\; Set $L^*_z \defeq 2^z \log m$ (current guess for $L^*$), $\ftlsum_{t_z:t_z-1}=0$ 
+
+% {\color{white}.}\; \textbf{While:} $\ftlsum_{t_z:t-1} \le g(L^*_z)$
+
+% {\color{white}.}\quad\; Set $a_t = a_{t-1}^{*}$; observe $\ell_t(\cdot)$
+%              \hfill\texttt{Play $\ftl$}
+
+% {\color{white}.}\quad\; Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$, $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$
+
+% {\color{white}.}\; \textbf{end}
+
+% {\color{white}.}\; Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$
+
+% {\color{white}.}\; \textbf{While:} $\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$
+    
+% {\color{white}.}\quad\; Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$\hfill \texttt{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+
+% {\color{white}.}\quad\; Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$
+
+% {\color{white}.}\; \textbf{end}
+
+% \textbf{end}
+% \end{tcolorbox}
+
+
+% \begin{algorithm}[!ht] \label{alg:SmallLossBob}
+% \SetAlgoNoLine
+% \caption{$\bob$ for Small-Loss}
+% \label{metaalg:UnknownSmallLoss}
+% \KwIn{Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$} 
+% %\textbf{Initialize} $\ftlsum_0=0$, $t=1$ \;
+% \For{$z = 0, 1, \dotsc$ (epochs)}
+% {
+%     Let $t = t_z\defeq$start time of $z^{th}$ epoch, $L^*_z \defeq 2^z \log m$ (current guess for $L^*$), $\ftlsum_{t_z:t_z-1}=0$ \;
+%     %Disregard past losses $\ell^{t_z-1}$\;
+%     %Play $\bob$ (\cref{metaalg:2approx}) with threshold $\theta = g_m(L^*_z)$ and $\wcalg$\;
+
+%     \While{$\ftlsum_{t_z:t-1} \le g(L^*_z)$}
+%     {
+%         Set $a_t = a_{t-1}^{*}$%
+%              \tcp*{Play $\ftl$}
+%         Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+%     }
+
+%     Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$\;
+%     \tcp{Check if regret of $\wcalg$ in this epoch violates the small loss bound $g(L_z^*)$}
+%     \While{$\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$}
+%     {
+%         Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$ \tcp*{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+%         Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$% and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+%     }    
+    
+% %     \uIf{$|\mathcal N| = 0$}{
+% %         Let $i^* = \varnothing$%
+% %         \tcp*{No winner}
+% %     }\Else{
+% %         Let $i^* \in \min_{i \in \mathcal N}\frac{A_i[t-1] + 1}{\a_i}$%
+% %         \tcp*{Agent with minimum normalized allocation}
+
+% %         Allocate item to agent $i^*$ for round $t$\;
+% %     }
+    
+% %     Let $A_i[t] = A_i[t-1] + \One{i = i^*} \quad \forall \, i\in [n]$%
+% %     \tcp*{Calculate agents' total allocations}
+% }
+% \end{algorithm}
+
+% \begin{metaalg}[$g(L^*), \wcalg$] \label{metaalg:UnknownSmallLoss}
+% \end{metaalg}
+% \noindent\fbox{%
+%     \parbox{\textwidth}{%
+%        For $z = 0, 1, \dotsc, \infty$ (epochs) 
+%         \begin{itemize}
+%            \item $t_z \defeq $ The time step of the start of the $z-$th epoch 
+%            \item $L^*_z \defeq 2^z \log m$ (guess the value of $L^*$)
+%            \item Disregard $\ell^{t_z-1}$ (losses observed so far) and play~\cref{metaalg:2approx} with threshold $g_m(L^*_z)$  and $\wcalg$
+%             \item At each time step, keep track of: 
+%             \begin{itemize}
+%                 \item $\sum_{t=t_z}^t \langle \abob_t, \ell_t \rangle$ (loss incurred in this epoch) 
+%                 \item $L_z^* + 2\min\{\ftlsum_{t_z:t}, g(L_z^*)\} + 1$ (provable upper bound on loss from~\cref{cor:BOBWKnownLStar} if $L_z^*$ is correct)
+%             \end{itemize}
+%             \item When 
+%             \[
+%             L_z^* + 2\min\{\ftlsum_{t_z:t}, g(L_z^*)\} + 1 < \sum_{t=t_z}^t \langle \abob_t, \ell_t \rangle
+%             \]
+%             start new epoch. 
+%         \end{itemize}
+%     }%
+% }
+
+
+\subsection{Proof of Theorem~\ref{thm:Regret_small_loss}}
+Recall Algorithm 2, where $\wcalg(\ell_{t_1}^{t_2})$ refers to the worst-case algorithm when the previously observed sequence is $\ell_{t_1}^{t_2}$; in particular this would be equivalent to the action recommended at time $t_2 + 1$ after throwing away all the observed losses before $t_1$. 
+We let $\ftlsum_{t_1:t_2} = 
+\sum_{i=t_1}^{t_2} (L_i(a^*_{i-1}) - L_i(a^*_i))$, which grows as the number of leader changes within $i \in [t_1, t_2]$.
+% \abdelete{\begin{algorithm}[!ht]
+% \SetAlgoNoLine
+% \caption{$\bob$ for Small-Loss with unknown $L^*$}
+% \label{metaalg:UnknownSmallLoss}
+% \KwIn{Policies $\ftl, \wcalg$; Small-loss bound $g(\cdot)$} 
+% %\textbf{Initialize} $\ftlsum_0=0$, $t=1$ \;
+% \For{$z = 0, 1, \dotsc$ (epochs)}
+% {
+%     Let $t = t_z\defeq$start time of $z^{th}$ epoch, $L^*_z \defeq 2^z \log m$ (current guess for $L^*$), $\ftlsum_{t_z:t_z-1}=0$ \;
+%     %Disregard past losses $\ell^{t_z-1}$\;
+%     %Play $\bob$ (\cref{metaalg:2approx}) with threshold $\theta = g_m(L^*_z)$ and $\wcalg$\;
+
+%     \While{$\ftlsum_{t_z:t-1} \le g(L^*_z)$}
+%     {
+%         Set $a_t = a_{t-1}^{*}$%
+%              \tcp*{Play $\ftl$}
+%         Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+%     }
+
+%     Let $\tau_z := \min_{t \geq t_z} \ftlsum_{t_z:t} > g(L^*_z)$ and $t = \tau_z + 1$\;
+%     \tcp{Check if regret of $\wcalg$ in this epoch violates the small loss bound $g(L_z^*)$}
+%     \While{$\Reg(\wcalg, \ell_{\tau_z+1}^{t-1}) \leq g(L_z^*)$}
+%     {
+%         Set $a_t = \wcalg(\ell_{\tau_z+1}^{t-1})$ \tcp*{Play $\wcalg$ forgetting losses before $\tau_z+1$}
+%         Observe $\ell_t(\cdot)$\; 
+%         Update $L_t(\cdot)=L_{t-1}(\cdot)+\ell_t(\cdot)$ % and $\ftlsum_{t_z:t}=\ftlsum_{t_z:t-1}+(L_t(a_{t-1}^{*})-L_t(a_{t}^{*}))$ and $t = t+1$\;
+%     }    
+    
+% %     \uIf{$|\mathcal N| = 0$}{
+% %         Let $i^* = \varnothing$%
+% %         \tcp*{No winner}
+% %     }\Else{
+% %         Let $i^* \in \min_{i \in \mathcal N}\frac{A_i[t-1] + 1}{\a_i}$%
+% %         \tcp*{Agent with minimum normalized allocation}
+
+% %         Allocate item to agent $i^*$ for round $t$\;
+% %     }
+    
+% %     Let $A_i[t] = A_i[t-1] + \One{i = i^*} \quad \forall \, i\in [n]$%
+% %     \tcp*{Calculate agents' total allocations}
+% }
+% \end{algorithm}}
+
+We first have the following decomposition of the regret for any algorithm $\alg$ that plays the sequence of actions $a^{\alg}_t$ at time $t$.
+\begin{lemma} \label{regret_decomp}
+The regret incurred by any sequence of actions $(a^\alg_t)_{t\in[n+1]}$ can be written as
+\begin{align}
+\Reg(\alg, \ell^n)
+&= \sum_{t=1}^{n} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right),
+\end{align}
+where we let $a_{n+1}^{\alg} := a_n^*$.
+\end{lemma}
+
+\proof{\bf Proof of~\cref{regret_decomp}.}
+\begin{align}
+L_n(\alg)
+&= \sum_{t=1}^n \ell_t(a^{\alg}_t) \\
+&= \sum_{t=1}^n \left(L_t(a^{\alg}_t) - L_{t-1}(a^{\alg}_t) \right) \\
+&= L_n(a^{\alg}_n) + \sum_{t=1}^{n-1} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right) - L_0(a^{\alg}_1).
+\end{align}
+% In general it is also true that 
+% \[\sum_{t=1}^n \ell_t(a^{\pi}_t) 
+% = L_{t_2}(a^{\pi}_{t-2}) + \sum_{t=t_1}^{t_2-1} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right) - L_{t_1 - 1}(a^{\pi}_{t_1}). \]
+This implies a regret decomposition of
+\begin{align}
+\Reg(\alg, \ell^n)
+&= L_n(\alg) - L_n(a_n^*) \\
+&= L_n(a^{\alg}_n) - L_n(a_n^*) + \sum_{t=1}^{n-1} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right) - L_0(a^{\alg}_1)
+\end{align}
+As $L_0(a^{\alg}_1) = 0$, and $a_{n+1}^{\alg} := a_n^*$, it follows that 
+\begin{align}
+\Reg(\alg, \ell^n)
+&= \sum_{t=1}^{n} \left(L_t(a^{\alg}_t) - L_{t}(a^{\alg}_{t+1}) \right).
+\end{align}
+\hfill \Halmos
+\endproof
+
+Next, we use this decomposition to establish the regret of any algorithm $\alg$ that alternates between playing $\ftl$ and another algorithm $\wcalg$.
+
+\begin{lemma} \label{small_loss_regret_lemma}
+Consider an algorithm $\alg$ which alternates between playing $\ftl$ and $\wcalg$, where $\ftl$ is played in the intervals $\{[t_z, \tau_z]\}_{z\in[\zlast]}$, and $\wcalg$ is played in intervals $\{[\tau_z +1, t_{z+1}-1]\}_{z\in[\zlast]}$. The regret of $\alg$ is bounded by
+\begin{align}
+\Reg(\alg, \ell^n) \leq
+\sum_z \left(\ftlsum_{t_z:\tau_z-1} + \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) + 1\right).
+\end{align}
+\end{lemma}
+
+\proof{\bf Proof of~\cref{small_loss_regret_lemma}.}
+We let $t_{\zlast} = n+1$, and $a_{n+1} = a_n^*$. We use~\cref{regret_decomp} and rearrange the terms by grouping them by the FTL periods and the $\wcalg$ periods.
+\begin{align}
+\Reg&(\alg, \ell^n) \nonumber\\
+&= \sum_z \left( \sum_{t=t_z}^{t_{z+1}-1} (L_t(a_t) - L_t(a_{t+1})) \right) \nonumber\\
+&= \sum_z \left( \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*))
++ L_{\tau_z}(a_{\tau_z-1}^*) - L_{\tau_z}(a_{\tau_z+1}) + \sum_{t=\tau_z+1}^{t_{z+1}-1} (L_t(a_t) - L_t(a_{t+1})) \right) \nonumber\\
+&= \sum_z \left( \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_t^*)) + L_{\tau_z}(a_{\tau_z-1}^*) + \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) - L_{t_{z+1}-1}(a_{t_{z+1}}) \right) \nonumber\\
+&= \sum_z \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*)) + \sum_z \left(\sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z-1}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) \right). \nonumber
+\end{align}
+
+We bound the first term by the FTL regret. Recall the notation
+\begin{align}
+\ftlsum_{t_z:\tau_z-1} := \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*)).
+\end{align}
+Because we are playing FTL at both time $\tau_z$ and $\tau_z - 1$, it holds that 
+\[L_{\tau_z}(a_{\tau_{z}-1}^*) = L_{\tau_z-1}(a_{\tau_{z}-1}^*) + \ell_{\tau_z}(a_{\tau_{z}-1}^*) \leq L_{\tau_z}(a_{\tau_{z}}^*) + 1.\]
+
+To bound the second term, we will show that 
+\begin{align}
+\sum_{t=\tau_z+1}^{t_{z+1}-1} &\ell_t(a_t) + L_{\tau_z}(a_{\tau_{z-1}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) 
+\nonumber\\
+&\leq \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) + 1 \\ 
+&= \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + \min_a L_{\tau_z}(a)  - \min_a L_{t_{z+1}-1}(a) +1\\ 
+&\leq \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) - \min_a \left(L_{t_{z+1}-1}(a) - L_{\tau_z}(a)\right) + 1 \\
+&= \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) +1. 
+\end{align}
+\hfill\Halmos
+\endproof
+
+We now complete the proof of Theorem 3 by showing that the conditions that determine the switching time between $\ftl$ and $\wcalg$ are appropriately chosen to upper bound $\ftlsum_{t_z:\tau_z-1}$ and $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1})$.
+Firstly, note that for any $z < \zlast$, $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) > g(L_z^*)$, which implies that $L^* > L_z^*$. In particular, the epoch $\zlast-1$ was exited, which implies that 
+\[
+2^{\zlast-1} \log m \le L^* \implies \zlast \le \log\left(\frac{L^*}{\log m}\right) + 1,
+\]
+where we have implicitly assumed that $L^* > \log m$---if not, then there is only one epoch, $\zlast = 0$ and the result is readily implied by Corollary 2.
+
+By the stopping condition of the epoch, $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) \leq \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-2}) + 1 \leq g(L_z^*) + 1$, such that substituting into~\cref{small_loss_regret_lemma} implies
+\begin{align}
+\Reg(\bob, \ell^n)  \leq \sum_z \left(\ftlsum_{t_z:\tau_z-1} + g(L_z^*) + 2\right).
+\end{align}
+
+% Furthermore if $L^* \leq L_z^*$, then the minimum loss on the sequence $\ell_{\tau_z+1}^{t_z-1}$ must also be bounded above by $L_z^*$, satisfying the small loss condition such that by the small loss bounds $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) \leq g(L_z^*)$, ensuring that the stopping condition of the epoch will not be reached. As a result, $\zlast$ must be the smallest $z$ such that $L^* \leq L_z^*$, $\zlast = \lceil \log(L^*/\log m) \rceil$.
+
+Also, it always holds that $\ftlsum_{t_z:\tau_z-1} \leq g(L_z^*)$ and for $z < \zlast$, $\ftlsum_{t_z:\tau_z} > g(L_z^*)$. Therefore 
+\[\sum_z^{\zlast-1} g(L_z^*) < \sum_z \ftlsum_{t_z:\tau_z-1} \leq \Reg(\ftl, \ell^n)\]
+and $\sum_z \ftlsum_{t_z:\tau_z-1} \leq \sum_z^{\zlast} g(L_z^*)$.
+
+To put it all together, if $\sum_z^{\zlast} g(L_z^*) \leq \Reg(\ftl,\ell^n)$, then 
+\begin{align}
+\Reg(\bob, \ell^n)  \leq 2 \sum_z g(L_z^*) + 2 \zlast.
+\end{align}
+
+If $\Reg(\ftl,\ell^n) < \sum_z^{\zlast} g(L_z^*)$, then it must be that in the last epoch the algorithm never switches to $\wcalg$. If it switched to $\wcalg$ it would imply that $\Reg(\ftl,\ell^n) \geq \sum_z \ftlsum_{t_z:\tau_z} > \sum_z^{\zlast} g(L_z^*)$ which would violate the assumption that $\Reg(\ftl,\ell^n) < \sum_z^{\zlast} g(L_z^*)$. Therefore it must be that
+\begin{align}
+\Reg(\bob, \ell^n)  \leq 2 \Reg(\ftl, \ell^n) + 2 \zlast.
+\end{align}
+
+As a result, it follows that (putting the $L^* \le \log m$ and the $L^* > \log m$ cases together) 
+\begin{align}
+\Reg&(\bob, \ell^n)  \nonumber\\
+&\leq 2 \min\left(\Reg(\ftl, \ell^n), \sum_{z = 0}^{\log\left(1+\frac{L^*}{\log m}\right)+1} g(2^z \log m)\right) + 2 \log\left(1+\frac{L^*}{\log m}\right)+2.
+\end{align}
+
+
+%%%%%%%Christina Proof start%%%%%%%%
+
+% We will use the following decomposition of the regret for any policy $\pi$ that plays the sequence of actions $a^{\pi}_t$ at time $t$.
+% \begin{lemma} \label{regret_decomp}
+% The regret incurred by any sequence of actions $(a^\pi_t)_{t\in[n+1]}$ can be written as
+% \begin{align}
+% \Reg(\pi, \ell^n)
+% &= \sum_{t=1}^{n} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right),
+% \end{align}
+% where we let $a_{n+1}^{\pi} := a_n^*$.
+% \end{lemma}
+
+% \begin{proof}
+% \begin{align}
+% L_n(\pi)
+% &= \sum_{t=1}^n \ell_t(a^{\pi}_t) \\
+% &= \sum_{t=1}^n \left(L_t(a^{\pi}_t) - L_{t-1}(a^{\pi}_t) \right) \\
+% &= L_n(a^{\pi}_n) + \sum_{t=1}^{n-1} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right) - L_0(a^{\pi}_1).
+% \end{align}
+% % In general it is also true that 
+% % \[\sum_{t=1}^n \ell_t(a^{\pi}_t) 
+% % = L_{t_2}(a^{\pi}_{t-2}) + \sum_{t=t_1}^{t_2-1} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right) - L_{t_1 - 1}(a^{\pi}_{t_1}). \]
+% This implies a regret decomposition of
+% \begin{align}
+% \Reg(\pi, \ell^n)
+% &= L_n(\pi) - L_n(a_n^*) \\
+% &= L_n(a^{\pi}_n) - L_n(a_n^*) + \sum_{t=1}^{n-1} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right) - L_0(a^{\pi}_1)
+% \end{align}
+% As $L_0(a^{\pi}_1) = 0$, and $a_{n+1}^{\pi} := a_n^*$, it follows that 
+% \begin{align}
+% \Reg(\pi, \ell^n)
+% &= \sum_{t=1}^{n} \left(L_t(a^{\pi}_t) - L_{t}(a^{\pi}_{t+1}) \right).
+% \end{align}
+% \end{proof}
+
+% \begin{lemma} \label{small_loss_regret_lemma}
+% Consider an algorithm $\pi$ which alternates between playing $\ftl$ and $\wcalg$, where $\ftl$ is played in the intervals $\{[t_z, \tau_z]\}_{z\in[\zlast]}$, and $\wcalg$ is played in intervals $\{[\tau_z +1, t_{z+1}-1]\}_{z\in[\zlast]}$. The regret of $\pi$ is bounded by
+% \begin{align}
+% \Reg(\pi, \ell^n) \leq
+% \sum_z \left(\ftlsum_{t_z:\tau_z-1} + \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) + 1\right).
+% \end{align}
+% \end{lemma}
+
+% \begin{proof}
+% We let $t_{\zlast} = n+1$, and $a_{n+1} = a_n^*$. We use \cref{regret_decomp} and rearrange the terms by grouping them by the FTL periods and the $\wcalg$ periods.
+% \begin{align}
+% \Reg(\pi, \ell^n) 
+% &= \sum_z \left( \sum_{t=t_z}^{t_{z+1}-1} (L_t(a_t) - L_t(a_{t+1})) \right)\\
+% &= \sum_z \left( \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*))
+% + L_{\tau_z}(a_{\tau_z-1}^*) - L_{\tau_z}(a_{\tau_z+1}) + \sum_{t=\tau_z+1}^{t_{z+1}-1} (L_t(a_t) - L_t(a_{t+1})) \right)\\
+% &= \sum_z \left( \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_t^*)) + L_{\tau_z}(a_{\tau_z-1}^*) + \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) - L_{t_{z+1}-1}(a_{t_{z+1}}) \right) \\
+% &= \sum_z \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*)) + \sum_z \left(\sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z-1}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) \right).
+% \end{align}
+
+% We bound the first term by the FTL regret as the leader changes in a subsequence is bounded above by the total number of leader changes, and recall the notation
+% \begin{align}
+% \ftlsum_{t_z:\tau_z-1} := \sum_{t=t_z}^{\tau_z-1} (L_t(a_{t-1}^*) - L_t(a_{t}^*)).
+% \end{align}
+
+% Because we are playing FTL at both time $\tau_z$ and $\tau_z - 1$, it holds that 
+% \[L_{\tau_z}(a_{\tau_{z}-1}^*) = L_{\tau_z-1}(a_{\tau_{z}-1}^*) + \ell_{\tau_z}(a_{\tau_{z}-1}^*) \leq L_{\tau_z}(a_{\tau_{z}}^*) + 1.\]
+
+% To bound the second term, we will show that 
+% \begin{align}
+% \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z-1}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) 
+% &\leq \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + L_{\tau_z}(a_{\tau_{z}}^*) - L_{t_{z+1}-1}(a_{t_{z+1}-1}^*) + 1 \\ 
+% &= \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) + \min_a L_{\tau_z}(a)  - \min_a L_{t_{z+1}-1}(a) +1\\ 
+% &\leq \sum_{t=\tau_z+1}^{t_{z+1}-1} \ell_t(a_t) - \min_a \left(L_{t_{z+1}-1}(a) - L_{\tau_z}(a)\right) + 1 \\
+% &= \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) +1. 
+% \end{align}
+% \end{proof}
+
+% \begin{proof}
+% We complete the proof of \cref{thm:Regret_small_loss} by showing that the conditions that determine the switching time between $\ftl$ and $\wcalg$ are appropriately chosen to upper bound $\ftlsum_{t_z:\tau_z-1}$ and $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1})$.
+
+% By the stopping condition of the epoch, $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) \leq \Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-2}) + 1 \leq g(L_z*) + 1$, such that substituting into \cref{small_loss_regret_lemma} implies
+% \begin{align}
+% \Reg(\bob, \ell^n)  \leq \sum_z \left(\ftlsum_{t_z:\tau_z-1} + g(L_z^*) + 2\right).
+% \end{align}
+
+% For any $z < \zlast$, $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) > g(L_z^*)$, which implies that $L^* > L_z^*$. Furthermore if $L^* \leq L_z^*$, then the minimum loss on the sequence $\ell_{\tau_z+1}^{t_z-1}$ must also be bounded above by $L_z^*$, satisfying the small loss condition such that by the small loss bounds $\Reg(\wcalg, \ell_{\tau_z+1}^{t_{z+1}-1}) \leq g(L_z^*)$, ensuring that the stopping condition of the epoch will not be reached. As a result, $\zlast$ must be the smallest $z$ such that $L^* \leq L_z^*$, $\zlast = \lceil \log(L^*/\log m) \rceil$.
+
+% Also, it always holds that $\ftlsum_{t_z:\tau_z-1} \leq g(L_z^*)$ and for $z < \zlast$, $\ftlsum_{t_z:\tau_z} > g(L_z^*)$. Therefore 
+% \[\sum_z^{\zlast-1} g(L_z^*) < \sum_z \ftlsum_{t_z:\tau_z-1} \leq \Reg(\ftl, \ell^n)\]
+% and $\sum_z \ftlsum_{t_z:\tau_z-1} \leq \sum_z^{\zlast} g(L_z^*)$.
+
+% To put it all together, if $\sum_z^{\zlast} g(L_z^*) \leq \Reg(\ftl,\ell^n)$, then 
+% \begin{align}
+% \Reg(\bob, \ell^n)  \leq 2 \sum_z g(L_z^*) + 2 \zlast.
+% \end{align}
+
+% If $\Reg(\ftl,\ell^n) < \sum_z^{\zlast} g(L_z^*)$, then it must be that in the last epoch the algorithm never switches to $\wcalg$. If it switched to $\wcalg$ it would imply that $\Reg(\ftl,\ell^n) \geq \sum_z \ftlsum_{t_z:\tau_z} > \sum_z^{\zlast} g(L_z^*)$ which would violate the assumption that $\Reg(\ftl,\ell^n) < \sum_z^{\zlast} g(L_z^*)$. Therefore it must be that
+% \begin{align}
+% \Reg(\bob, \ell^n)  \leq 2 \Reg(\ftl, \ell^n) + 2 \zlast.
+% \end{align}
+
+% As a result, it follows that 
+% \begin{align}
+% \Reg(\bob, \ell^n)  \leq 2 \min\left(\Reg(\ftl, \ell^n), \sum_z^{\lceil \log(L^*/\log m) \rceil} g(2^z \log m)\right) + 2 \lceil \log(L^*/\log m) \rceil.
+% \end{align}
+% \end{proof}
+
+%%%%%%%Christina Proof end%%%%%%%%
+
+%%%%%%%Alankrita Proof start%%%%%%%%
+
+% \begin{theorem}[Regret of~\cref{metaalg:UnknownSmallLoss}] \label{thm:UnknownLStarReg}
+%    Recall that $L^* = \min_{j \in [m]} L_{tj}$, i.e. the loss achieved by the best expert in hindsight. If $\wcalg$ is such that for any $\ell^n$ 
+%    \[
+%    \Reg(\wcalg, \ell^n) \le g(L^*),
+%    \]
+%    then the $\bob$ algorithm achieved by instantiating~\cref{metaalg:UnknownSmallLoss} with $g(L^*)$ and $\wcalg$ satisfies
+%     \begin{align}\label{eq:BOBWUnknownLstarReg}
+%     \Reg(\bob, \ell^n) \le 2 \min\left\{\sum_{z=0}^{\zlast} \Reg(\ftl, \ell_{z_t}^{\zlast}), \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)} g(2^z \log m)\right\} + 2\log\left(1+\frac{L^*}{\log m}\right).
+%     \end{align}
+% \end{theorem}
+% This bound is particularly illuminating when $g(L^*) \equiv 2\sqrt{2 L^* \log m} + \kappa \log m$ (where $\kappa > 0$ is an absolute constant), which is known to be achievable for Hedge with a time-varying learning rate~\cite{Auer--Cesa-Bianchi--Gentile2002}. 
+
+
+% \begin{proof}
+%  This follows simply by calculating 
+%     \begin{align}
+%         \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)} g(2^z \log m) &= 2\sqrt{2}\log m \sum_{z=0}^{\log\left(1+\frac{L^*}{\log m}\right)} 2^{z/2} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right)\nonumber\\
+%         &=  \log m \frac{4}{\sqrt{2}-1}\sqrt{1+\frac{L^*}{\log m}} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right) \nonumber \\
+%         &\le 8 \sqrt{2\log^2 m + 2L^* \log m} + \kappa \log m \log\left(1+\frac{L^*}{\log m}\right) \nonumber\\
+%         &\stackrel{\text{(a)}}{\le} 8 \sqrt{2L^* \log m} + \kappa\log\left(1+\frac{L^*}{\log m}\right)\log m + 8\sqrt{2} \log m \nonumber
+%     \end{align}
+%     where (a) follows since for nonnegative $a,b$ $\sqrt{a+b} \le \sqrt{a}+ \sqrt{b}$.
+% \end{proof}
+
+% \begin{proof}[Proof of~\cref{thm:UnknownLStarReg}]
+%         Let $\zlast \le n$ denote the number of the last epoch, and let $t_z$ denote the beginning of the $z-$th epoch (so, $t_0 = 1$) and the $z-$th epoch lasts from $t_z \le t \le t_{z+1}-1$. By the loop exit condition, the total loss incurred by $\bob$ (whose action at time $t$ is denoted by $\abob_t$) in the $z-$th loop is at most 
+%     \begin{align}\label{eq:LossInEpochUB}
+%         \sum_{t=t_z}^{t_{z+1}-1} \langle \abob_t , \ell_t \rangle \le L^*_{z} + 2 \min\{\ftlsum_{t_z:t_{z+1}-1}, g(L_z^*)\} + 1 + 1 %the last 1 is because at t_{z+1}-2 loss was strictly < thresh, but so in the next stel loss le thresh + 1
+%     \end{align}
+%     where we define $t_{\zlast+1}-1 \defeq n$. Therefore, we have 
+%     \begin{align}
+%         \sum_{t=1}^n \langle \abob_t , \ell_t \rangle &\le \sum_{z=0}^{\zlast} \left(L^*_{z} + 2 \min\{\ftlsum_{t_z:t_{z+1}-1}, g(L_z^*)\} + 2 \right) \nonumber\\
+%         &= \sum_{z=0}^{\zlast} L_z^* + \sum_{z=0}^{\zlast} 2 \min\{\ftlsum_{t_z:t_{z+1}-1}, g(L_z^*)\} + 2\zlast \nonumber\\
+%         &\le  \sum_{z=0}^{\zlast} L_z^* + 2 \min\left\{\sum_{z=0}^{\zlast}\ftlsum_{t_z:t_{z+1}-1},  \sum_{z=0}^{\zlast} g(L_z^*)\right\} + 2\zlast \label{eq:MinOfSum} \\
+%         &=  \sum_{z=0}^{\zlast} L_z^* + 2 \min\left\{\sum_{z=0}^{\zlast} \Reg(\ftl, \ell_{z_t}^{z_{t+1}-1}),  \sum_{z=0}^{\zlast} g(L_z^*)\right\} + 2\zlast \label{eq:ZeroCrossingsAddup}  
+%     \end{align}
+%     where~\cref{eq:MinOfSum} follows since for any $a_1,\dotsc,a_k$ and $b_1,\dotsc,b_k$ we have 
+%     \[
+%     \sum_{i=1}^k \min\{a_i,b_i\} \le \min\left\{\sum_{i=1}^k a_i, \sum_{i=1}^k b_i\right\}
+%     \]
+%     and~\cref{eq:ZeroCrossingsAddup} follows by the definition and properties of $\ftlsum_t$ elaborated in~\cref{eq:PartialSumFTL}. Recalling the definition of $j^*_n$ in~\cref{eq:BestExpertsSet}
+%     \begin{align}
+%        \Reg(\bob, \ell^n) &= \sum_{t=1}^n \langle \abob_t, \ell_t \rangle - \sum_{t=1}^n \ell_{tj^*_{n}} \nonumber\\
+%        &= \sum_{t=1}^n \langle \abob_t, \ell_t \rangle - \sum_{z=0}^{\zlast} \sum_{t = t_z}^{t_{z+1}-1} \ell_{tj^*_{n}} \nonumber\\
+%        &\le \sum_{z=0}^{\zlast}\left( L_z^* - \sum_{t = t_z}^{t_{z+1}-1} \ell_{tj^*_{n}}\right)  + 2 \min\left\{\sum_{z=0}^{\zlast} \Reg(\ftl, \ell_{z_t}^{z_{t+1}-1}),  \sum_{z=0}^{\zlast} g(L_z^*)\right\} + 2\zlast   \label{eq:EpochWiseLossUB}
+%     \end{align}
+%     where~\cref{eq:EpochWiseLossUB} follows from~\cref{eq:ZeroCrossingsAddup}. We now argue that 
+%     \begin{align}\label{eq:LzLBdonLoss}
+%         L^*_{z} < \sum_{t=t_z}^{ t_{z+1}-1} \ell_{tj^*_{n}}
+%     \end{align}
+%     by establishing a contradiction if $L^*_{z} \ge \sum_{t=t_z}^{t_{z+1}-1} \ell_{tj^*_{n}}$. If indeed $L^*_z$ is such an upper bound, then we have %loss incurred by the optimal action in epoch $z$ is a lower bound on the loss of any action in epoch $z$ (an in particular for action $i^*_{1:n}$) and we have 
+%     \begin{align}\label{eq:LossBestArmUB}
+%     \min_{j \in [m]} \sum_{t=t_z}^{t_{z+1}-1} \ell_{tj} \le \sum_{t=t_z}^{t_{z+1}-1} \ell_{tj^*_{n}} \le L^*_z.  
+%      \end{align}
+%     But~\cref{cor:BOBWKnownLStar} establishes that if~\cref{eq:LossBestArmUB} holds, then using Meta-Alogrithm 1 with $\wcalg$ and $g(L_z^*)$ implies 
+%     \begin{align}\label{eq:LossInEpochContradiction}
+%     \Reg(\bob, \ell_{t_z}^{t_{z+1}-1}) \le 2\min\left\{\Reg(\ftl,\ell_{t_z}^{t_{z+1}-1}), g(L_z^*)\right\} + 1 
+%     \end{align}
+%     However,~\cref{eq:LossInEpochContradiction} violates the loop exit condition and implies that the time step $t_{z+1}$ is also within epoch $z$, which is not the case. Therefore, we have arrived at a contradiction and established that~\cref{eq:LzLBdonLoss} holds. Using this in~\cref{eq:EpochWiseLossUB} yields 
+%     \begin{align}\label{eq:RegUBZlast}
+%         \Reg(\bob,\ell^n) \le  2 \min\left\{\Reg(\ftl,\ell_{t_z}^{t_{z+1}-1}),  \sum_{z=0}^{\zlast} g(L_z^*)\right\} + 2\zlast. 
+%     \end{align}
+%     To finish the proof, we need a bound on $\zlast$. For this, we use~\cref{eq:LzLBdonLoss} again. Summing up~\cref{eq:LzLBdonLoss} over all epochs yields 
+%     \[
+%         \sum_{z=0}^{\zlast} L^*_z < \sum_{z=0}^{\zlast} \sum_{t=t_z}^{t_{z+1}-1} \ell_{tj^*_n} = L^*
+%     \]
+%     and since $L^*_z = 2^z \log m$, we have 
+%     \[
+%     \log m \sum_{z=0}^{\zlast} 2^z \le L^* 
+%     \]
+%     implying that 
+%     \begin{align} \label{eq:zLastUB}
+%        \zlast \le \log\left(1+\frac{L^*}{\log m}\right).
+%     \end{align}
+%     Substituting~\cref{eq:zLastUB} into~\cref{eq:RegUBZlast} and using $L_z^* = 2^z \log m$ yields the claimed result.
+% \end{proof}
+% 
+%%%%%%%Alankrita Proof end%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

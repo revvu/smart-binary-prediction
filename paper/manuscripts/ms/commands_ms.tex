@@ -1,0 +1,129 @@
+\usepackage[capitalize]{cleveref}
+\usepackage{tcolorbox}
+\usepackage{dsfont}
+\usepackage{enumitem}
+\usepackage[bf]{caption}  
+\usepackage{amssymb}
+
+  \newcommand{\Ind}{\mathds{1}}
+    \newcommand{\by}{\mathbf{y}}
+    \newcommand{\bY}{\mathbf{Y}}
+    \newcommand{\bx}{\mathbf{x}}
+    \newcommand{\bX}{\mathbf{X}}
+    \newcommand{\bz}{\mathbf{z}}
+    \newcommand{\bZ}{\mathbf{Z}}
+    \newcommand{\bh}{\mathbf{h}}
+    \newcommand{\bH}{\mathbf{H}}
+    \newcommand{\bA}{\mathbf{A}}
+    \newcommand{\ba}{\mathbf{a}}
+    \newcommand{\bc}{\mathbf{c}}
+    \newcommand{\bC}{\mathbf{C}}
+    \newcommand{\bd}{\mathbf{d}}
+    \newcommand{\bB}{\mathbf{B}}
+    \newcommand{\bb}{\mathbf{b}}
+    \newcommand{\bU}{\mathbf{U}}
+    \newcommand{\bu}{\mathbf{u}}
+    \newcommand{\bV}{\mathbf{V}}
+    \newcommand{\bv}{\mathbf{v}}
+    \newcommand{\CV}{\mathcal{V}}
+    \newcommand{\bw}{\mathbf{w}}
+    \newcommand{\bt}{\mathbf{t}}
+    \newcommand{\bT}{\mathbf{T}}
+%    \newcommand{\be}{\mathbf{e}}
+    \newcommand{\bE}{\mathbf{E}}
+    \newcommand{\bR}{\mathbf{R}}
+    \newcommand{\bI}{\mathbf{I}}
+    \newcommand{\bP}{\mathbf{P}}
+    \newcommand{\bL}{\mathbf{L}}
+    \newcommand{\Xc}{\mathcal{X}}
+    \newcommand{\Yc}{\mathcal{Y}}
+    \newcommand{\Wc}{\mathcal{W}}
+    \newcommand{\bg}{\mathbf{g}}
+    \newcommand{\bG}{\mathbf{G}}
+    \newcommand{\Zc}{\mathcal{Z}}
+    \newcommand{\bs}{\mathbf{s}}
+    \newcommand{\bS}{\mathbf{S}}
+    \newcommand{\bl}{\mathbf{l}}
+    \newcommand{\bF}{\mathbf{F}}
+    \newcommand{\Zp}{\mathbb{Z}_p}
+    \newcommand{\ZZ}{\mathbb{Z}}
+    \newcommand{\RR}{\mathbb{R}}
+    \newcommand{\PP}{\mathbb{P}}
+    \newcommand{\Prob}{\mathbb{P}}
+    \newcommand{\Tsnr}{\text{SNR}}
+    \newcommand{\Tinr}{\text{INR}}
+    \newcommand{\Ql}{Q_{\Lambda}}
+    \newcommand{\Mod}{\bmod\Lambda}
+    \newcommand{\Enc}{\mathcal{E}}
+    \newcommand{\Dec}{\mathcal{D}}
+    \newcommand{\Var}{\mathrm{Var}}
+    \newcommand{\csym}{C_{\text{SYM}}}
+    \newcommand{\rsym}{R_{\text{SYM}}}
+    \newcommand{\diag}{\mathop{\mathrm{diag}}}
+    \newcommand{\Span}{\mathop{\mathrm{span}}}
+    \newcommand{\sign}{\mathop{\mathrm{sign}}}
+    \newcommand{\Vol}{\mathrm{Vol}}
+    \newcommand{\Ber}{\mathrm{Bernoulli}}
+    \newcommand{\Bin}{\mathrm{Binomial}}
+    \newcommand{\map}{\theta}
+    \newcommand{\Unif}{\mathrm{Uniform}}
+    \newcommand{\defeq}{\mathrel{\mathop{:}}=}
+    \def\eg{{\it e.g.\ }}
+    \def\etc{{\it etc}}
+    \def\wt{\widetilde}
+    \def\b{\mathbf}
+    \newcommand{\m}{\mathcal}
+    \def\eg{{\it e.g.\ }}
+    \def\etc{{\it etc}}
+    \def\wt{\widetilde}
+    \def\Expt{\mathbb{E}}
+    \def\bpi{\bm{\pi}}
+    \def\ev{{\bf e}}
+    \def\H{\mathrm{H}}
+    \newcommand{\ch}{\textcolor{blue}}
+    \newcommand{\redt}{\textcolor{red}}
+    \newcommand{\bec}{\mathrm{BEC}}
+    \newcommand{\bsc}{\mathrm{BSC}}
+    \newcommand{\indi}{\mathbbm{1}}
+    \newcommand{\Lap}{\mathrm{L}}
+    \newcommand{\g}{\gamma}
+    \newcommand{\e}{\epsilon}
+    \newcommand{\Reg}{\mathrm{Reg}}
+    \newcommand{\pcov}{p^{\mathrm{Cover}}}
+    \newcommand{\pftl}{p^{\mathrm{FTL}}}
+    \newcommand{\pwc}{\overline{p}}
+    \newcommand{\yftl}{\widehat{Y}^{\mathrm{FTL}}}
+    \newcommand{\ycov}{\widehat{Y}^{\mathrm{Cover}}}
+    \newcommand{\maj}{\mathrm{Majority}}
+    \newcommand{\wcalg}{\text{ALG}_{\text{WC}}} %%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!
+    \newcommand{\pbobw}{p^{\mathrm{BOBW}}}
+    \newcommand{\ttil}{\widetilde{\tau}}
+    \newcommand{\zlast}{z_{\mathrm{last}}}
+    \newcommand{\pstar}{p^{\mathrm{BOBW*}}}
+    \renewcommand{\thefigure}{\arabic{figure}}
+%    \DeclareMathOperator*{\argmin}{\arg\!\min}
+ %   \DeclareMathOperator*{\argmax}{\arg\!\max}
+    \DeclareMathOperator*{\argsup}{\arg\!\sup}
+    \DeclareMathOperator\E{\mathbb{E}}
+    \newcommand{\ftl}{\text{FTL}}%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!
+    \newcommand{\cover}{\text{Cover}}
+    \newcommand{\hedge}{\text{Hedge}}
+    \newcommand{\Ac}{\mathcal{A}}
+    \newcommand{\alg}{\text{ALG}}
+    \newcommand{\PseudoReg}{\overline{\mathrm{Reg}}}
+    \newcommand{\dist}{\mathcal{D}}
+    \newcommand{\aftl}{a^{\text{FTL}}}
+    \newcommand{\ftlsum}{\Sigma^{\text{FTL}}}
+    \newcommand{\bob}{\text{SMART}} %%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!%%%%%%%change!!!!!
+    \newcommand{\abob}{a^{\text{SMART}}}
+    \newcommand{\Majority}{\text{Majority}}
+    \newcommand{\Cover}{\text{Cover}}
+\allowdisplaybreaks
+
+
+\newcommand{\bluet}{\textcolor{blue}}
+\usepackage[showdeletions]{color-edits}
+%\usepackage[suppress]{color-edits}
+\addauthor{cy}{magenta}
+\addauthor{ab}{cyan}
+\addauthor{sb}{red}

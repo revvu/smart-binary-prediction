@@ -1,0 +1,312 @@
+    \documentclass[acmsmall,screen,review]{acmart}
+    
+    %%
+    %% \BibTeX command to typeset BibTeX logo in the docs
+    \AtBeginDocument{%
+      \providecommand\BibTeX{{%
+        Bib\TeX}}}
+    
+    %% Rights management information.  This information is sent to you
+    %% when you complete the rights form.  These commands have SAMPLE
+    %% values in them; it is your responsibility as an author to replace
+    %% the commands and values with those provided to you when you
+    %% complete the rights form.
+    %\setcopyright{acmcopyright}
+    %\copyrightyear{2018}
+    %\acmYear{2018}
+    %\acmDOI{XXXXXXX.XXXXXXX}
+    
+    %% These commands are for a PROCEEDINGS abstract or paper.
+    \acmConference[SIGMETRICS '24]{2024 ACM SIGMETRICS}{June 10--14, 2024}{Venice, Italy}
+    %%
+    %%  Uncomment \acmBooktitle if the title of the proceedings is different
+    %%  from ``Proceedings of ...''!
+    %%
+    %%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+    %%  June 03--05, 2018, Woodstock, NY}
+    %\acmPrice{15.00}
+    %\acmISBN{978-1-4503-XXXX-X/18/06}
+    
+    
+    %%
+    %% Submission ID.
+    %% Use this when submitting an article to a sponsored event. You'll
+    %% receive a unique submission ID from the organizers
+    %% of the event, and this ID should be used as the parameter to this command.
+    %%\acmSubmissionID{123-A56-BU3}
+    
+    %%
+    %% For managing citations, it is recommended to use bibliography
+    %% files in BibTeX format.
+    %%
+    %% You can then either use BibTeX with the ACM-Reference-Format style,
+    %% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+    %% support for advanced citation of software artefact from the
+    %% biblatex-software package, also separately available on CTAN.
+    %%
+    %% Look at the sample-*-biblatex.tex files for templates showcasing
+    %% the biblatex styles.
+    %%
+    
+    %%
+    %% The majority of ACM publications use numbered citations and
+    %% references.  The command \citestyle{authoryear} switches to the
+    %% "author year" style.
+    %%
+    %% If you are preparing content for an event
+    %% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+    %% citations and references.
+    %% Uncommenting
+    %% the next command will enable that style.
+    %%\citestyle{acmauthoryear}
+    
+    \usepackage[ruled]{algorithm2e} % For algorithms
+        \renewcommand{\algorithmcfname}{ALGORITHM}
+        \SetAlFnt{\small}
+        \SetAlCapFnt{\small}
+        \SetAlCapNameFnt{\small}
+        \SetAlCapHSkip{0pt} 
+        \IncMargin{-\parindent}
+    
+    
+    \usepackage{xspace,nicefrac,tcolorbox,xifthen,tikz,subcaption,enumitem}
+    \usetikzlibrary{shapes, arrows, positioning}
+    \usepackage{amsthm,dsfont}  
+    \usepackage{epsfig}
+    \usepackage{calc,pstricks,pgf}
+    \allowdisplaybreaks
+    
+    
+    \usepackage{xcolor}
+        \definecolor{myred}{HTML}{ea4335}
+        \definecolor{mygreen}{HTML}{41a756}
+        \definecolor{myblue}{HTML}{4285f4}
+    
+    \usepackage[bb=dsserif]{mathalpha}
+    \hypersetup{
+        colorlinks,
+        allcolors=myblue
+    }
+    
+    \usepackage[capitalize]{cleveref}
+        \newcommand{\creflastconjunction}{, and\nobreakspace} % oxford comma for \Cref{thm1,thm2,thm3}
+    
+    \usepackage{color-edits}
+    % \usepackage[suppress]{color-edits}
+    \addauthor{ab}{myblue}
+    \addauthor{cy}{cyan}
+    \addauthor{sb}{teal}
+    \newcommand{\todo}[1]{\textcolor{myred}{[\textbf{TODO:} #1]}}
+    
+    
+    \newtheorem{theorem}{Theorem}
+    \newtheorem{corollary}{Corollary}
+    \newtheorem{remark}{Remark}
+    \newtheorem{example}{Example}
+    \newtheorem{definition}{Definition}
+    \newtheorem{proposition}{Proposition}
+    \newtheorem{lemma}{Lemma}
+    \newtheorem{metaalg}{Meta-Algorithm}
+    \newtheorem{conjecture}{Conjecture}
+    %\newenvironment{proof}[1][Proof]{\noindent\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+    
+    \newcommand{\Ind}{\mathds{1}}
+    \newcommand{\by}{\mathbf{y}}
+    \newcommand{\bY}{\mathbf{Y}}
+    \newcommand{\bx}{\mathbf{x}}
+    \newcommand{\bX}{\mathbf{X}}
+    \newcommand{\bz}{\mathbf{z}}
+    \newcommand{\bZ}{\mathbf{Z}}
+    \newcommand{\bh}{\mathbf{h}}
+    \newcommand{\bH}{\mathbf{H}}
+    \newcommand{\bA}{\mathbf{A}}
+    \newcommand{\ba}{\mathbf{a}}
+    \newcommand{\bc}{\mathbf{c}}
+    \newcommand{\bC}{\mathbf{C}}
+    \newcommand{\bd}{\mathbf{d}}
+    \newcommand{\bB}{\mathbf{B}}
+    \newcommand{\bb}{\mathbf{b}}
+    \newcommand{\bU}{\mathbf{U}}
+    \newcommand{\bu}{\mathbf{u}}
+    \newcommand{\bV}{\mathbf{V}}
+    \newcommand{\bv}{\mathbf{v}}
+    \newcommand{\CV}{\mathcal{V}}
+    \newcommand{\bw}{\mathbf{w}}
+    \newcommand{\bt}{\mathbf{t}}
+    \newcommand{\bT}{\mathbf{T}}
+    \newcommand{\be}{\mathbf{e}}
+    \newcommand{\bE}{\mathbf{E}}
+    \newcommand{\bR}{\mathbf{R}}
+    \newcommand{\bI}{\mathbf{I}}
+    \newcommand{\bP}{\mathbf{P}}
+    \newcommand{\bL}{\mathbf{L}}
+    \newcommand{\Xc}{\mathcal{X}}
+    \newcommand{\Yc}{\mathcal{Y}}
+    \newcommand{\Wc}{\mathcal{W}}
+    \newcommand{\bg}{\mathbf{g}}
+    \newcommand{\bG}{\mathbf{G}}
+    \newcommand{\Zc}{\mathcal{Z}}
+    \newcommand{\bs}{\mathbf{s}}
+    \newcommand{\bS}{\mathbf{S}}
+    \newcommand{\bl}{\mathbf{l}}
+    \newcommand{\bF}{\mathbf{F}}
+    \newcommand{\Zp}{\mathbb{Z}_p}
+    \newcommand{\ZZ}{\mathbb{Z}}
+    \newcommand{\RR}{\mathbb{R}}
+    \newcommand{\PP}{\mathbb{P}}
+    \newcommand{\Prob}{\mathsf{P}}
+    \newcommand{\Tsnr}{\mathsf{SNR}}
+    \newcommand{\Tinr}{\mathsf{INR}}
+    \newcommand{\Ql}{Q_{\Lambda}}
+    \newcommand{\Mod}{\bmod\Lambda}
+    \newcommand{\Enc}{\mathcal{E}}
+    \newcommand{\Dec}{\mathcal{D}}
+    \newcommand{\Var}{\mathrm{Var}}
+    \newcommand{\csym}{C_{\text{SYM}}}
+    \newcommand{\rsym}{R_{\text{SYM}}}
+    \newcommand{\diag}{\mathop{\mathrm{diag}}}
+    \newcommand{\Span}{\mathop{\mathrm{span}}}
+    \newcommand{\sign}{\mathop{\mathrm{sign}}}
+    \newcommand{\Vol}{\mathrm{Vol}}
+    \newcommand{\Ber}{\mathrm{Bernoulli}}
+    \newcommand{\Bin}{\mathrm{Binomial}}
+    \newcommand{\map}{\theta}
+    \newcommand{\Unif}{\mathrm{Uniform}}
+    \newcommand{\defeq}{\mathrel{\mathop{:}}=}
+    \def\eg{{\it e.g.\ }}
+    \def\etc{{\it etc}}
+    \def\wt{\widetilde}
+    \def\b{\mathbf}
+    \newcommand{\m}{\mathcal}
+    \def\eg{{\it e.g.\ }}
+    \def\etc{{\it etc}}
+    \def\wt{\widetilde}
+    \def\Expt{\mathbb{E}}
+    \def\bpi{\bm{\pi}}
+    \def\ev{{\bf e}}
+    \def\H{\mathrm{H}}
+    \newcommand{\ch}{\textcolor{blue}}
+    \newcommand{\redt}{\textcolor{red}}
+    \newcommand{\bec}{\mathrm{BEC}}
+    \newcommand{\bsc}{\mathrm{BSC}}
+    \newcommand{\indi}{\mathbbm{1}}
+    \newcommand{\Lap}{\mathrm{L}}
+    \newcommand{\g}{\gamma}
+    \newcommand{\e}{\epsilon}
+    \newcommand{\Reg}{\mathrm{Reg}}
+    \newcommand{\pcov}{p^{\mathrm{Cover}}}
+    \newcommand{\pftl}{p^{\mathrm{FTL}}}
+    \newcommand{\pwc}{\overline{p}}
+    \newcommand{\yftl}{\widehat{Y}^{\mathrm{FTL}}}
+    \newcommand{\ycov}{\widehat{Y}^{\mathrm{Cover}}}
+    \newcommand{\maj}{\mathrm{Majority}}
+    \newcommand{\wcalg}{\mathsf{ALG}_{\mathsf{WC}}}
+    \newcommand{\pbobw}{p^{\mathrm{BOBW}}}
+    \newcommand{\ttil}{\widetilde{\tau}}
+    \newcommand{\zlast}{z_{\mathrm{last}}}
+    \newcommand{\pstar}{p^{\mathrm{BOBW*}}}
+    \renewcommand{\thefigure}{\arabic{figure}}
+    \DeclareMathOperator*{\argmin}{\arg\!\min}
+    \DeclareMathOperator*{\argmax}{\arg\!\max}
+    \DeclareMathOperator*{\argsup}{\arg\!\sup}
+    \DeclareMathOperator\E{\mathbb{E}}
+    \newcommand{\ftl}{\mathsf{FTL}}
+    \newcommand{\cover}{\mathsf{Cover}}
+    \newcommand{\hedge}{\mathsf{Hedge}}
+    \newcommand{\Ac}{\mathcal{A}}
+    \newcommand{\alg}{\mathsf{ALG}}
+    \newcommand{\PseudoReg}{\overline{\mathrm{Reg}}}
+    \newcommand{\dist}{\mathcal{D}}
+    \newcommand{\aftl}{a^{\mathsf{FTL}}}
+    \newcommand{\ftlsum}{\Sigma^{\mathsf{FTL}}}
+    \newcommand{\bob}{\mathsf{SMART}}
+    \newcommand{\abob}{a^{\mathsf{SMART}}}
+    \newcommand{\Majority}{\mathsf{Majority}}
+    \newcommand{\Cover}{\mathsf{Cover}}
+    
+    \newcommand{\citewithauthor}[1]{\textcite{#1}}
+    
+    \newenvironment{myproof}[1][Proof.]{%
+        \begin{proof}[#1]%
+    }{%
+        \end{proof}%
+    }
+    
+    
+    \begin{document}
+    
+    \title[The SMART Approach to Instance-Optimal Online Learning]{The SMART Approach to Instance-Optimal Online Learning}
+    
+    
+    \begin{abstract}
+        \input{body/abstract}
+    \end{abstract}
+    
+    %%
+    %% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+    %% Please copy and paste the code instead of the example below.
+    %%
+    % \begin{CCSXML}
+    % <ccs2012>
+    %  <concept>
+    %   <concept_id>00000000.0000000.0000000</concept_id>
+    %   <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+    %   <concept_significance>500</concept_significance>
+    %  </concept>
+    %  <concept>
+    %   <concept_id>00000000.00000000.00000000</concept_id>
+    %   <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+    %   <concept_significance>300</concept_significance>
+    %  </concept>
+    %  <concept>
+    %   <concept_id>00000000.00000000.00000000</concept_id>
+    %   <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+    %   <concept_significance>100</concept_significance>
+    %  </concept>
+    %  <concept>
+    %   <concept_id>00000000.00000000.00000000</concept_id>
+    %   <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+    %   <concept_significance>100</concept_significance>
+    %  </concept>
+    % </ccs2012>
+    % \end{CCSXML}
+    
+    % \ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+    % \ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+    % \ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+    % \ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+    
+    %%
+    %% Keywords. The author(s) should pick words that accurately describe
+    %% the work being presented. Separate the keywords with commas.
+    %\keywords{Do, Not, Us, This, Code, Put, the, Correct, Terms, for, Your, Paper}
+    
+    \maketitle
+    
+    
+    \input{body/introduction}
+    %%%%%%%%%%%%%%%%%%
+    \input{body/setting}
+    %%%%%%%%%%%%%%%%%%
+    \input{body/ftl}
+    %%%%%%%%%%%%%%%%%%
+    \input{body/twoapprox}
+    %%%%%%%%%%%%%%%%%%
+    %\input{body/skirental}
+    %%%%%%%%%%%%%%%%%%
+    \input{body/extensions}
+    %%%%%%%%%%%%%%%%%%
+    \input{body/converse}
+    %%%%%%%%%%%%%%%%%%
+    \input{body/discussion}
+    
+    %%
+    %% The next two lines define the bibliography style to be used, and
+    %% the bibliography file.
+    \bibliographystyle{ACM-Reference-Format}
+    \bibliography{bobw}
+    
+    \input{body/appendix.tex}
+    
+    
+    \end{document}

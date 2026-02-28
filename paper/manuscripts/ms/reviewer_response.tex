@@ -1,0 +1,313 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+
+% \usepackage{fullpage}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathrsfs}
+\usepackage{bm, bbm}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\input{MS/commands_ms}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2em}
+\newcommand{\rev}{\textcolor{blue}} 
+\newcommand{\Qv}{{\bf Q}}
+\newcommand{\pv}{{\bf p}}
+\def\poi{\mathrm{Poi}}
+\def\E{{\mathsf E}}
+\def\P{{\mathsf P}}
+\newtheorem{rem}{Remark}
+\title{Authors' response to reviewer comments on ``The SMART Approach to Instance-Optimal Online Learning: Assume the Best, Prepare for the Worst''}
+\date{}
+
+
+
+
+
+\begin{document}
+\maketitle
+
+Dear Professor Farias, 
+
+Please find enclosed our revised version for the paper ``The SMART Approach to Instance-Optimal Online Learning: Assume the Best, Prepare for the Worst'', submitted to \textit{Management Science}.
+
+We would like to thank you, the associate editor, and the reviewers for the helpful comments and suggestions, which improved the presentation of the paper. We took all inputs into consideration and have made appropriate changes to the manuscript. 
+Enclosed are our detailed responses to the remarks and suggestions made by the you, the AE and the reviewers.\newline
+
+With Best Regards,
+
+Reevu Adakroy, Siddhartha Banerjee, Alankrita Bhatt, and Christina Lee Yu
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Authors' response to the Department Editor}
+\begin{enumerate}
+    \item \emph{I enjoyed reading the paper. The contribution is simple and intuitive. One quibble I did have is your use of the term `instance optimality' which I found confusing since you compare to g(n).}
+
+    {\bf Response:} Thank you for this feedback. This terminology concern was also raised by Reviewer 2 (Major Comment 3) and the Associate Editor (Comment 6), and we have addressed it comprehensively in the revised manuscript. We added an enhanced discussion after the definition of instance-optimality clarifying the utility of the current definition, scenarios in which the stricter definition (matching the exact regret of the worst-case algorithm rather than $g(n)$) can be achieved, and discussing an ``in-between" guarantee (i.e. matching some sequence dependent upper bound on $\Reg(\wcalg, \ell^n)$ if not the regret itself), which we achieve by a variant of our algorithm in Section 8. 
+
+       
+
+    \item \emph{Also I found that section 5.1 did not add very much; more generally I think you can probably shorten this paper quite a bit. }
+
+    {\bf Response:} We believe Section 5.1 serves an important pedagogical function by illustrating the ski-rental connection through the concrete binary prediction setting, where the regret decomposition has a clean geometric interpretation (lead changes). This helps readers understand the core algorithmic intuition before the general analysis. However, if the editor feels strongly that this section should be removed to improve the paper's conciseness, we are open to this revision.
+
+    \item \emph{My most substantive comment is that there isn't an interesting practical motivating example/ case study; I would hope that in a major revision, you flesh out such an example and include some compelling numerical evidence for the same. }
+
+    {\bf Response:} Thank you for this substantive feedback, which was also raised by the Associate Editor and Reviewer 2. We have addressed this by adding an enhanced discussion of Bastani et al. \cite{bastani2021mostly} which motivates the use of greedy strategies like FTL in practical settings. We also added an example to motivate strategic attacks as suggested by Reviewer 2 \textcolor{red}{(TODO)}. \textcolor{red}{Additionally, we included simulations beyond the binary prediction setting to provide more compelling numerical evidence for our approach.}
+    \textcolor{red}{(TODO: we should actually state and explain here what are the additional simulation settings we have included, what was the result of the simulation / in what way is it more compelling)}
+\end{enumerate}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Authors' response to the Associate Editor}
+We thank the AE for soliciting reviews for our manuscript as well as for their positive feedback and constructive suggestions. We address their major comments below: 
+
+\begin{enumerate}
+
+    \item \emph{The authors should make clearer, and also discuss elaborately, the scope of applicability of their framework. In fact - and apology if I've missed it - the precise notions of FTL and $\wcalg$ do not seem to be clearly laid out in the paper. For example, FTL is explicitly formulated for binary prediction in Example 1, but beyond this example there doesn't seem to be a concrete formulation. These unclarities are tied to the applications that Referee 2 asks.}
+    
+
+    {\bf Response:} Thank you for this comment. In the updated-manuscript, within the definition of instance-optimality (Definition 2) we provide a more precise definition of $\wcalg$ and FTL. In particular, the definition now incorporates the following text:
+    
+    \rev{Given \bluet{the follow-the-leader algorithm} $\ftl$ \bluet{which at time step $t$ selects action
+\begin{align}\label{eq:FTLDefinition}
+a_t = \arg \inf_{a \in \mathcal{A}} \sum_{i=1}^t \ell_i(a) 
+\end{align}}
+and any algorithm $\wcalg$ with 
+\[
+\sup_{\ell^n} \Reg(\wcalg, \ell^n) \le g(n),
+\] } \dotsc\dotsc
+
+  \item \emph{The authors should be clearer in presenting these notions and then discuss with some concrete examples where their framework applies (e.g., the authors need $g(n)$; in what examples are these known?). Moreover, it would be nice to connect these examples to applications that are relevant to the MS audience.}
+
+    {\bf Response:} We thank the AE for this suggestion. As mentioned in our response to Reviewer 2's Major Comment 2, we have enhanced the introduction with a more detailed discussion of the healthcare application from Bastani et al. \cite{bastani2021mostly}, which provides a concrete example where best-of-both-worlds guarantees are valuable. In healthcare intervention settings, algorithms must perform well on real patient data (where FTL-like approaches excel) while remaining robust against potential distribution shifts.
+    
+Regarding concrete examples where $g(n)$ is known, our framework applies broadly across online learning settings with established minimax bounds. For instance:
+\begin{itemize}
+\item Binary prediction: $g(n) = \sqrt{\frac{n}{2\pi}} + o(1) $ (Cover's minimax bound)
+\item Prediction with expert advice: $g(n) = 2\sqrt{n \log m}$ (standard Hedge /exponential weights regret bound)
+\item Online convex optimization: $g(n) = \sqrt{n}$ (for convex losses over bounded domains)
+\item Small-loss settings: $g(L*) = 2\sqrt{L^* \log m}$ (adaptive Hedge bounds)
+\end{itemize}
+
+
+   \item   \emph{The above should also clarify, as a related point, the generality of FTL (e.g., even beyond purely stochastic cases?), but also the limitation of FTL (e.g., if I use another stochastic algorithm instead of FTL, would similar regret guarantees be expected?). This is also related to Referee 2 Major Comment 2 that questions the strength of FTL and practical relevance.}
+
+    {\bf Response:} We thank the AE for raising this important point. FTL is minimax optimal in a wide class of stochastic settings \cite{kotlowski2018minimaxity}, extremely easy to implement, and has demonstrated practical effectiveness (as discussed in our response to the question above as well as Reviewer 2's Major Comment 2). These properties make FTL a natural choice for the ``optimistic" component of our best-of-both-worlds approach.
+
+    Importantly, while stochastic settings provide one motivation for FTL, FTL performs well more broadly on any sequence with few lead changes, including many deterministic patterns that are clearly not stochastically generated. For example, certain fixed repeating patterns (those with few leader changes) would yield excellent FTL performance despite being entirely deterministic. This highlights an important distinction: our instance-optimal guarantees adapt to sequence-dependent structural properties (like lead changes) rather than requiring distributional assumptions, which differentiates our approach from the expected-regret guarantees that the best-of-both-worlds literature has focused on.
+    
+    The SMART philosophy could indeed be extended to other stochastic algorithms beyond FTL. The key technical requirement is constructing a monotone adapted regret estimator---essentially, a way to track the algorithm's regret online using only historical data. We discovered that FTL admits such an estimator (Lemma 1). For other algorithms, the main technical bottleneck would be deriving similar estimators, while the competitive analysis framework from ski-rental would transfer directly. This represents an interesting direction for future work, though FTL's combination of optimality, simplicity, and the existence of a clean regret estimator makes it a compelling choice for our current framework. 
+
+
+    \item \emph{The authors review established works on reconciling stochastic and worst-case guarantees, which is appreciated. However, I feel that a stronger case needs to be made on why the authors' notion of ``best of both worlds" is more reasonable than the existing ones. For example, a line of work (cited by the authors) considers the setting where most outputs are iid, except several that are adversarially chosen. Connecting to the potential applications the authors present (in Point 1 above), why would we be fixated on either iid or adversarial generator as the authors focus on, instead of having a mix of both as suggested by these past works? Or what would happen if the authors' algorithm is applied to the mix situations?}
+
+    We thank the AE for raising this fundamental conceptual point about our approach. While existing ``best of both worlds'' work focuses on characterizing generative settings (e.g., mostly i.i.d. with some adversarial corruption), we argue that our algorithm-centric perspective is more practical and principled. Rather than requiring assumptions about how sequences are generated—which is often unknowable and involves difficult hypothesis testing in practice—our guarantees are conditioned directly on the observed sequence and the performance of two concrete algorithms on that sequence.
+This distinction is crucial for real applications. In healthcare or online advertising, practitioners don't know whether today's data comes from an ``i.i.d. setting with adversarial corruption'' versus a ``purely adversarial setting''. What they do know is the historical performance of their algorithms. Our instance-optimal guarantee says: regardless of what generative process (if any) produced this sequence, you will achieve regret within a constant factor of whichever algorithm—FTL or your worst-case backup—performed better on this specific sequence. This provides interpretable, actionable guarantees without requiring practitioners to classify their environment into predefined categories.
+When applied to mixed settings with both i.i.d. and adversarial components, our algorithm would naturally adapt: achieving low regret when FTL performs well (benefiting from the i.i.d. structure) while maintaining robustness during adversarial periods (via the worst-case algorithm). The guarantee remains meaningful regardless of the mixture proportions.
+
+
+    \item \emph{ It would be good to make clear the settings and assumptions in all the theoretical results. Currently, some of them are a bit hand-wavy, sometimes even putting the setting of consideration outside the theorem.}
+
+    {\bf Response:} We thank the AE for this comment. We have reviewed all theorem statements and added missing definitions, setting descriptions and context wherever missing, as also suggested in comments by Reviewer 2. 
+
+
+    \item \emph{A few claims need to be cleared up, as suggested by Referee 2. These include the claim of reduction to the ski-rental problem, which in fact may be an adaptation of the argument instead of a reduction (Referee 2 Major Comment 1), the meaning of ``instance-optimal" (Referee 2 Major Comment 3). Relatedly, it might help strengthen technical novelty if the authors can highlight how their arguments may not be straightforward to think about using the directions taken in the previous works, both for upper and lower bound results (which is also related to Referee 2 Major Comment 4).}
+
+
+    {\bf Response:} We thank the AE for highlighting these important clarifications.
+    
+    As detailed in our responses to Reviewer 2's Major Comments 1 and 3, we have clarified that our approach draws on the competitive analysis framework from ski-rental rather than constituting a formal reduction, and we have enhanced our discussion of the distinction between our notion of instance-optimality (competing against worst-case bounds) versus the stricter definition (competing against exact algorithm performance). Please see the responses to Reviewer 2 Major comments 1 and 3 where we have provided our revisions/additions to the text in the current manuscript.
+
+
+    Technical novelty beyond previous works: Our approach differs fundamentally from existing ``best-of-both-worlds" literature in several key ways:
+
+    \begin{itemize}
+        \item Upper bounds: Previous approaches (corralling, hedging between losses) treat algorithms symmetrically and track realized losses. Our key insight is that for FTL, we can construct a monotone adapted regret estimator directly, bypassing the need to use loss as a proxy for regret. This enables the clean competitive analysis framework, which to the best of our knowledge has not been invoked in the best-of-both-worlds no regret algorithms literature. 
+
+        \item Lower bounds: To our knowledge, we provide the first fundamental lower bound (1.43) for best-of-both-worlds guarantees in online learning. Our proof technique using Cover's characterization of achievable loss functions and uniform random walk analysis is novel for this problem class.
+
+        \item Instance-level guarantees: Unlike existing work that provides expected regret guarantees under distributional assumptions, our results hold for every individual sequence, providing more interpretable guarantees.
+    \end{itemize}
+
+
+    
+  
+\end{enumerate}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section*{Authors' response to Reviewer 1}
+
+We thank the reviewer for their positive assessment and recommendation for publication. We appreciate their recognition of the paper's relevance, clarity, and theoretical contributions. Regarding the point about technical novelty, while we agree the algorithm's intuition is straightforward, we note that the rigorous analysis required several non-trivial insights: the discovery that FTL admits monotone adapted regret estimators (enabling the ski-rental reduction), establishing the first fundamental lower bound for best-of-both-worlds guarantees (1.43 factor), and achieving instance-optimal guarantees that hold for every sequence rather than just in expectation under distributional assumptions. We believe this combination of conceptual simplicity with analytical rigor aligns well with the foundational nature of the problem, and hope that even if the individual insights may seem natural in hindsight, their combination provides a useful contribution to the literature on robust online learning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage 
+
+
+\section*{Authors' response to Reviewer 2}
+
+We thank the reviewer for their insightful and thorough review and address their comments below. Any new text added to the manuscript is highlighted in \bluet{blue}. 
+
+{\bf Major comments:}
+
+\begin{enumerate}
+    \item \emph{The paper claims that the analysis follows from a reduction to the ski-rental problem but it’s not really a reduction, but rather that the proof follows similarly as the analysis for ski-rental. It would be nice if a reduction that allows to directly use results from ski-rental to obtain results for this problem could be obtained.}
+
+    {\bf Response:} We thank the reviewer for this important and valid distinction. They are correct that our approach is more accurately described as drawing on the analytical framework and competitive analysis techniques of ski-rental rather than constituting a formal reduction. We have revised the paper to clarify this relationship and use more precise language throughout. In particular, we have made the following changes:
+    \begin{enumerate}
+        \item In the abstract, changed the line invoking the connection to ski-rental to ``\rev{Our approach and results follow by drawing on competitive analysis techniques from the ski-rental problem}".
+
+        \item In Section 3, revised the line ``we can reduce the task of minimizing regret to a version of the 'ski-rental' problem" to ``\rev{Using these two observations, \bluet{we can analyze the task of minimizing regret using the competitive analysis framework from the `ski-rental' problem.}}"
+
+        \item  Retitled Section 5.1 to ``Illustrating the \bluet{Connection} to Ski Rental in Binary Prediction"
+
+        \item Added the following paragraph in Section 5.1: 
+        
+        ``\rev{
+        We note that our analysis almost exactly parallels the framework developed for the classical ski-rental problem, though it is not a formal reduction. As mentioned previously, in ski-rental, a skier faces an unknown season length and must decide each day whether to rent skis (cost $1$) or buy them (cost $B$), with the goal of minimizing the competitive ratio against the optimal offline strategy. The key structural similarities to our setting are: (1) a binary decision between ``renting" (continuing with $\ftl$) versus "buying" (switching to $\wcalg$), (2) monotonically increasing costs for the rental option ($\ftl$'s cumulative regret), (3) a fixed switching cost for the purchase option (worst-case regret bound $g(n-\tau)$), and (4) the need to make switching decisions online without knowing the future. The competitive ratios ($2$-competitive for deterministic, $e/(e-1)$-competitive for randomized) carry over directly due to these structural parallels. However, our setting differs in a few ways: the ``rental cost" (FTL regret) is not deterministic but depends on the adaptive sequence (especially in the general online learning case beyond binary prediction, see (7)), and the ``purchase cost" varies with the switching time $\tau$. In essence, while we cannot directly invoke ski-rental results as an exact subroutine, the  entire analytical machinery transfers so cleanly that the proofs follow nearly identical steps.
+        }"
+    \end{enumerate}
+    
+    
+    Regarding the suggestion for a more direct reduction: while technical differences prevent an exact black-box reduction (primarily the adaptive, sequence-dependent nature of our ``rental costs" and the time-varying ``purchase costs"), we find that the core competitive analysis techniques transfer almost directly. The proof structure, the randomization strategy (exponential distribution for thresholds), and even the specific competitive ratios ($e/(e-1)$ for randomized algorithms) carry over unchanged.
+
+\item \emph{``suggesting that in practice one may be better off just using FTL”. This strong performance of FTL in practice is an important part of the motivation, but there is no strong evidence that is provided to support that claim. Is there previous work that actually shows that FTL performs well in practice? Related to that, is there some real-world data that could be used for experiments in the experiments section?
+}
+
+{\bf Response:} We appreciate this important point about supporting the practical performance claims for FTL. We have strengthened our argument by:
+
+\begin{enumerate}
+    \item Enhanced citations: We already cite~\cite{bastani2021mostly} which demonstrates both theoretically and empirically on healthcare datasets that simple greedy algorithms (including FTL-type approaches) work effectively for most typical data in contextual bandit settings. We have added the following expanded discussion of their empirical findings in Section 1:
+
+    ``\bluet{
+Such a need is also practically relevant; as demonstrated in \cite{bastani2021efficient}, simple greedy algorithms show remarkable effectiveness on real healthcare datasets. In their contextual bandit experiments across multiple healthcare intervention scenarios, they found that greedy policies (which follow the FTL principle of choosing actions based on empirical performance) achieved near-optimal performance on actual patient data, substantially outperforming worst-case guarantees. Thus, the gap between simple greedy approaches and sophisticated robust algorithms was minimal on realistic datasets, while the greedy approaches maintained significant computational and implementation advantages."
+}
+
+\item Theoretical support: We have expanded our discussion of the theoretical results from~\cite{Huang--Lattimore--Gyorgy--Szapesvari2016} and ~\cite{kotlowski2018minimaxity} which show that FTL achieves optimal or near-optimal regret under various stochastic assumptions, providing theoretical justification for why FTL performs well on "realistic" sequences. Section 2 now contains:
+
+``This phenomena is known in more general settings~\cite{Huang--Lattimore--Gyorgy--Szapesvari2016}, \bluet{suggesting that for many naturally occurring sequences, FTL may achieve much better performance than worst-case bounds would indicate---see also the discussion in Section 1 on positive empirical performance of greedy, $\ftl$-like policies on real data. More broadly, \cite{kotlowski2018minimaxity} shows that $\ftl$ achieves optimal pseudoregret under minimal distributional assumptions in stochastic settings.}
+ On the other hand, 
+%as~\cref{fig:SMART}$(b,c)$ indicates, 
+we know how to generate sequences~\cite{feder1992universal} where $\Reg(\ftl)$ grows linearly with $n$, and so the $\sqrt{n}$ regret of $\cover$ becomes appealing. 
+\bluet{This discussion indicates that $\ftl$'s poor worst-case performance occurs primarily on carefully constructed adversarial sequences, while achieving near-optimal performance on a broad class of naturally occurring stochastic processes.}"
+\end{enumerate}
+Regarding real-world experiments, while we acknowledge this would strengthen the empirical evaluation, our current experimental section focuses on demonstrating the theoretical predictions across different sequence types (i.i.d., adversarial constructions, loss-based sequences) to validate the algorithmic behavior. The healthcare results in \cite{bastani2021mostly} provide complementary real-world evidence for FTL's practical effectiveness in related settings. \textcolor{red}{Nevertheless, we have strengthened our experiments section by adding more results on settings beyond binary prediction such as online convex optimization, showing the empirical utility of FTL in a more complex setting beyond binary prediction, as well as the positive performance of SMART in adapting to the sequence in this setting.}
+
+\item \emph{The paper uses the term instance-optimal a lot to describe their results, but it’s not clear to me that the results can be considered instance-optimal since, as mentioned on page 6, the guarantees are against a worst-case regret bound for $\wcalg$ rather than its performance on the instance. I think it’s an important distinction.
+}
+
+{\bf Response:} We thank the reviewer for raising this important point. Indeed, we currently have a brief discussion on this in the current manuscript after Definition 2, contrasting this definition of instance-optimality from that presented in Definition 1, in which the exact performance of the worst-case algorithm is required to be matched up to a multiplicative factor (as opposed to a worst-case upper bound on it). We would like to point out three salient points: 1) In the binary prediction case, our algorithm achieves the strict characterization of instance-optimality in Definition 1; 2) This is also the case in which $\wcalg$ is the true minmax algorithm, which is an equalizer (i.e. achieving equal loss over all sequences); and 3) While we are not able to compete with exactly $\Reg(\wcalg, \ell^n)$ we are able to compete with a sequence-dependent upper bound $g(\ell^n)$ that adapts to ``easy" sequences: this is present in Section 8. The discussion on these distinctions after Definition  2 now reads:
+
+``We note that Definition 2 is an extension of the definition of instance-optimality for the binary setting (Definition 1) since in the binary setting, the worst-case regret $g(n) = \Reg(\cover,y_1^n) = \sqrt{\frac{n}{2\pi}}(1+o(1))$.
+While strictly speaking the above guarantee is not truly instance-optimal in that we are comparing against a worst-case regret bound $g(n)$ for $\wcalg$ rather than its performance on the instance $\ell^n$, the two are the same if $\wcalg$ is minimax optimal and hence attaining equal regret on all loss sequences (as with the minmax algorithm $\cover$ for binary prediction). \bluet{It is interesting to define (and achieve) instance-optimality for a ``path" dependent worst-case bound; in Section 8, we devise an algorithm that achieves a guarantee of the form $\Reg(\alg,\ell^n)\leq \gamma_n \min\{\Reg(\ftl,\ell^n),g(\ell^n)\}$, where $g(\ell^n)$ captures a certain measure of ``easiness" of the sequence $\ell^n$.}"
+
+
+\item \emph{An overview of the proof of theorem 3 would be helpful.}
+
+{\bf Response.} We thank the reviewer for this suggestion. We note that Section 6 provides a detailed overview of the proof approach for Theorem 3, including the key steps: (1) reformulating the competitive ratio problem in terms of achievable loss functions, (2) applying Cover's characterization theorem for binary prediction, (3) using the balance condition to derive necessary constraints, and (4) analyzing uniform random walks to compute the asymptotic competitive ratio.
+To improve clarity, we have added the following brief high-level proof overview immediately after stating Theorem 3 that summarizes the main proof strategy before diving into the technical details in Section 6:
+
+``\bluet{The proof of Theorem 3 uses Cover's characterization of achievable loss functions in binary prediction~\cite{Cover1966}. Any $\gamma$-competitive algorithm must satisfy a certain balance condition when applied to random sequences---we show this forces $\gamma \ge 1.4335$ by analyzing the expected performance on uniform random walks and computing the resulting integral constraints.}"
+
+\item \emph{Similar to how there are stronger lower bounds for deterministic algorithms for ski-rental than for randomized algorithms, it would be nice to show some lower bound for any algorithm that performs (potentially multiples) deterministic switches between the two algorithms.}
+
+{\bf Response.} We thank the reviewer for this interesting suggestion. We note that our lower bound of 1.43 applies to all algorithms, including those that perform multiple deterministic switches between FTL and $\wcalg$.
+As mentioned in Remark 1, we already have bounds for restricted classes: the ski-rental lower bound of $e/(e-1) \approx 1.58$ applies to monotone mixing policies (single-switch algorithms), while deterministic single-switch policies are bounded below by $2$. However, the question of tight lower bounds for algorithms with exactly $k$ deterministic switches is intriguing---to our knowledge, this is not fully resolved even in the classical ski-rental literature.
+Developing such refined bounds would require extending our proof techniques beyond Cover's characterization theorem to handle the more complex strategy spaces. We believe this represents an interesting direction for future work.
+
+
+
+\item  \emph{I don’t follow the argument for why any corralling algorithm must suffer $O(\text{poly}(n))$ regret. “results in the combined policy”: how is this combined policy defined? A few sentences after that, it says “achieving a constant factor guarantee with respect to the minimum of the two losses does not translate to a constant factor guarantee with respect to the minimum of the two regrets.” Isn’t the following a proof of the opposite: for any instance $y$, 
+\begin{align}
+    \text{Reg}(\text{ALG}, y) &= L(\text{ALG}, y) - L(a^*, y) \nonumber \\
+   &\le \alpha \min(\text{Loss}_1, \text{Loss}_2) - L(a^*, y) \label{eq:AddRegret}\\
+    &\le \alpha (\min(\text{Loss}_1, \text{Loss}_2) - L(a^*, y))  \label{eq:LStarge0}\\
+    &= \alpha \min(\text{Regret}_1, \text{Regret}_2)? \nonumber
+\end{align}}
+
+{\bf Response.} We apologize for our lack of clarity here. The combined policy here is a meta-algorithm (such as the exponential weights algorithm) that receives ``advice" from the two algorithms $\ftl$ and $\cover$ in the form of the actions $a_t^{\ftl}$ and $a_t^{\cover}$ and plays an action taking into account the history of the sequence and the losses accumulated thus far. For example, the exponential weights algorithm chooses the $\ftl$ action with probability proportional to $\exp\left(-\eta L_t^{\ftl}\right)$ where $L_t^{\ftl}$ is the loss accumulated by $\ftl$ so far and $\eta$ is a learning-rate parameter. 
+
+In the above line of equations, an additional worst-case regret term needs to be added to~\eqref{eq:AddRegret} in order to be accurate: any corralling policy achieves the minimum of the two loss plus an additional overhead of the regret. This additive overhead is often $\sqrt{n}$ (such as in the exponential weights case), which far supercedes $\min\{\Reg(\ftl,y^n), \Reg(\cover, y^n)\}$ which is often $\Theta(1)$. We thank the reviewer for pushing us to be more precise: we added the following line in the part of the manuscript discussing corralling policies:
+
+``With high probability on any such sequence we have small $\Reg(\ftl,y^n)=O(1)$ and yet high loss $L_n(a^*,y^n)=\Theta(n)$; now any corralling algorithm (even a small loss one) must suffer $O(\text{poly}(n))$ regret, and hence $\omega(1)$ competitive ratio---\textcolor{blue}{the final regret guarantee of 
+\[
+\min\{\Reg(\ftl, y^n), \Reg(\cover,y^n)\} + Reg(\alg^{\text{corralling}}, y^n)
+\]
+is often dominated by the second term which can scale very differently from the first term}."
+
+\end{enumerate}
+
+Responses to other comments:
+
+\begin{enumerate}
+    \item \emph{There is a connection between the best-of-both world guarantees of this paper and the consistency/robustness guarantees in the area of algorithms with predictions that could be discussed. At each round, the action suggested by FTL can be seen as a prediction. In algorithms with predictions, the goal is to simultaneously compete against the algorithm the follows the prediction (consistency guarantees) and an algorithm with worst-case guarantees (robustness guarantees). Online learning has also been studied in the framework of algorithm with predictions}
+
+    {\bf Response.} \textcolor{red}{TODO.}
+
+    \item \emph{Page 12: “this suggests that multiple switching can help get a better competitive ratio”, I think this should say “could potentially” instead of “can”.}
+
+    {\bf Response.} Thank you, corrected. 
+
+    \item \emph{Page 17: define notation Majority$\{y, \epsilon\}$}.
+
+    {\bf Response.} Thank you, we added the following definition: ``$\dotsc$ \bluet{(for a binary sequence $z^n$, Majority$\{z^n\} = 0$ if $\sum_{i=1}^n z_i < n/2$, and 1 otherwise)} $\dotsc$"
+
+    \item \emph{Page 22: “SMART closely tracks the better of the two algorithms”, too strong of a claim given the plots} 
+
+    {\bf Response.} Thank you. We rephrased for clarity with: ``\textcolor{blue}{$\ftl$ and $\bob$ perform similarly, both achieving substantially lower regret than $\cover$ for $p<1/2$}''.
+
+    \item \emph{the plots are hard to read, I suggest making everything bigger (especially font sizes, but also dots and lines).}
+
+    {\bf Response.} Thank you, we have adjusted the plots to be larger and more readable. 
+
+
+    \item \emph{“many worst-case algorithms can […] and achieve regret guarantees that are a function of the difficulty of the instance”, give examples.}
+
+    {\bf Response.} Thank you. Before delving into the ``small-loss" bounds considered in Section 8, we added citations to related line of work in online learning. The line in question now reads: 
+    ``However, many worst-case algorithms can still adapt to the instance $\ell^n$ and achieve regret guarantees that are a function of the ``difficulty" of the instance $\ell^n$ \bluet{\cite{Cesa-Bianchi--Lugosi2006, de2014follow, koolen2015second, luo2015achieving, orabona2018scale}}."
+
+    \item \emph{Theorem 5: introduce and formalize the expert setting (e.g. notation $L_{tj}$ is not defined).}
+
+    {\bf Response.} Thank you, we have added the following text right before Theorem 5 to introduce the experts setting:
+
+    ``\bluet{In this section, we address this problem for the special online learning setting of \emph{prediction with expert advice}. In this case, there are $m$ ``experts", each of which chooses an action to take at each time step. The objective of the decision-maker is to aggregate these potentially-different actions in a way so as to achieve total loss approaching the loss of the best fixed expert in hindsight at the end of the time horizon, without knowing the identity of this expert which will be optimal in the future. In this setting, known strategies (such as variants of the exponential weights algorithm) are known to achieve regret that scales with $L^*$ (typically $O(\sqrt{L^*\log m}$ \cite[Chapter 2]{Cesa-Bianchi--Lugosi2006}). We now turn our attention to the question of how to use such adaptive algorithms with sequence-dependent guarantees in place of $\wcalg$ in SMART.}"
+
+    Moreover, we have added the following to the text of Theorem 5 to clarify definitions: 
+
+    ``Let $\wcalg$ have small loss regret guarantees satisfying $\Reg(\wcalg, \ell^n) \le g(L^*)$ 
+    for any $\ell^n$ where \bluet{$L^* = \min_{j \in [m]} \sum_{t=1}^n \ell_{tj}$}, i.e. the loss achieved by the best expert in hindsight $\dotsc$"
+    
+    \item \emph{Theorem 5 and Corollary 4: discuss the bounds obtained and how desirable they are.}
+
+    {\bf Response.} Thank you. We have added the following paragraph after the proof of Corollary 4 discussing the obtained bounds. 
+
+    ``\bluet{Our small-loss bounds are comparable to existing results in the literature while maintaining the desired instance-optimal flavor. The bound in Corollary 4 gracefully interpolates between $O(1)$ regret when $\ftl$ performs well and $O\left(\sqrt{L^*\log m}\right)$ when the instance difficulty $L^*$ is the limiting factor; thereby in the latter case matching the scaling of small-loss Hedge and other related algorithms, though with different constants. While we lose the careful $e/(e-1)$ competitive ratio control from our main result (due to the guess-and-double approach across epochs), we retain the fundamental property that SMART adapts to the easier of $\ftl$ or the small-loss regime. This represents a natural extension of our instance-optimality framework to settings where the algorithm can exploit not just $\ftl$'s good performance, but also the intrinsic difficulty of the sequence as measured by $L^*$.}"
+
+    
+\end{enumerate}
+
+Typos: We are grateful to the reviewer for their careful spotting of the typos, all of which we have now corrected.
+\textcolor{red}{[TODO] Fix the citation bracketing}
+
+
+Responses to comments/questions raised in ``Additional Questions":
+
+\begin{enumerate}
+    \item \emph{The introduction lacks a discussion of applications that would benefit from algorithms with best of both worlds guarantees. Strategic attacks are also used to motivate the problem, I suggest adding a concrete example application with strategic attacks.}
+
+    {\bf Response.} We thank the reviewer for this suggestion to strengthen the motivational examples. We have enhanced the introduction with more detailed discussion of the healthcare application from Bastani et al.~\cite{bastani2021mostly}, which provides a concrete example where best-of-both-worlds guarantees are valuable in the domain of healthcare intervention---a good algorithm here must perform well on real patient data (which tends to be very amenable to FTL-like approaches), while also remaining alert and robust to any distributional changes given the high-stakes application domain. 
+    
+    Regarding strategic attacks, we added another example in the domain of online advertising in the introduction:
+
+    ``\textcolor{blue}{In pay-per-click advertising, platforms must select which ads to display for each user, learning from historical click patterns to optimize revenue. Under normal conditions, simple algorithms that follow historical success patterns work well since user behavior tends to be relatively consistent. However, click fraud introduces adversarial dynamics: malicious actors deploy automated systems to systematically manipulate click patterns. For instance, competitors might use bots to repeatedly search for and ignore a rival's advertisements, artificially making those ads appear ineffective to the platform's learning algorithm. In such environments, algorithms must perform well under typical user interactions while remaining robust against coordinated manipulation campaigns. This exemplifies the practical need for approaches that can leverage the efficiency of simple, data-driven methods during normal operations while maintaining defensive capabilities against strategic attacks.}
+
+
+\end{enumerate}
+
+\bibliographystyle{IEEEtran}
+\bibliography{bobw.bib}
+
+\end{document}

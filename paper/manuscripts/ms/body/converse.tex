@@ -1,0 +1,379 @@
+\section{Instance Optimal Online Learning: Converse} \label{sec:converse} 
+In this section, we investigate fundamental limits on the instance-optimal regret guarantees achievable by \emph{any} algorithm. More precisely, in the setting of binary prediction, we ask what is the smallest value of $\gamma_n$ satisfying
+\begin{align} \label{eq:LBQues}
+    \Reg(\alg, y^n) &\le \g_n \min\{\Reg(\ftl,y^n),\Reg(\Cover,y^n)\}
+    = \g_n \min\left\{\tfrac12 c(y^{n-1}), f_n\right\}
+\end{align}
+for all $y^n$, where $f_n \defeq  \Reg(\Cover,y^n) = \sqrt{\frac{n}{2 \pi}} (1+o(1))$. 
+We show the following lower bound.
+
+\begin{theorem}[Lower bound on the competitive ratio] \label{thm:LowerBdCR}
+    \[
+    \lim_{n \to \infty} \g_n \ge \Big(1-e^{-1/\pi}+2Q\big(\sqrt{2/\pi}\big)\Big)^{-1} \approx 1.4335
+    \]
+    where the $Q(\cdot)$ function is $Q(x) \defeq \frac{1}{\sqrt{2\pi}}\int_{x}^{\infty} e^{-t^2/2}$. 
+\end{theorem}
+
+Since binary prediction is a specific online learning problem, this also yields a fundamental lower bound for instance-optimality for general online learning.
+Note particularly that $\g_n > 1$, implying that $(1+o(1))\min\{\Reg(\ftl),\Reg(\wcalg)\}$ regret is not possible to achieve. Thus, there is an inevitable multiplicative factor that must be paid in order to achieve an instance-optimal regret guarantee.
+
+% \begin{table*}\label{table:RegComparision}
+% \centering
+% \caption{Regret guarantees in best of both worlds paradigms}
+% \begin{tabular}{|c|c|}
+%   \hline
+%   Problem Setting & Regret Guarantee \\
+%   \hline
+%    Experts, $C$ corruptions, $\Delta$ difference between top two actions  & $\frac{\log m}{\Delta} + \sqrt{\frac{C \log m}{\Delta}}$~\cite{Amir--Attias--Koren--Mansour--Livni2020, Ito2021} \\
+%   Bandit, $C$ corruptions, $\Delta$ difference between top two actions  &  $\frac{m\log n}{\Delta} + \sqrt{\frac{C m\log n}{\Delta}}$~\cite{Ito2021,Lykouris--Mirrokni--PaesLeme2018}\\
+%   Combining FTL and small-loss algorithm & $\min\{\Reg(\ftl,\ell^n), \sqrt{L^* \log m}$\}~\cite{de2014follow}\\ 
+%    This paper &  $\min\{\Reg(\ftl,\ell^n), \sqrt{L^* \log m}\}$ \\
+%     &  $\min\{\Reg(\ftl,\ell^n), \max_{\ell^n} \Reg(\wcalg, \ell^n)\}$ \\
+%   \hline
+% \end{tabular}
+% \end{table*}
+An equivalent way to state~\cref{eq:LBQues} is to find the smallest $\g_n$ for which a predictor $\{a_t(y^{t-1})\}_{t=1}^n$ satisfies for all $y\in\{0,1\}^n$
+\begin{align}\label{eq:InstanceOptLossFn}
+   \textstyle\sum_{t=1}^n |a_t(y^{t-1})-y_t| 
+   &\le \g_n \min\big\{\tfrac12 c(y^{n-1}), f_n\big\} + \min\big\{\textstyle\sum_{t=1}^n y_i, n-\textstyle\sum_{t=1}^n y_i\big\}. 
+\end{align}
+In order to establish the values of $\gamma_n$ for which the loss function in the right hand side of~\cref{eq:InstanceOptLossFn} are achievable, we utilize the following result of~\cite{Cover1966}, which provides an exact characterization of the set of \emph{all} loss functions achievable in binary prediction. Formally, we say a function $\phi : \{0,1\}^n \to \mathbb{R}^+$ is \emph{achievable} in binary prediction if there exists a predictor/strategy $a_t: y^{t-1} \mapsto [0,1]$ that ensures $\sum_{t=1}^n |a_t(y^{t-1})-y_t| = \phi(y^n)\quad,\,\forall\,y^n\in\{0,1\}^n$. 
+Then, we have the following characterization.
+
+\begin{theorem}\emph{\bf[From~\cite{Cover1966}]}  
+\label{thm:CoverAchievableFn}
+Let $\e_{t}^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d. For $\phi$ to be achievable, it must satisfy the following:
+\begin{itemize}[nosep]
+    \item Balance:  $\E[\phi(\{\epsilon^n_t\}_{t\in[n]})] = \frac{n}{2}$ . 
+    \item Stability: Let $\phi_t(y^t) \defeq \E[\phi(y^{t}\e_{t+1}^n)]$; then $|\phi_t(y^{t-1}0)-\phi_t(y^{t-1}1)| \le 1\,\forall\,y^t\in\{0,1\}^t$. 
+    \end{itemize}
+    Further any $\phi$ satisfying the above is realized by predictor  $a_t(y^{t-1}) = \frac{1+\phi_t(y^{t-1}0)-\phi_t(y^{t-1}1)}{2}
+    $.
+\end{theorem}
+
+An illuminating question is whether the loss of the hindsight-optimal action, i.e. $\phi(y^n) = \min\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\}$ is achievable, which is answered in the negative by Cover's result. An immediate corollary of~\cref{thm:CoverAchievableFn} gives the \emph{exact} minimax optimal algorithm for binary prediction. 
+
+\begin{corollary} \label{cor:BinPredOptReg}
+    The loss function $y^n \mapsto \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\}$ violates the balance condition and therefore is not achievable. However, the function 
+    \begin{align}
+    \label{eq:CoverLossFn}
+    y^n \mapsto \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\} + \frac{\E|\sum_{t=1}^n Z_t|}{2}
+    \end{align}
+    where $Z^n \sim \Unif\{+1,-1\}$ i.i.d. is achievable. The predictor that achieves~\cref{eq:CoverLossFn} chooses $\widehat{Y}_t$ (equivalently, $a_t = \mathsf{P}[\widehat{Y_t} = 1]$) as
+        $\widehat{Y}_t = \Majority\{y^{t-1},\e_{t+1}^n\}$
+    where $\e_{t+1}^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d. \bluet{(for a binary sequence $z^n$, Majority$\{z^n\} = 0$ if $\sum_{i=1}^n z_i < n/2$, and 1 otherwise)}, with ties broken uniformly at random. Finally, Cover's predictor is \emph{minmax optimal} in the sense that for any other predictor $\alg$, 
+    \[
+    \max_{y^n} \Reg(\alg, y^n) \ge \max_{y^n} \Reg(\Cover, y^n) = \sqrt{\frac{n}{2\pi}}(1+o(1))
+    \]
+\end{corollary}
+
+
+Returning to our setting, from the balance condition in~\cref{thm:CoverAchievableFn}, for $\epsilon^n \sim \mathrm{Bern}(1/2)$ i.i.d. 
+\begin{align*}
+\g_n \E\big[\min\big\{\tfrac12 c(\e^{n-1}), f_n\big\}\big] 
++ \E\big[ \min\big\{\textstyle\sum_{t=1}^n \e_t, n-\textstyle\sum_{t=1}^n \e_t\big\}\big] \ge \frac{n}{2}.
+\end{align*}
+for the function in~\eqref{eq:InstanceOptLossFn} to be achievable. Using the definition of $f_n$, 
+\begin{align*}
+    \g_n \ge \frac{f_n}{\E\left[ \min\left\{\tfrac12 c(\e^{n-1}), f_n\right\}\right]} =  \frac{2f_n}{\E\left[\min\left\{c(\e^{n-1}), 2f_n\right\}]\right]}.
+\end{align*}
+The above bound immediately yields that $\g_n \ge 1$ as expected. We can further sharply characterize the asymptotics of $\g_n$, using the properties of uniform random walks. \\
+
+%\input{body/CoverResult}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Proof of Theorem~\ref{thm:LowerBdCR}}
+    Consider a large even $n$. We then have for horizon size $n+1$, $\Reg(\ftl,y^{n+1}) = \frac{c(y^n)}{2}$.  Moreover, $\Reg(\Cover,y^{n+1}) = f_{n+1}$. Let\footnote{Note that $k$ in this definition does not count the origin as a line crossing.}
+    \begin{align}\label{eq:PnkDefn}
+        p_{n,k} \defeq \Prob[c(\e^{n}) = k+1].
+    \end{align}
+    We then have,
+    \begin{align}
+     \E[\min\{c(\e^n), 2f_{n+1}\}] &= \sum_{k=1}^n \min\{k, 2f_{n+1}\} \Pr[c(\e^n) = k]\nonumber\\
+        &= \sum_{k=1}^n \min\{k, 2f_{n+1}\} p_{n,k-1} \nonumber\\
+        &= \sum_{k=0}^n \min\{k+1,2f_{n+1}\}p_{n,k} \nonumber\\
+        &= \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} (k+1)p_{n,k} + 2f_{n+1} \Prob[c(\e^n) \ge 2f_{n+1}] \nonumber\\
+        &= \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} (k+1)p_{n,k} + 2f_{n+1} \Prob[c(\e^n) \ge 2f_{n+1}] + \Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor] \nonumber\\
+        &=  \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k} + 2f_{n+1} \left(1-\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}\right) +  \Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor] \label{eq:ConvSplit}
+    \end{align} 
+    Upon dividing~\cref{eq:ConvSplit} by $2f_{n+1}$, we get 
+    \begin{align} \label{eq:ConvThreeTerms}
+      \frac{\E[\min\{c(\e^n), 2f_{n+1}\}]}{2f_{n+1}}  = \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k}}{2f_{n+1}} +  \left(1-\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}\right) +  \frac{\Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor]}{2f_{n+1}}.
+    \end{align}
+    Note that the third term vanishes since $f_{n+1} \to \infty$ and $0 \le \Prob[\cdot] \le 1$. We will now separately evaluate the first two terms in~\cref{eq:ConvThreeTerms}. To do this, we require an auxiliary lemma, the proof of which is provided later.
+    \begin{lemma}\label{lem:pnkasymptotics}
+        If $k \le C\sqrt{n}$ for an absolute constant $C$, then for large enough $n$ ($n \ge 32C^2$ suffices) we have
+        \begin{align}\label{eq:pnkDensityApprox}
+            e^{-\frac{16C^3}{\sqrt{n}}} \le \frac{p_{n,k}}{\sqrt{\frac{2}{n\pi}}e^{-k^2/2n}} \le \sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} e^{\frac{16C^3}{\sqrt{n}}}.
+        \end{align}
+        That is,
+        \[
+        p_{n,k} = \sqrt{\frac{2}{n\pi}}e^{-k^2/2n} (1+o(1)).
+        \]
+    \end{lemma}
+    We now evaluate the first term in~\cref{eq:ConvThreeTerms}. Since $\lfloor 2f_{n+1} \rfloor - 1 \le 2\sqrt{n}$, we invoke~\cref{lem:pnkasymptotics} to evaluate 
+    \begin{align}
+        \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k} &=    (1+o(1))\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k \sqrt{\frac{2}{n\pi}} e^{-\frac{k^2}{2n}} \\
+        &= (1+o(1)) \sqrt{\frac{2}{n\pi}} \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} \label{eq:PartialSum}
+    \end{align}
+    Now, we note that since $x \mapsto xe^{-\frac{x^2}{2n}}$ is increasing on $(0,\lfloor 2f_{n+1} \rfloor-1)$ %because \lfloor 2f_{n+1} \rfloor-1 \le \sqrt{n} 
+    , by a Riemann approximation, we have that 
+    \begin{align} \label{eq:RiemannApprox}
+    \int_{0}^{2f_{n+1}-2} x e^{-\frac{x^2}{2n}} dx - 1 \le\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} \le \int_{0}^{2f_{n+1}} x e^{-\frac{x^2}{2n}} dx 
+    \end{align}
+    and evaluating
+    \begin{align}
+        \int_{0}^{2f_{n+1}} x e^{-\frac{x^2}{2n}} dx &= \frac{1}{2} \int_{0}^{4f_{n+1}^2} e^{-\frac{t}{2n}} dt = n\left(1-e^{-\frac{4f_{n+1}^2}{2n}}\right) = n\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right).
+    \end{align}
+    Evaluating the lower bound in~\cref{eq:RiemannApprox} analogously we have 
+    \begin{align}\label{eq:ExptZCLowRegime}
+        \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} = (1+o(1)) n\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right)
+    \end{align}
+    and therefore from~\cref{eq:PartialSum}, 
+    \begin{align}
+        \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k p_{n,k}}{2f_{n+1}} &= (1+o(1))\frac{\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right) n \sqrt{\frac{2}{n \pi}}}{\sqrt{\frac{2(n+1)}{\pi}}} \nonumber\\
+      &= (1+o(1))\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right) \label{eq:LittleOPartialSum}
+    \end{align}
+    and therefore, from~\cref{eq:LittleOPartialSum}, we have that 
+    \begin{align}\label{eq:LimFirstTermConverse}
+        \lim_{n \to \infty}  \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k p_{n,k}}{2f_{n+1}}  = 1-e^{-\frac{1}{\pi}}.
+    \end{align}
+    We now address the second term in~\cref{eq:ConvThreeTerms} by invoking~\cref{lem:pnkasymptotics} and noting that 
+    \begin{align}
+       \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k} &= (1+o(1)) \sqrt{\frac{2}{n \pi}}\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} e^{-\frac{k^2}{2n}} \nonumber\\
+       &\stackrel{(a)}{=} (1+o(1)) \int_{0}^{2f_{n+1}} e^{-\frac{x^2}{2n}} dx \nonumber\\
+       &= (1+o(1)) \sqrt{\frac{2}{\pi}} \int_{0}^{\sqrt{\frac{2}{\pi}}} e^{-\frac{t^2}{2}} dt \nonumber\\
+       &= \frac{1}{\sqrt{2\pi}} \int_{-\sqrt{\frac{2}{\pi}}}^{\sqrt{\frac{2}{\pi}}} e^{-\frac{t^2}{2}} dt \nonumber \\
+        &= \Prob\left(-\sqrt{\frac{2}{\pi}} \le X \le \sqrt{\frac{2}{\pi}}\right) \label{eq:StandardNormalConfInt}
+    \end{align}
+    where in~\cref{eq:StandardNormalConfInt} $X \sim \mathcal{N}(0,1)$. Then, 
+    \begin{align}
+        1- \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}  &\to 1-\Prob\left(-\sqrt{\frac{2}{\pi}} \le X \le \sqrt{\frac{2}{\pi}}\right) = 2Q\left(\sqrt{\frac{2}{\pi}}\right) \label{eq:LimSecTermConverse}. 
+    \end{align}
+    Substituting~\cref{eq:LimFirstTermConverse} and~\cref{eq:LimSecTermConverse} in~\cref{eq:ConvThreeTerms} yields that 
+    \begin{align}
+     \frac{1}{\g_n} = \frac{\E[\min\{c(\e^n), 2f_{n+1}\}]}{2f_{n+1}} \to 1-e^{-\frac{1}{\pi}} + 2Q\left(\sqrt{\frac{2}{\pi}}\right)
+    \end{align}
+    and therefore 
+    \begin{align}\label{eq:finalGammaLimit}
+        \g_n \to \frac{1}{1-e^{-\frac{1}{\pi}} + 2Q\left(\sqrt{\frac{2}{\pi}}\right)}. 
+    \end{align}
+
+
+\subsection{Proof of Lemma \ref{lem:pnkasymptotics}}
+    We first note the following. 
+    \begin{proposition}[\cite{Feller1991}]\label{prop:pnkexact}
+        \[
+        p_{n,k} = \frac{1}{2^{n-k}} \binom{n-k}{n/2}.
+        \]
+    \end{proposition}
+    Therefore, 
+    \[
+    \frac{p_{n,k}2^n}{2^k} = \binom{n-k}{n/2} = \frac{(n-k)!}{\frac{n}{2}!\left(\frac{n}{2}-k\right)!}.
+    \]
+    We now use the Stirling approximation:
+    \begin{align}\label{eq:stirling}
+        \sqrt{2\pi m} \left(\frac{m}{e}\right)^m e^{\frac{1}{12m+1}} \le m! \le     \sqrt{2\pi m} \left(\frac{m}{e}\right)^m e^{\frac{1}{12m}}.
+    \end{align}
+    Using~\cref{eq:stirling} we have 
+    \begin{align}
+         \frac{p_{n,k}2^n}{2^k} &\le \frac{\sqrt{2\pi(n-k)}}{\sqrt{2\pi(n/2)} \sqrt{2\pi(n/2-k)}} \cdot \frac{(n-k)^{n-k}}{(n/2)^{n/2} (n/2-k)^{n/2-k}} \nonumber\\
+         &\qquad\qquad\qquad\qquad\qquad\qquad\cdot \exp{\left(\frac{1}{12(n-k)}-\frac{1}{6n+1}-\frac{1}{6n-12k+1}\right)} \nonumber\\
+         &= \sqrt{\frac{2}{n\pi}} \sqrt{\frac{n-k}{n-2k}} \frac{(n-k)^{n-k}2^{n-k}}{n^{n/2}(n-2k)^{n/2-k}}\cdot\exp{\left(\frac{1}{12n-k}\right)} \nonumber\\
+         &\stackrel{(a)}{\le} \sqrt{\frac{2}{n\pi}} \cdot 2^{n-k} \cdot\frac{(n-k)^{n-k}}{n^{n/2}(n-2k)^{n/2-k}} \exp\left(\frac{1}{12n-k}\right) \cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+         &=  \sqrt{\frac{2}{n\pi}} \cdot 2^{n-k} \underbrace{\frac{(1-k/n)^{n-k}}{(1-2k/n)^{n/2-k}}}_{=: T}\exp\left(\frac{1}{12n-k}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}}.  \label{eq:SubstituteT}
+    \end{align}
+    We now analyze the term $T$ in~\cref{eq:SubstituteT} in more detail. 
+    \begin{proposition}\label{prop:TaylorSeriesT}
+    \begin{align} \label{eq:LnTBds}
+            -\frac{k^2}{2n^2} - c\frac{k^3}{n^2} \le \ln T \le  -\frac{k^2}{2n^2} + c\frac{k^3}{n^2}
+    \end{align}
+    where $c \le 15$. 
+    \end{proposition}
+    \proof{\bf Proof of~\cref{prop:TaylorSeriesT}.}
+        By Taylor theorem, we have 
+        \begin{align}\label{eq:lnXBds}
+            \ln(1-x) = -x - \frac{x^2}{2} - \frac{x^3}{3(1-\mu)^2} \text{ for } \mu \in (0,x).
+        \end{align}
+        Therefore, for $k \le C\sqrt{n}$ and $n \ge 16C^2$ we have 
+        \begin{align}
+            \ln\left(1-\frac{k}{n}\right) &= -\frac{k}{n} - \frac{k^2}{2n^2} - \frac{\alpha_1k^3}{n^3} \label{eq:OneTermT}\\
+            \ln\left(1-\frac{2k}{n}\right) &= -\frac{2k}{n} - \frac{2k^2}{2n^2} - \frac{\alpha_2k^3}{n^3} \label{eq:SecondTermT}
+        \end{align}
+        for $\alpha_1,\alpha_2 \in \Big(\frac{1}{3},\frac{8}{3}\Big]$. Evaluating $\ln T$ we have 
+        \begin{align}
+            \ln T &= (n-k)\ln\left(1-\frac{k}{n}\right) - \left(n-\frac{k}{2}\right)\ln\left(1-\frac{2k}{n}\right)  \nonumber\\
+            &\stackrel{(a)}{=} (n-k)\left(-\frac{k}{n} - \frac{k^2}{2n^2} - \frac{\alpha_1k^3}{n^3}\right) - \left(n-\frac{k}{2}\right)\left(-\frac{2k}{n} - \frac{2k^2}{2n^2} - \frac{\alpha_2k^3}{n^3}\right) \nonumber\\
+            &= \left(-\frac{k^2}{2n}+\frac{k^2}{n}+\frac{k^2}{n}-\frac{2k^2}{n}\right)+\left(-\alpha_1+\frac{1}{2}+\frac{\alpha_2}{2}-2\right)\frac{k^3}{n^2}+\left(\alpha_1-\alpha_2\right)\frac{k^4}{n^3} \nonumber\\
+            &= -\frac{k^2}{2n^2} + c_1\frac{k^3}{n^2} + c_2\frac{k^4}{n^3} \label{eq:subc1c2}
+        \end{align}
+        where $(a)$ follows by substituting~\cref{eq:OneTermT} and~\cref{eq:SecondTermT}. Now, since $\frac{k^4}{n^3} \le \frac{k^3}{n^2}$ we have 
+        \begin{align}
+         \ln T  \le  -\frac{k^2}{2n^2} +  (|c_1|+|c_2|)\frac{k^3}{n^2}
+        \end{align}
+        and on the other hand for the same reason 
+        \begin{align}
+            \ln T \ge -\frac{k^2}{2n} - (|c_1|+|c_2|)\frac{k^3}{n^2}
+        \end{align}
+        The proposition follows by noticing $|c_1|+|c_2| \le 15$ by using that $\alpha_1, \alpha_2 \in \left(\frac{1}{3},\frac{8}{3}\right]$.
+    \hfill \Halmos
+    \endproof
+Using~\cref{prop:TaylorSeriesT} in~\cref{eq:SubstituteT} we have the upper bound 
+\begin{align}
+    p_{n,k} &\le \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}+\frac{15k^3}{n^2}\right)\cdot \exp\left(\frac{1}{12n-k}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+    &\stackrel{(a)}{\le} \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}\right)\cdot \exp\left(\frac{16k^3}{n^2}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+    &\stackrel{(b)}{\le}  \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}\right)\cdot \exp\left(\frac{16C^3}{\sqrt{n}}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \label{eq:pnkAsympUB}
+\end{align}
+where $(a)$ uses $\frac{1}{12n-k}+\frac{15k^3}{n^2} \le \frac{16k^3}{n^2}$, and $(b)$ uses the fact that $k \le C\sqrt{n}$, which yields the upper bound in~\cref{eq:pnkDensityApprox}. The lower bound follows analogously by the Stirling approximation~\cref{eq:stirling} and~\cref{prop:TaylorSeriesT}.
+
+
+
+% \begin{proof}
+%     Consider a large even $n$. We then have for horizon size $n+1$, $\Reg(\ftl,y^{n+1}) = \frac{c(y^n)}{2}$.  Moreover, $\Reg(\Cover,y^{n+1}) = f_{n+1}$. Let\footnote{Note that $k$ in this definition does not counting the origin as as a line crossing.}
+%     \begin{align}\label{eq:PnkDefn}
+%         p_{n,k} \defeq \Prob[c(\e^{n}) = k+1].
+%     \end{align}
+%     We then have,
+%     \begin{align}
+%      \E[\min\{c(\e^n), 2f_{n+1}\}] &= \sum_{k=1}^n \min\{k, 2f_{n+1}\} \Pr[c(\e^n) = k]\nonumber\\
+%         &= \sum_{k=1}^n \min\{k, 2f_{n+1}\} p_{n,k-1} \nonumber\\
+%         &= \sum_{k=0}^n \min\{k+1,2f_{n+1}\}p_{n,k} \nonumber\\
+%         &= \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} (k+1)p_{n,k} + 2f_{n+1} \Prob[c(\e^n) \ge 2f_{n+1}] \nonumber\\
+%         &= \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} (k+1)p_{n,k} + 2f_{n+1} \Prob[c(\e^n) \ge 2f_{n+1}] + \Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor] \nonumber\\
+%         &=  \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k} + 2f_{n+1} \left(1-\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}\right) +  \Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor] \label{eq:ConvSplit}
+%     \end{align} 
+%     Upon dividing~\cref{eq:ConvSplit} by $2f_{n+1}$, we get 
+%     \begin{align} \label{eq:ConvThreeTerms}
+%       \frac{\E[\min\{c(\e^n), 2f_{n+1}\}]}{2f_{n+1}}  = \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k}}{2f_{n+1}} +  \left(1-\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}\right) +  \frac{\Prob[c(\e^n) \le \lfloor 2f_{n+1}\rfloor]}{2f_{n+1}}.
+%     \end{align}
+%     Note that the third term vanishes since $f_{n+1} \to \infty$ and $0 \le \Prob[\cdot] \le 1$. We will now separately evaluate the first two terms in~\cref{eq:ConvThreeTerms}. To do this, we require an auxiliary lemma, the proof of which is provided later.
+%     \begin{lemma}\label{lem:pnkasymptotics}
+%         If $k \le C\sqrt{n}$ for an absolute constant $C$, then for large enough $n$ ($n \ge 32C^2$ suffices) we have
+%         \begin{align}\label{eq:pnkDensityApprox}
+%             e^{-\frac{16C^3}{\sqrt{n}}} \le \frac{p_{n,k}}{\sqrt{\frac{2}{n\pi}}e^{-k^2/2n}} \le \sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} e^{\frac{16C^3}{\sqrt{n}}}.
+%         \end{align}
+%         That is,
+%         \[
+%         p_{n,k} = \sqrt{\frac{2}{n\pi}}e^{-k^2/2n} (1+o(1)).
+%         \]
+%     \end{lemma}
+%     We now evaluate the first term in~\cref{eq:ConvThreeTerms}. Since $\lfloor 2f_{n+1} \rfloor - 1 \le 2\sqrt{n}$, we invoke~\cref{lem:pnkasymptotics} to evaluate 
+%     \begin{align}
+%         \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} kp_{n,k} &=    (1+o(1))\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k \sqrt{\frac{2}{n\pi}} e^{-\frac{k^2}{2n}} \\
+%         &= (1+o(1)) \sqrt{\frac{2}{n\pi}} \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} \label{eq:PartialSum}
+%     \end{align}
+%     Now, we note that since $x \mapsto xe^{-\frac{x^2}{2n}}$ is increasing on $(0,\lfloor 2f_{n+1} \rfloor-1)$ %because \lfloor 2f_{n+1} \rfloor-1 \le \sqrt{n} 
+%     , by a Riemann approximation, we have that 
+%     \begin{align} \label{eq:RiemannApprox}
+%     \int_{0}^{2f_{n+1}-2} x e^{-\frac{x^2}{2n}} dx - 1 \le\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} \le \int_{0}^{2f_{n+1}} x e^{-\frac{x^2}{2n}} dx 
+%     \end{align}
+%     and evaluating
+%     \begin{align}
+%         \int_{0}^{2f_{n+1}} x e^{-\frac{x^2}{2n}} dx &= \frac{1}{2} \int_{0}^{4f_{n+1}^2} e^{-\frac{t}{2n}} dt \nonumber\\
+%         &= n\left(1-e^{-\frac{4f_{n+1}^2}{2n}}\right) \nonumber\\
+%         &= n\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right).
+%     \end{align}
+%     Evaluating the lower bound in~\cref{eq:RiemannApprox} analogously we have 
+%     \begin{align}\label{eq:ExptZCLowRegime}
+%         \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k e^{-\frac{k^2}{2n}} = (1+o(1)) n\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right)
+%     \end{align}
+%     and therefore from~\cref{eq:PartialSum}, 
+%     \begin{align}
+%         \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k p_{n,k}}{2f_{n+1}} &= (1+o(1))\frac{\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right) n \sqrt{\frac{2}{n \pi}}}{\sqrt{\frac{2(n+1)}{\pi}}} \nonumber\\
+%       &= (1+o(1))\left(1-e^{-\frac{1}{\pi}(1+o(1))}\right) \label{eq:LittleOPartialSum}
+%     \end{align}
+%     and therefore, from~\cref{eq:LittleOPartialSum}, we have that 
+%     \begin{align}\label{eq:LimFirstTermConverse}
+%         \lim_{n \to \infty}  \frac{\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} k p_{n,k}}{2f_{n+1}}  = 1-e^{-\frac{1}{\pi}}.
+%     \end{align}
+%     We now address the second term in~\cref{eq:ConvThreeTerms} by invoking~\cref{lem:pnkasymptotics} and noting that 
+%     \begin{align}
+%        \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k} &= (1+o(1)) \sqrt{\frac{2}{n \pi}}\sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} e^{-\frac{k^2}{2n}} \nonumber\\
+%        &\stackrel{(a)}{=} (1+o(1)) \int_{0}^{2f_{n+1}} e^{-\frac{x^2}{2n}} dx \nonumber\\
+%        &= (1+o(1)) \sqrt{\frac{2}{\pi}} \int_{0}^{\sqrt{\frac{2}{\pi}}} e^{-\frac{t^2}{2}} dt \nonumber\\
+%        &= \frac{1}{\sqrt{2\pi}} \int_{-\sqrt{\frac{2}{\pi}}}^{\sqrt{\frac{2}{\pi}}} e^{-\frac{t^2}{2}} dt \nonumber \\
+%         &= \Prob\left(-\sqrt{\frac{2}{\pi}} \le X \le \sqrt{\frac{2}{\pi}}\right) \label{eq:StandardNormalConfInt}
+%     \end{align}
+%     where in~\cref{eq:StandardNormalConfInt} $X \sim \mathcal{N}(0,1)$. Then, 
+%     \begin{align}
+%         1- \sum_{k=0}^{\lfloor 2f_{n+1} \rfloor-1} p_{n,k}  &\to 1-\Prob\left(-\sqrt{\frac{2}{\pi}} \le X \le \sqrt{\frac{2}{\pi}}\right) \nonumber\\
+%         &= 2Q\left(\sqrt{\frac{2}{\pi}}\right) \label{eq:LimSecTermConverse}. 
+%     \end{align}
+%     Substituting~\cref{eq:LimFirstTermConverse} and~\cref{eq:LimSecTermConverse} in~\cref{eq:ConvThreeTerms} yields that 
+%     \begin{align}
+%      \frac{1}{\g_n} = \frac{\E[\min\{c(\e^n), 2f_{n+1}\}]}{2f_{n+1}} \to 1-e^{-\frac{1}{\pi}} + 2Q\left(\sqrt{\frac{2}{\pi}}\right)
+%     \end{align}
+%     and therefore 
+%     \begin{align}\label{eq:finalGammaLimit}
+%         \g_n \to \frac{1}{1-e^{-\frac{1}{\pi}} + 2Q\left(\sqrt{\frac{2}{\pi}}\right)}. 
+%     \end{align}
+% \end{proof}
+
+% \begin{proof}[Proof of~\cref{lem:pnkasymptotics}]
+%     We first note the following. 
+%     \begin{proposition}[\cite{Feller1991}]\label{prop:pnkexact}
+%         \[
+%         p_{n,k} = \frac{1}{2^{n-k}} \binom{n-k}{n/2}.
+%         \]
+%     \end{proposition}
+%     Therefore, 
+%     \[
+%     \frac{p_{n,k}2^n}{2^k} = \binom{n-k}{n/2} = \frac{(n-k)!}{\frac{n}{2}!\left(\frac{n}{2}-k\right)!}.
+%     \]
+%     We now use the Stirling approximation:
+%     \begin{align}\label{eq:stirling}
+%         \sqrt{2\pi m} \left(\frac{m}{e}\right)^m e^{\frac{1}{12m+1}} \le m! \le     \sqrt{2\pi m} \left(\frac{m}{e}\right)^m e^{\frac{1}{12m}}.
+%     \end{align}
+%     Using~\cref{eq:stirling} we have 
+%     \begin{align}
+%          \frac{p_{n,k}2^n}{2^k} &\le \frac{\sqrt{2\pi(n-k)}}{\sqrt{2\pi(n/2)} \sqrt{2\pi(n/2-k)}} \cdot \frac{(n-k)^{n-k}}{(n/2)^{n/2} (n/2-k)^{n/2-k}} \cdot \exp{\left(\frac{1}{12(n-k)}-\frac{1}{6n+1}-\frac{1}{6n-12k+1}\right)} \nonumber\\
+%          &= \sqrt{\frac{2}{n\pi}} \sqrt{\frac{n-k}{n-2k}} \frac{(n-k)^{n-k}2^{n-k}}{n^{n/2}(n-2k)^{n/2-k}}\cdot\exp{\left(\frac{1}{12n-k}\right)} \nonumber\\
+%          &\stackrel{(a)}{\le} \sqrt{\frac{2}{n\pi}} \cdot 2^{n-k} \cdot\frac{(n-k)^{n-k}}{n^{n/2}(n-2k)^{n/2-k}} \exp\left(\frac{1}{12n-k}\right) \cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+%          &=  \sqrt{\frac{2}{n\pi}} \cdot 2^{n-k} \underbrace{\frac{(1-k/n)^{n-k}}{(1-2k/n)^{n/2-k}}}_{=: T}\exp\left(\frac{1}{12n-k}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}}.  \label{eq:SubstituteT}
+%     \end{align}
+%     We now analyze the term $T$ in~\cref{eq:SubstituteT} in more detail. 
+%     \begin{proposition}\label{prop:TaylorSeriesT}
+%     \begin{align} \label{eq:LnTBds}
+%             -\frac{k^2}{2n^2} - c\frac{k^3}{n^2} \le \ln T \le  -\frac{k^2}{2n^2} + c\frac{k^3}{n^2}
+%     \end{align}
+%     where $c \le 15$. 
+%     \end{proposition}
+%     \begin{proof}
+%         By Taylor theorem, we have 
+%         \begin{align}\label{eq:lnXBds}
+%             \ln(1-x) = -x - \frac{x^2}{2} - \frac{x^3}{3(1-\mu)^2} \text{ for } \mu \in (0,x).
+%         \end{align}
+%         Therefore, for $k \le C\sqrt{n}$ and $n \ge 16C^2$ we have 
+%         \begin{align}
+%             \ln\left(1-\frac{k}{n}\right) &= -\frac{k}{n} - \frac{k^2}{2n^2} - \frac{\alpha_1k^3}{n^3} \label{eq:OneTermT}\\
+%             \ln\left(1-\frac{2k}{n}\right) &= -\frac{2k}{n} - \frac{2k^2}{2n^2} - \frac{\alpha_2k^3}{n^3} \label{eq:SecondTermT}
+%         \end{align}
+%         for $\alpha_1,\alpha_2 \in \Big(\frac{1}{3},\frac{8}{3}\Big]$. Evaluating $\ln T$ we have 
+%         \begin{align}
+%             \ln T &= (n-k)\ln\left(1-\frac{k}{n}\right) - \left(n-\frac{k}{2}\right)\ln\left(1-\frac{2k}{n}\right)  \nonumber\\
+%             &\stackrel{(a)}{=} (n-k)\left(-\frac{k}{n} - \frac{k^2}{2n^2} - \frac{\alpha_1k^3}{n^3}\right) - \left(n-\frac{k}{2}\right)\left(-\frac{2k}{n} - \frac{2k^2}{2n^2} - \frac{\alpha_2k^3}{n^3}\right) \nonumber\\
+%             &= \left(-\frac{k^2}{2n}+\frac{k^2}{n}+\frac{k^2}{n}-\frac{2k^2}{n}\right)+\left(-\alpha_1+\frac{1}{2}+\frac{\alpha_2}{2}-2\right)\frac{k^3}{n^2}+\left(\alpha_1-\alpha_2\right)\frac{k^4}{n^3} \nonumber\\
+%             &= -\frac{k^2}{2n^2} + c_1\frac{k^3}{n^2} + c_2\frac{k^4}{n^3} \label{eq:subc1c2}
+%         \end{align}
+%         where $(a)$ follows by substituting~\cref{eq:OneTermT} and~\cref{eq:SecondTermT}. Now, since $\frac{k^4}{n^3} \le \frac{k^3}{n^2}$ we have 
+%         \begin{align}\label{eq:LnTUB}
+%          \ln T  \le  -\frac{k^2}{2n^2} +  (|c_1|+|c_2|)\frac{k^3}{n^2}
+%         \end{align}
+%         and on the other hand for the same reason 
+%         \begin{align}\label{eq:LnTUB}
+%             \ln T \ge -\frac{k^2}{2n} - (|c_1|+|c_2|)\frac{k^3}{n^2}
+%         \end{align}
+%         The proposition follows by noticing $|c_1|+|c_2| \le 15$ by using that $\alpha_1, \alpha_2 \in \left(\frac{1}{3},\frac{8}{3}\right]$.
+%     \end{proof}
+% Using~\cref{prop:TaylorSeriesT} in~\cref{eq:SubstituteT} we have the upper bound 
+% \begin{align}
+%     p_{n,k} &\le \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}+\frac{15k^3}{n^2}\right)\cdot \exp\left(\frac{1}{12n-k}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+%     &\stackrel{(a)}{\le} \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}\right)\cdot \exp\left(\frac{16k^3}{n^2}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \nonumber\\
+%     &\stackrel{(b)}{\le}  \sqrt{\frac{2}{n\pi}} \cdot \exp\left(-\frac{k^2}{2n}\right)\cdot \exp\left(\frac{16C^3}{\sqrt{n}}\right)\cdot\sqrt{\frac{1-C/\sqrt{n}}{1-2C/\sqrt{n}}} \label{eq:pnkAsympUB}
+% \end{align}
+% where $(a)$ uses $\frac{1}{12n-k}+\frac{15k^3}{n^2} \le \frac{16k^3}{n^2}$, and $(b)$ uses the fact that $k \le C\sqrt{n}$, which yields the upper bound in~\cref{eq:pnkDensityApprox}. The lower bound follows analogously by the Stirling approximation~\cref{eq:stirling} and~\cref{prop:TaylorSeriesT}.
+
+
+    
+% \end{proof}
+

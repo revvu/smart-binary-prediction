@@ -1,0 +1,269 @@
+\documentclass[twoside]{article}
+
+\usepackage{aistats2024}
+
+
+% \usepackage[round]{natbib}
+% \renewcommand{\bibname}{References}
+% \renewcommand{\bibsection}{\subsubsection*{\bibname}}
+    
+    \usepackage[ruled]{algorithm2e} % For algorithms
+        \renewcommand{\algorithmcfname}{ALGORITHM}
+        \SetAlFnt{\small}
+        \SetAlCapFnt{\small}
+        \SetAlCapNameFnt{\small}
+        \SetAlCapHSkip{0pt} 
+        \IncMargin{-\parindent}
+    
+    
+    \usepackage{xspace,nicefrac,tcolorbox,xifthen,tikz,subcaption,enumitem}
+    \usetikzlibrary{shapes, arrows, positioning}
+    \usepackage{amsthm,dsfont}  
+    \usepackage{epsfig}
+    \usepackage{calc,pstricks,pgf}
+    \allowdisplaybreaks
+    
+    
+    \usepackage{xcolor}
+        \definecolor{myred}{HTML}{ea4335}
+        \definecolor{mygreen}{HTML}{41a756}
+        \definecolor{myblue}{HTML}{4285f4}
+    
+    \usepackage[bb=dsserif]{mathalpha}
+    % \hypersetup{
+    %     colorlinks,
+    %     allcolors=myblue
+    % }
+    
+    \usepackage[capitalize]{cleveref}
+        \newcommand{\creflastconjunction}{, and\nobreakspace} % oxford comma for \Cref{thm1,thm2,thm3}
+    
+    \usepackage{color-edits}
+    % \usepackage[suppress]{color-edits}
+    \addauthor{ab}{myblue}
+    \addauthor{cy}{cyan}
+    \addauthor{sb}{teal}
+    \newcommand{\todo}[1]{\textcolor{myred}{[\textbf{TODO:} #1]}}
+    
+    
+    \newtheorem{theorem}{Theorem}
+    \newtheorem{corollary}{Corollary}
+    \newtheorem{remark}{Remark}
+    \newtheorem{example}{Example}
+    \newtheorem{definition}{Definition}
+    \newtheorem{proposition}{Proposition}
+    \newtheorem{lemma}{Lemma}
+    \newtheorem{metaalg}{Meta-Algorithm}
+    \newtheorem{conjecture}{Conjecture}
+    %\newenvironment{proof}[1][Proof]{\noindent\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+    
+    \newcommand{\Ind}{\mathds{1}}
+    \newcommand{\by}{\mathbf{y}}
+    \newcommand{\bY}{\mathbf{Y}}
+    \newcommand{\bx}{\mathbf{x}}
+    \newcommand{\bX}{\mathbf{X}}
+    \newcommand{\bz}{\mathbf{z}}
+    \newcommand{\bZ}{\mathbf{Z}}
+    \newcommand{\bh}{\mathbf{h}}
+    \newcommand{\bH}{\mathbf{H}}
+    \newcommand{\bA}{\mathbf{A}}
+    \newcommand{\ba}{\mathbf{a}}
+    \newcommand{\bc}{\mathbf{c}}
+    \newcommand{\bC}{\mathbf{C}}
+    \newcommand{\bd}{\mathbf{d}}
+    \newcommand{\bB}{\mathbf{B}}
+    \newcommand{\bb}{\mathbf{b}}
+    \newcommand{\bU}{\mathbf{U}}
+    \newcommand{\bu}{\mathbf{u}}
+    \newcommand{\bV}{\mathbf{V}}
+    \newcommand{\bv}{\mathbf{v}}
+    \newcommand{\CV}{\mathcal{V}}
+    \newcommand{\bw}{\mathbf{w}}
+    \newcommand{\bt}{\mathbf{t}}
+    \newcommand{\bT}{\mathbf{T}}
+    \newcommand{\be}{\mathbf{e}}
+    \newcommand{\bE}{\mathbf{E}}
+    \newcommand{\bR}{\mathbf{R}}
+    \newcommand{\bI}{\mathbf{I}}
+    \newcommand{\bP}{\mathbf{P}}
+    \newcommand{\bL}{\mathbf{L}}
+    \newcommand{\Xc}{\mathcal{X}}
+    \newcommand{\Yc}{\mathcal{Y}}
+    \newcommand{\Wc}{\mathcal{W}}
+    \newcommand{\bg}{\mathbf{g}}
+    \newcommand{\bG}{\mathbf{G}}
+    \newcommand{\Zc}{\mathcal{Z}}
+    \newcommand{\bs}{\mathbf{s}}
+    \newcommand{\bS}{\mathbf{S}}
+    \newcommand{\bl}{\mathbf{l}}
+    \newcommand{\bF}{\mathbf{F}}
+    \newcommand{\Zp}{\mathbb{Z}_p}
+    \newcommand{\ZZ}{\mathbb{Z}}
+    \newcommand{\RR}{\mathbb{R}}
+    \newcommand{\PP}{\mathbb{P}}
+    \newcommand{\Prob}{\mathsf{P}}
+    \newcommand{\Tsnr}{\mathsf{SNR}}
+    \newcommand{\Tinr}{\mathsf{INR}}
+    \newcommand{\Ql}{Q_{\Lambda}}
+    \newcommand{\Mod}{\bmod\Lambda}
+    \newcommand{\Enc}{\mathcal{E}}
+    \newcommand{\Dec}{\mathcal{D}}
+    \newcommand{\Var}{\mathrm{Var}}
+    \newcommand{\csym}{C_{\text{SYM}}}
+    \newcommand{\rsym}{R_{\text{SYM}}}
+    \newcommand{\diag}{\mathop{\mathrm{diag}}}
+    \newcommand{\Span}{\mathop{\mathrm{span}}}
+    \newcommand{\sign}{\mathop{\mathrm{sign}}}
+    \newcommand{\Vol}{\mathrm{Vol}}
+    \newcommand{\Ber}{\mathrm{Bernoulli}}
+    \newcommand{\Bin}{\mathrm{Binomial}}
+    \newcommand{\map}{\theta}
+    \newcommand{\Unif}{\mathrm{Uniform}}
+    \newcommand{\defeq}{\mathrel{\mathop{:}}=}
+    \def\eg{{\it e.g.\ }}
+    \def\etc{{\it etc}}
+    \def\wt{\widetilde}
+    \def\b{\mathbf}
+    \newcommand{\m}{\mathcal}
+    \def\eg{{\it e.g.\ }}
+    \def\etc{{\it etc}}
+    \def\wt{\widetilde}
+    \def\Expt{\mathbb{E}}
+    \def\bpi{\bm{\pi}}
+    \def\ev{{\bf e}}
+    \def\H{\mathrm{H}}
+    \newcommand{\ch}{\textcolor{blue}}
+    \newcommand{\redt}{\textcolor{red}}
+    \newcommand{\bec}{\mathrm{BEC}}
+    \newcommand{\bsc}{\mathrm{BSC}}
+    \newcommand{\indi}{\mathbbm{1}}
+    \newcommand{\Lap}{\mathrm{L}}
+    \newcommand{\g}{\gamma}
+    \newcommand{\e}{\epsilon}
+    \newcommand{\Reg}{\mathrm{Reg}}
+    \newcommand{\pcov}{p^{\mathrm{Cover}}}
+    \newcommand{\pftl}{p^{\mathrm{FTL}}}
+    \newcommand{\pwc}{\overline{p}}
+    \newcommand{\yftl}{\widehat{Y}^{\mathrm{FTL}}}
+    \newcommand{\ycov}{\widehat{Y}^{\mathrm{Cover}}}
+    \newcommand{\maj}{\mathrm{Majority}}
+    \newcommand{\wcalg}{\mathsf{ALG}_{\mathsf{WC}}}
+    \newcommand{\pbobw}{p^{\mathrm{BOBW}}}
+    \newcommand{\ttil}{\widetilde{\tau}}
+    \newcommand{\zlast}{z_{\mathrm{last}}}
+    \newcommand{\pstar}{p^{\mathrm{BOBW*}}}
+    \renewcommand{\thefigure}{\arabic{figure}}
+    \DeclareMathOperator*{\argmin}{\arg\!\min}
+    \DeclareMathOperator*{\argmax}{\arg\!\max}
+    \DeclareMathOperator*{\argsup}{\arg\!\sup}
+    \DeclareMathOperator\E{\mathbb{E}}
+    \newcommand{\ftl}{\mathsf{FTL}}
+    \newcommand{\cover}{\mathsf{Cover}}
+    \newcommand{\hedge}{\mathsf{Hedge}}
+    \newcommand{\Ac}{\mathcal{A}}
+    \newcommand{\alg}{\mathsf{ALG}}
+    \newcommand{\PseudoReg}{\overline{\mathrm{Reg}}}
+    \newcommand{\dist}{\mathcal{D}}
+    \newcommand{\aftl}{a^{\mathsf{FTL}}}
+    \newcommand{\ftlsum}{\Sigma^{\mathsf{FTL}}}
+    \newcommand{\bob}{\mathsf{SMART}}
+    \newcommand{\abob}{a^{\mathsf{SMART}}}
+    \newcommand{\Majority}{\mathsf{Majority}}
+    \newcommand{\Cover}{\mathsf{Cover}}
+    
+    \newcommand{\citewithauthor}[1]{\textcite{#1}}
+    
+    \newenvironment{myproof}[1][Proof.]{%
+        \begin{proof}[#1]%
+    }{%
+        \end{proof}%
+    }
+
+\begin{document}
+
+\twocolumn[
+
+\aistatstitle{The SMART Approach to Instance-Optimal Online Learning}
+
+\aistatsauthor{ Author 1 \And Author 2 \And  Author 3 }
+
+\aistatsaddress{ Institution 1 \And  Institution 2 \And Institution 3 } ]
+
+\begin{abstract}
+ \input{body/abstract}
+\end{abstract}
+
+
+\input{body/introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{body/setting}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{body/ftl}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{body/twoapprox}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{body/skirental}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{body/extensions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{body/converse}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{body/discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\pagebreak 
+
+\bibliographystyle{IEEEtran}
+\bibliography{bobw}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Checklist}
+
+
+% %%% BEGIN INSTRUCTIONS %%%
+ \begin{enumerate}
+
+
+ \item For all models and algorithms presented, check if you include:
+ \begin{enumerate}
+   \item A clear description of the mathematical setting, assumptions, algorithm, and/or model. [Yes]
+   \item An analysis of the properties and complexity (time, space, sample size) of any algorithm. [Yes]
+   \item (Optional) Anonymized source code, with specification of all dependencies, including external libraries. [Not Applicable]
+ \end{enumerate}
+
+
+ \item For any theoretical claim, check if you include:
+ \begin{enumerate}
+   \item Statements of the full set of assumptions of all theoretical results. [Yes]
+   \item Complete proofs of all theoretical results. [Yes]
+   \item Clear explanations of any assumptions. [Yes]     
+ \end{enumerate}
+
+
+ \item For all figures and tables that present empirical results, check if you include:
+ \begin{enumerate}
+   \item The code, data, and instructions needed to reproduce the main experimental results (either in the supplemental material or as a URL). [Yes]
+   \item All the training details (e.g., data splits, hyperparameters, how they were chosen). [Not Applicable]
+         \item A clear definition of the specific measure or statistics and error bars (e.g., with respect to the random seed after running experiments multiple times). [Yes]
+         \item A description of the computing infrastructure used. (e.g., type of GPUs, internal cluster, or cloud provider). [Not Applicable]
+ \end{enumerate}
+
+ \item If you are using existing assets (e.g., code, data, models) or curating/releasing new assets, check if you include:
+ \begin{enumerate}
+   \item Citations of the creator If your work uses existing assets. [Not Applicable]
+   \item The license information of the assets, if applicable. [Not Applicable]
+   \item New assets either in the supplemental material or as a URL, if applicable. [Not Applicable]
+   \item Information about consent from data providers/curators. [Not Applicable]
+   \item Discussion of sensible content if applicable, e.g., personally identifiable information or offensive content. [Not Applicable]
+ \end{enumerate}
+
+ \item If you used crowdsourcing or conducted research with human subjects, check if you include:
+ \begin{enumerate}
+   \item The full text of instructions given to participants and screenshots. [Not Applicable]
+   \item Descriptions of potential participant risks, with links to Institutional Review Board (IRB) approvals if applicable. [Not Applicable]
+   \item The estimated hourly wage paid to participants and the total amount spent on participant compensation. [Not Applicable]
+ \end{enumerate}
+
+ \end{enumerate}
+
+
+\end{document}

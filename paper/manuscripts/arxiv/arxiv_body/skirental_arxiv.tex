@@ -1,0 +1,48 @@
+\section{Improving the competitive ratio} \label{sec:SkiRental}
+
+\begin{theorem}[Regret of $\bob$ with Randomized Thresholds]  \label{eq:SkiRentalRegret}
+      Let $\wcalg$ have worst-case regret $g(n)$ over all inputs, and define cumulative density function $F_n(x) = \frac{e^{x/g(n)}-1}{e-1}$ for $x\in [0,g(n)]$. Now suppose we sample $\theta\sim F_n$, i.e., given $U\sim\text{Uniform}[0,1]$, we set
+      \begin{align*}
+      \theta=g(n)\ln(1+(e-1)U)
+      \end{align*}
+      Then the $\bob$ policy (\cref{metaalg:2approx}) with random threshold $\theta$ and policy $\wcalg$ has regret 
+    \begin{align} 
+    \label{eq:eApproxReg}
+        \E_{\theta}\left[\Reg(\bob, \ell^n)\right] \le \frac{e}{e-1} \min\{\Reg(\ftl,\ell^n),g(n)\} + 1.
+    \end{align}
+\end{theorem}
+
+
+The algorithm and proof follows a similar approach as that of the classical randomized algorithm for ski-rental~\cite{karlin1994competitive}
+\begin{proof}
+For a given sequence of loss functions $\ell^n$, we use the shorthand notation $r= \Reg(\ftl,\ell^n)$ and $g=g(n)$.
+Also, for our given choice of cdf $F_n$, the corresponding pdf is given by $f(z) = \frac{e^{z/g}}{g(e-1)}$ for $z\in[0,g]$. 
+As before, let $\tau \defeq \min_{1 \le t \le n-1} \ftlsum_t > \theta$ be the (random) round where $\bob$ switches from $\ftl$ to $\wcalg$ (with $\tau=n$ if it never switches). Then we have
+\begin{align*}
+\frac{\Reg(\bob,\ell^n)}{\min\{\Reg(\ftl,\ell^n),g(n)\}}\leq \begin{cases} 
+   \frac{\theta + g}{\min\{r,g\}} & \text{if } \tau < n \\
+   1       & \text{if } \tau = n
+  \end{cases}
+\end{align*}
+where the second case follows from the fact that $\theta\in[0,g]$, and hence if we never switch, then $r\le g(n)$. 
+Taking expectation over $\theta$, we have
+\begin{align*}
+\frac{\E_{\theta}\left[\Reg(\bob,\ell^n)\right]}{\min\{\Reg(\ftl,\ell^n),g\}}\le 
+\begin{cases} 
+   \int_0^r   \frac{x + g}{r}f(x)dx + 1 - F(r)  & \text{if } r \le g \\
+   \int_0^g   \frac{x + g}{g}f(x)dx        & \text{if } r > g
+  \end{cases}
+\end{align*}
+Let $\phi(z) \defeq  \int_0^z \frac{(x + g)}{z}f(x)dx + 1 - F(z) $ for $z\in[0,g]$; then $\frac{\E_{\theta}\left[\Reg(\bob,\ell^n)\right]}{\min\{\Reg(\ftl,\ell^n),g\}} \leq \max_{z\in[0,g]}\phi(z)$. Moreover, we can differentiate to get $z^2\phi'(z)= gzf(z) - \int_0^z(x + g)f(x)dx$. Substituting our choice of $f$ in this expression, we get
+\begin{align*}
+\frac{z^2d\phi(z)}{dz} &= \frac{ze^{z/g}}{(e-1)} - \int_0^z(x + g)\frac{e^{x/g}}{g(e-1)}dx
+=\frac{ze^{z/g} - g\int_0^{z/g}(w + 1)e^{w}dw}{(e-1)}=0
+%\\&=\frac{ze^{z/g} - g(ze^{z/g}/g)}{(e-1)} = 0
+\end{align*}
+Thus, $\phi(z)$ is constant for all $z\in[0,g]$, and moreover, $\phi(g) = \frac{1}{g(e-1)}\int_0^g(1+x/g)e^{x/g}dx = \frac{e}{e-1}$.
+\end{proof}
+
+
+\begin{remark}[Optimality for restricted class of algorithms] \label{rem:SkiRentalLB}
+    
+\end{remark}

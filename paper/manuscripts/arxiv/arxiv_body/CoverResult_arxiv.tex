@@ -1,0 +1,28 @@
+\section{Fundamental limits of binary prediction: Cover's result} \label{appendix:Cover}
+
+In the setting of binary prediction, the remarkable result of~\cite{Cover1966} stated next provides an exact characterization of the set of all loss functions achievable in binary prediction. This result equips us with the \emph{exact} minmax optimal algorithm for binary prediction alluded to in Section~\ref{sec:intro}, as well equips us with other tools we employ later. 
+\begin{theorem}  \label{thm:CoverAchievableFn}
+A loss function $\phi : \{0,1\}^n \to \mathbb{R}^+$ be \emph{achievable} in binary prediction if there exists a predictor/strategy $a_t: y^{t-1} \mapsto [0,1]$ that achieves $\sum_{t=1}^n |a_t(y^{t-1})-y_t| = \phi(y^n)$ 
+for all $y^n$. Then, $\phi$ is achievable if and only if it satistfies the following two conditions:
+\begin{itemize}
+    \item Balance: For $\e^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d.,  $\E[\phi(Y^n)] = \frac{n}{2}$ . 
+    \item Stability: Let $\phi_t(y^t) \equiv \E[\phi(y^{t}\e_{t+1}^n)]$ where $\e_{t+1}^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d. Then $|\phi_t(y^{t-1}0)-\phi_t(y^{t-1}1)| \le 1$. 
+    \end{itemize}
+    Furthermore, if a function $\phi$ is satisfies the above two conditions, then the predictor $a_t(y^{t-1}) = \frac{1+\phi_t(y^{t-1}0)-\phi_t(y^{t-1}1)}{2}$ achieves it.
+\end{theorem}
+
+An illuminating question is whether the loss of the hindsight-optimal action, i.e. $\phi(y^n) = \min\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\}$ is achievable, which is answered in the negative by Cover's result. 
+
+\begin{corollary} \label{cor:BinPredOptReg}
+    The loss function $y^n \mapsto \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\}$ violates the balance condition and therefore is not achievable. However, the function 
+    \begin{align}
+    \label{eq:CoverLossFn}
+    y^n \mapsto \min\left\{\sum_{t=1}^n y_i, n-\sum_{t=1}^n y_i\right\} + \frac{\E|\sum_{t=1}^n Z_t|}{2}
+    \end{align}
+    where $Z^n \sim \Unif\{+1,-1\}$ i.i.d. is achievable. The predictor that achieves~\cref{eq:CoverLossFn} chooses $\widehat{Y}_t$ (equivalently, $a_t = \mathsf{P}[\widehat{Y_t} = 1]$) as
+        $\widehat{Y}_t = \Majority\{y^{t-1},\e_{t+1}^n\}$
+    where $\e_{t+1}^n \sim \mathrm{Bern}\left(\frac{1}{2}\right)$ i.i.d., with ties broken uniformly at random. Finally, Cover's predictor is \emph{minmax optimal} in the sense that for any other predictor $\alg$, 
+    \[
+    \max_{y^n} \Reg(\alg, y^n) \ge \max_{y^n} \Reg(\Cover, y^n) = \sqrt{\frac{n}{2\pi}}(1+o(1))
+    \]
+\end{corollary}

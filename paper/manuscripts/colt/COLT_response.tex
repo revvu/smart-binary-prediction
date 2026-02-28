@@ -1,0 +1,32 @@
+      \documentclass[12pt]{colt2024} %% Anonymized submission
+      \usepackage{times}
+      \begin{document}
+      \title{}    
+      We are very grateful to the reviewers for their insightful remarks and comments. While we agree with most of the reviews, we would like to emphasize a few points: 
+      \medskip
+      
+      \noindent\textbf{The notion of instance-optimality}: Our formal requirement for instance-optimality is very strong -- the \emph{regret} of our algorithm must be within a constant factor of the regret of both FTL and the minimax-optimal regret (note the smaller regret is always $O(\sqrt{n})$, and may be as small as $O(1)$). As far as we are aware, such a stringent requirement for a `best-of-both-world' (BOBW) algorithm has not been considered before, and existing algorithms do not achieve this (with the exception of FlipFlop for the experts setting). On the other hand, requiring such a strong guarantee allows us to demonstrate very \emph{sharp lower bounds}, which also is uncommon for BOBW policies. 
+    
+      \medskip      
+      \noindent\textbf{Novelty of the SMART paradigm}: While our approach is very simple, we believe it is fundamentally different from existing work (in particular, from the approaches behind FlipFlop and $(\mathcal{A},\mathcal{B})$-PROD). In particular, existing approaches are all based on hedging between the \emph{realized losses} of the policies (which are clearly monotone non-decreasing over time); in contrast, our main idea is that for policies like FTL, one can directly construct a monotone estimator for its \emph{regret}. We agree it is surprising this idea was not used before; apart from being simple, it makes the guarantees completely transparent, and also immediately extends to many settings, as we discuss next. 
+        
+      \medskip
+      \noindent\textbf{Comparison to existing algorithms}: We thank reviewer $3$ for pointing out the $(\mathcal{A},\mathcal{B})$-PROD algorithm -- we were indeed unaware of this reference. $(\mathcal{A},\mathcal{B})$-PROD is based on hedging between the losses of the two algorithms -- while in our intro we briefly discuss why doing so in a symmetric way is not sufficient for our guarantee, we did not realize that by tuning the learning rate one can achieve an \emph{asymmetric} regret guarantee with respect to the two algorithms. Nevertheless (as the reviewer also indicates) on sequences where FTL has $\Theta(n)$ regret, $(\mathcal{A},\mathcal{B})$-PROD can only get a regret of $\Theta(\sqrt{n \log n})$, which is not constant factor competitive compared to the $O(\sqrt{n})$ minimax regret. %We also note that while the guarantees for $(\mathcal{A},\mathcal{B})$-PROD hold for \emph{any} pair of algorithms, the applications given in the paper are all covered by our approach as well.
+      %
+     We reiterate that while our notion of instance-optimality is related to existing BOBW guarantees, it is sharper; as far as we are aware, the only existing constant-factor bound is for FlipFlop for the experts setting.
+     In our full manuscript, we will add a much more detailed comparison to both $(\mathcal{A},\mathcal{B})$-prod and FlipFlop and make it more prominent as suggested by the reviewer.   
+
+
+      \medskip
+      \noindent\textbf{Extensions}: In our work, for the sake of clarity, we focused on the basic paradigm of predictions with expert advice, and only showed one extension to small-loss guarantees; we now briefly discuss a few additional extensions related to literature mentioned by the reviewers; these extensions follow from our basic analysis plus standard techniques:\\ 
+      $1.$ While as presented SMART needs to know the minimax upper bound $g(n)$, it is easy to avoid this via a doubling trick to get an `anytime' version at the cost of a constant factor.\\
+      $2.$ While we present our results using the expert prediction problem as the context, our results also extend to some of the additional applications mentioned in the $(\mathcal{A},\mathcal{B})$-PROD paper: \\
+      $(a)$ A direct application of our result recovers a similar constant competitive ratio guarantee in the online convex optimization literature, maintaining log regret if the loss function is strongly convex while preserving sqrt T regret in the worst case. \\
+      $(b)$ We can extend our results to the setting of shifting experts by applying FTL over the set of $K$-change policies, and then use the SMART approach to decide if and when to switch to Fixed-Share algorithm. In particular, SMART works in any setting for which we are given a worst-case optimal policy for that class (and we apply FTL to the correct set of benchmarks used to define regret). 
+
+%      Regarding the comments of Reviewer \#3: We apologize for missing the (A,B)-prod paper in our literature review. As the reviewer points out, the (A,B)-prod algorithm (which takes two arbitrary algorithms A and B as input)  achieves competitive ratio 1 w.r.t. the regret of algorithms A and B; at the cost of a larger additive overhead of $\sqrt{n \log n}$. While for an adversarially chosen sequence the additive overhead dominates the total regret, this algorithm follows the loss of FTL exactly for sequences where FTL has lower regret. We note that for sequences where FTL has lower regret, SMART also achieves exactly the regret of FTL as it never switches from following FTL. Thus, although our focus is on achieving regret that is within a constant multiplicative factor of the *regret* of FTL and a worst-case algorithm (which  (A,B)-prod is not designed for), SMART does incorporate one of the strengths of (A,B)-prod. We acknowledge though that SMART requires the algorithm A to be FTL, and the question of extending our results to arbitrary algorithm A is an interesting open problem we leave for future work. 
+
+%In the updated manuscript, we will add a more detailed comparison to both (A,B)-prod and FlipFlop and make it more prominent as suggested by the reviewer.  
+
+      \end{document}
+
