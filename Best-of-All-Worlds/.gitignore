@@ -1,0 +1,4 @@
+*.pyc
+*.lprof
+profile_output_2*.txt
+.vscode
