@@ -1,64 +1,117 @@
 # exp03_time_varying_mu_oco
 
-Experiment 03 studies SMART for OCO quadratic losses with time-varying centers:
+Experiment 03 studies SMART in a simple 1D online convex optimization setting with quadratic losses:
 
-- $\ell_t(a) = \frac{1}{2}(a-\mu_t)^2$
+- $\ell_t(a)=\frac{1}{2}(a-\mu_t)^2$
 
-This clean Python implementation was derived from the uploaded notebooks:
+The implementation in this folder is a cleaned Python version derived from the uploaded notebooks.
 
-- `smart_oco.ipynb`
-- `SMART_oco_anytime_lr.ipynb`
-- `smart_binary.ipynb` (archived for context)
+## Background (Undergraduate-Level)
+
+At each round `t`, the algorithm chooses a number `a_t` in a fixed interval (the code uses `[-1, 1]`), then observes a loss function
+
+- $\ell_t(a)=\frac{1}{2}(a-\mu_t)^2$.
+
+This is just a parabola centered at `mu_t`. Intuitively:
+
+- if `a_t` is close to `mu_t`, loss is small;
+- if `a_t` is far from `mu_t`, loss is large.
+
+So the full problem is about tracking a moving target `mu_t` over time.
+
+Why this experiment matters for SMART:
+
+1. It is mathematically clean and easy to interpret.
+2. It isolates sequence effects: how the environment (`mu_t`) changes controls which algorithm wins.
+3. It lets us test SMART’s intended role: optimistic when safe, robust when needed.
 
 ## Objective
 
-Demonstrate SMART's core mechanism in a clean 1D OCO setting:
+Demonstrate three core SMART behaviors:
 
-1. Preserve optimistic performance in benign regimes.
-2. Protect against realistic hard/nonstationary regimes.
-3. Show comparative horizon-level behavior across regimes.
+1. In benign environments, SMART should behave like the optimistic baseline (FTL).
+2. In harder nonstationary environments, SMART should avoid optimistic failures.
+3. Across horizons, SMART should track a favorable tradeoff between optimistic and robust baselines.
 
-The key design variable is the input sequence `mu_t`. Sequence quality determines whether the plots are informative.
+## Algorithms in this experiment
 
-## What is implemented
+- `FTL`: Follow-The-Leader baseline.
+- `OGD`: robust baseline (fixed or anytime learning rate).
+- `SMART`: starts optimistically and switches to robust behavior using the paper’s switching statistic.
 
-- FTL baseline
-- OGD baseline
-  - fixed learning rate: $\eta = 2/\sqrt{n}$
-  - optional anytime learning rate: $\eta_t = 1/\sqrt{t}$
-- SMART switching policy with Eq. (6) style switching statistic and threshold $2\sqrt{n}$
+## Input Sequence Design: What `mu_t` Means and How We Generate It
 
-## Paper-facing `\mu_t` sequence suite
+The input sequence is the most important design choice in this experiment.  
+Each scenario defines a full horizon-length sequence `mu_1, ..., mu_n`.
 
-Experiment 03 should focus on three realistic sequences:
+### 1) `stable_benign` (FTL-dominant)
 
-1. `stable_benign` (FTL-dominant)
-- AR(1)-style low-noise process around a stable center.
-- Intended takeaway: SMART stays close to FTL and avoids unnecessary switching.
+Goal:
+- represent a mostly stable environment where optimism should work.
 
-2. `corruption_burst` (adversarial-realistic)
-- Stable baseline with transient windows where centers flip sign strongly.
-- Intended takeaway: FTL degrades in burst windows; SMART switches and reduces damage.
+Generation (step-by-step):
+1. Start near a positive center (`~0.60`).
+2. Update with an AR(1)-style rule:
+   - strong pull to the center,
+   - small Gaussian noise each round.
+3. Clip values to stay in a bounded range.
 
-3. `drift_plus_shift` (representative mixed regime)
-- Gradual drift followed by one moderate structural shift.
-- Intended takeaway: SMART transitions from optimistic to robust behavior with interpretable timing.
+Effect:
+- `mu_t` moves slowly with low noise, so FTL should perform well.
 
-## Acceptance criteria (for paper use)
+### 2) `corruption_burst` (adversarial-realistic)
 
-1. `stable_benign`: `SMART` is approximately `FTL` over horizons and usually does not switch.
-2. `corruption_burst`: `FTL` grows significantly worse with horizon; `SMART` materially lowers final regret.
-3. `drift_plus_shift`: `SMART` lands between optimistic and robust extremes over horizons.
-4. Primary figure is final regret vs horizon using fresh sequences per horizon.
+Goal:
+- represent a stable process with short, severe disruptions.
 
-## Threshold calibration
+Generation (step-by-step):
+1. Start from a stable positive baseline (`~0.55`) plus small noise.
+2. Insert two time windows (bursts).
+3. Inside each burst, force `mu_t` to a strong negative regime (plus noise).
+4. Outside bursts, return to baseline behavior.
 
-- In this setting, Eq.(6) `Sigma_t` values are often small relative to `2*sqrt(n)`.
-- The runner exposes `--threshold-scale` (default `0.0035`) so horizon-level behavior is comparable across the three sequences.
+Effect:
+- an optimistic policy that trusts recent history can be damaged during bursts.
+- SMART should gain by switching.
 
-## Figures
+### 3) `drift_plus_shift` (representative mixed regime)
 
-Curated paper-candidate figures live in `figures/` with labels/titles mapped in `figures/INDEX.md`.
+Goal:
+- represent a practical nonstationary stream with both gradual and abrupt change.
+
+Generation (step-by-step):
+1. Early phase: long benign regime near `~0.55`.
+2. Middle phase: gradual drift downward.
+3. Late phase: one sustained shift to a negative regime (`~ -0.70` with noise).
+4. Clip to bounds.
+
+Effect:
+- this combines easy and hard periods in one realistic-style trajectory.
+
+## Experimental Protocol (Primary Figure Contract)
+
+Primary figure type is `Regret` vs `Horizon`:
+
+1. Choose a grid of horizons `n` (for example `100, 200, ..., 1000`).
+2. For each horizon `n`, generate fresh sequences of length `n`.
+3. Run all algorithms on each sequence.
+4. Record regret at the end of that horizon.
+5. Plot mean regret (and uncertainty bands when stochastic) against horizon.
+
+This is intentionally not a single-sequence prefix trace.
+
+## Acceptance Criteria (Paper-Facing)
+
+1. `stable_benign`: SMART is close to FTL across horizons.
+2. `corruption_burst`: SMART is substantially better than FTL as horizon grows.
+3. `drift_plus_shift`: SMART lies between optimistic and robust extremes in a meaningful way.
+
+## Threshold Calibration
+
+In this quadratic setting, the raw switching statistic can be numerically small relative to default theoretical scaling, so:
+
+- we expose `--threshold-scale` (default `0.0035`),
+- and report results under that explicit calibration.
 
 ## Run
 
@@ -73,7 +126,7 @@ Anytime OGD variant:
 python run_experiments.py --n-max 1000 --n-step 100 --trials 30 --threshold-scale 0.0035 --anytime-lr
 ```
 
-Run selected scenarios only:
+Run specific scenarios:
 
 ```bash
 python run_experiments.py --scenario stable_benign corruption_burst drift_plus_shift
@@ -81,12 +134,14 @@ python run_experiments.py --scenario stable_benign corruption_burst drift_plus_s
 
 ## Outputs
 
-Figures are written to:
+- `outputs/figures/exp03_quadratic_oco_regret_by_horizon.png`
 
-- `outputs/figures/exp03_quadratic_oco_final_regret_by_horizon.png`
+Curated paper figure:
 
-## Known issues
+- `figures/fig_exp03_quadratic_oco_regret_by_horizon.png`
 
-1. Threshold choice is still calibration-sensitive and should be reported alongside results.
-2. These are synthetic but structured sequences; realism is controlled, not dataset-derived.
-3. Conclusions depend on domain bounds, quadratic form, and robust baseline choice (OGD schedule).
+## Known limitations
+
+1. Sequences are synthetic but structured; they are not fitted from a real dataset.
+2. Conclusions depend on the chosen domain bounds and robust baseline (OGD schedule).
+3. Threshold calibration remains an explicit modeling choice.
