@@ -17,8 +17,9 @@ class RunConfig:
     t_max: int = 1000
     t_step: int = 100
     runs: int = 8
-    n_candidates: int = 64
-    threshold_scale: float = 0.2
+    max_delta_norm: float = 0.45
+    label_mismatch_prob: float = 0.02
+    threshold_scale: float = 0.01
     seed: int = 7
 
 
@@ -103,8 +104,9 @@ def main() -> None:
     parser.add_argument("--t-step", type=int, default=100)
     parser.add_argument("--runs", type=int, default=8)
     parser.add_argument("--d", type=int, default=5)
-    parser.add_argument("--n-candidates", type=int, default=64)
-    parser.add_argument("--threshold-scale", type=float, default=0.2)
+    parser.add_argument("--max-delta-norm", type=float, default=0.45)
+    parser.add_argument("--label-mismatch-prob", type=float, default=0.02)
+    parser.add_argument("--threshold-scale", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--regime", nargs="*", default=regime_names())
     args = parser.parse_args()
@@ -114,7 +116,8 @@ def main() -> None:
         t_max=args.t_max,
         t_step=args.t_step,
         runs=args.runs,
-        n_candidates=args.n_candidates,
+        max_delta_norm=args.max_delta_norm,
+        label_mismatch_prob=args.label_mismatch_prob,
         threshold_scale=args.threshold_scale,
         seed=args.seed,
     )
@@ -126,14 +129,8 @@ def main() -> None:
 
     stats_by_regime = {}
 
-    def regime_threshold_scale(regime_name: str) -> float:
-        # Use a slightly more aggressive switch threshold only for corruption bursts.
-        if regime_name == "bursty_corruption":
-            return cfg.threshold_scale * 0.6
-        return cfg.threshold_scale
-
     for regime in args.regime:
-        thr_scale = regime_threshold_scale(regime)
+        thr_scale = cfg.threshold_scale
         ftl_runs = np.zeros((cfg.runs, len(t_grid)), dtype=float)
         ftrl_runs = np.zeros((cfg.runs, len(t_grid)), dtype=float)
         smart_runs = np.zeros((cfg.runs, len(t_grid)), dtype=float)
@@ -143,7 +140,8 @@ def main() -> None:
             for i, T in enumerate(t_grid):
                 synth_cfg = SynthesisConfig(
                     d=cfg.d,
-                    n_candidates=cfg.n_candidates,
+                    max_delta_norm=cfg.max_delta_norm,
+                    label_mismatch_prob=cfg.label_mismatch_prob,
                     seed=cfg.seed + 1000 * r + 17 * T,
                 )
                 seq = synthesize_sequence(T=T, regime=regime, cfg=synth_cfg)
@@ -167,7 +165,8 @@ def main() -> None:
         # Diagnostic plot at max horizon using first run seed.
         diag_cfg = SynthesisConfig(
             d=cfg.d,
-            n_candidates=cfg.n_candidates,
+            max_delta_norm=cfg.max_delta_norm,
+            label_mismatch_prob=cfg.label_mismatch_prob,
             seed=cfg.seed + 99991,
         )
         seq_diag = synthesize_sequence(T=cfg.t_max, regime=regime, cfg=diag_cfg)

@@ -396,3 +396,19 @@ The deepest insight of SMART is not merely “switch once.”
 It is the discovery that FTL admits an online-computable, monotone regret trace that makes a hindsight-comparison objective operational in real time.
 
 That structural bridge is why competitive-analysis tools become relevant, why the guarantees are strong, and why implementation details around the trace/threshold/reset are non-negotiable for correctness.
+
+## 16) What SMART Experiments Must Demonstrate (Paper Focus)
+
+To be paper-useful, SMART experiments should demonstrate mechanism validity, not just isolated wins.
+
+1. **No unnecessary optimism tax in benign regimes**
+- When optimism is correct, SMART should stay close to FTL and avoid overpaying for robustness.
+
+2. **Robust protection in hard regimes**
+- When optimistic behavior becomes unreliable, SMART should switch and avoid FTL-style blow-ups.
+
+3. **Interpretable adaptation**
+- The switch should be explainable via `Sigma_t` crossing threshold near meaningful regime deterioration.
+- Diagnostics should support a causal narrative (what changed, when, and why SMART reacted).
+
+This is the central empirical story: SMART should track the better side of the optimism/robustness tradeoff, with switching behavior that is both effective and interpretable.

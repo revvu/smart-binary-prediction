@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,12 +12,8 @@ Array = NDArray[np.float64]
 @dataclass(frozen=True)
 class SynthesisConfig:
     d: int = 5
-    n_candidates: int = 64
-    label_noise_std: float = 0.15
-    leader_weight: float = 1.0
-    realism_weight: float = 0.03
-    difficulty_weight: float = 0.5
-    flip_penalty: float = 0.15
+    max_delta_norm: float = 0.45
+    label_mismatch_prob: float = 0.02
     seed: int = 0
 
 
@@ -42,99 +37,164 @@ def action_ftl(theta: Array) -> Array:
     return _normalize(-theta)
 
 
-def _grad_sign(q: float, y: float) -> float:
-    diff = q - y
-    if diff > 0.0:
-        return 0.5
-    if diff < 0.0:
-        return -0.5
-    return 0.0
-
-
-def _sample_covariate(
-    rng: np.random.Generator,
-    sqrt_diag: Array,
-    rotation: Array,
-) -> Array:
-    base = rng.standard_normal(sqrt_diag.shape[0]) * sqrt_diag
-    z = rotation @ base
-    n = np.linalg.norm(z)
-    if n > 1.0:
-        z = z / n
-    return z.astype(float)
-
-
 def _orthonormal_basis(rng: np.random.Generator, d: int) -> Array:
     q, _ = np.linalg.qr(rng.standard_normal((d, d)))
     return q.astype(float)
 
 
-def generate_target_regime(name: str, T: int, d: int, seed: int) -> tuple[Array, Array, Array, Array, Array, Array]:
-    """
-    Returns (target_leaders, w_star_path, sqrt_diag_path, difficulty_path, leader_weight_path, rotation).
+def _smooth_rotation(u_from: Array, u_to: Array, alpha: float) -> Array:
+    # Interpolate and renormalize to obtain a smooth path over the unit sphere.
+    return _normalize((1.0 - alpha) * u_from + alpha * u_to)
 
-    target_leaders: desired FTL-leader path to emulate
-    w_star_path: latent separator path used to generate realistic base labels
-    sqrt_diag_path: per-round feature scale (covariate shift)
-    rotation: fixed orthonormal basis for correlated feature sampling
-    """
-    rng = np.random.default_rng(seed)
-    rot = _orthonormal_basis(rng, d)
 
+def _target_direction_path(name: str, T: int, d: int, rng: np.random.Generator) -> tuple[Array, Array]:
     v1 = _normalize(rng.standard_normal(d))
     v2 = _normalize(rng.standard_normal(d))
     v3 = _normalize(rng.standard_normal(d))
 
     target = np.zeros((T, d), dtype=float)
-    difficulty = np.zeros(T, dtype=float)
-    leader_weight_path = np.ones(T, dtype=float)
+    w_star = np.zeros((T, d), dtype=float)
 
     if name == "stable_benign":
         for t in range(T):
-            target[t] = _normalize(v1 + 0.03 * rng.standard_normal(d))
-        difficulty[:] = 0.25
-    elif name == "gradual_drift":
+            target[t] = _normalize(v1 + 0.01 * rng.standard_normal(d))
+            w_star[t] = _normalize(v1 + 0.03 * rng.standard_normal(d))
+    elif name == "corruption_burst":
+        # Mostly stable separator, with transient instability in observed leader signal.
+        b1 = (int(0.30 * T), int(0.42 * T))
+        b2 = (int(0.60 * T), int(0.72 * T))
         for t in range(T):
-            alpha = t / max(T - 1, 1)
-            vec = (1.0 - alpha) * v1 + alpha * v2 + 0.02 * rng.standard_normal(d)
-            target[t] = _normalize(vec)
-        difficulty[:] = 0.35
-    elif name == "regime_shift":
-        center = 0.55 * T
-        sharpness = 0.04 * T
+            if b1[0] <= t < b1[1]:
+                anchor = v2 if (t % 2 == 0) else -v2
+                target[t] = _normalize(anchor + 0.03 * rng.standard_normal(d))
+            elif b2[0] <= t < b2[1]:
+                anchor = v3 if (t % 2 == 0) else -v3
+                target[t] = _normalize(anchor + 0.03 * rng.standard_normal(d))
+            else:
+                target[t] = _normalize(v1 + 0.015 * rng.standard_normal(d))
+            w_star[t] = _normalize(v1 + 0.04 * rng.standard_normal(d))
+    elif name == "drift_plus_shift":
+        shift_center = int(0.70 * T)
         for t in range(T):
-            weight = 1.0 / (1.0 + np.exp(-(t - center) / max(sharpness, 1.0)))
-            vec = (1.0 - weight) * v1 + weight * v2 + 0.02 * rng.standard_normal(d)
-            target[t] = _normalize(vec)
-        difficulty[:] = 0.30
-        lo = int(0.45 * T)
-        hi = int(0.7 * T)
-        difficulty[lo:hi] = 0.80
-        leader_weight_path[lo:hi] = 0.30
-    elif name == "bursty_corruption":
-        target[:] = v1
-        bursts = [(int(0.20 * T), int(0.45 * T), v2), (int(0.60 * T), int(0.85 * T), v3)]
-        for lo, hi, v in bursts:
-            target[lo:hi] = v
-        target += 0.03 * rng.standard_normal((T, d))
-        target = np.array([_normalize(v) for v in target], dtype=float)
-        difficulty[:] = 0.35
-        for lo, hi, _ in bursts:
-            difficulty[lo:hi] = 0.99
-            leader_weight_path[lo:hi] = 0.10
+            if t < shift_center:
+                alpha = t / max(shift_center - 1, 1)
+                drift_target = _smooth_rotation(v1, v2, 0.40 * alpha)
+                drift_star = _smooth_rotation(v1, v2, 0.50 * alpha)
+                target[t] = _normalize(drift_target + 0.012 * rng.standard_normal(d))
+                w_star[t] = _normalize(drift_star + 0.03 * rng.standard_normal(d))
+            else:
+                jump_target = _smooth_rotation(v1, v2, 0.85)
+                jump_star = _smooth_rotation(v1, v2, 0.92)
+                target[t] = _normalize(jump_target + 0.015 * rng.standard_normal(d))
+                w_star[t] = _normalize(jump_star + 0.04 * rng.standard_normal(d))
     else:
         raise ValueError(f"Unknown regime: {name}")
 
-    # Latent true separator roughly follows target but with independent noise
-    w_star_path = np.array([_normalize(u + 0.07 * rng.standard_normal(d)) for u in target], dtype=float)
+    return target, w_star
 
-    # Covariate shift: AR(1) log-scales per dimension
-    log_scales = np.zeros((T, d), dtype=float)
-    for t in range(1, T):
-        log_scales[t] = 0.92 * log_scales[t - 1] + 0.08 * rng.standard_normal(d)
-    sqrt_diag_path = np.exp(0.5 * np.clip(log_scales, -0.8, 0.8))
 
-    return target, w_star_path, sqrt_diag_path, difficulty, leader_weight_path, rot
+def _magnitude_schedule(name: str, T: int, rng: np.random.Generator) -> Array:
+    # Radius of theta_t. Large radius stabilizes leader direction; low radius increases volatility.
+    r = np.zeros(T, dtype=float)
+
+    if name == "stable_benign":
+        base = 0.10
+        slope = 0.020
+        for t in range(T):
+            r[t] = base + slope * np.sqrt(t + 1) + 0.003 * rng.standard_normal()
+    elif name == "corruption_burst":
+        base = 0.10
+        slope = 0.022
+        for t in range(T):
+            r[t] = base + slope * np.sqrt(t + 1) + 0.004 * rng.standard_normal()
+        # Soften theta growth during corruption windows to make optimism more fragile.
+        windows = [(int(0.30 * T), int(0.42 * T)), (int(0.60 * T), int(0.72 * T))]
+        for lo, hi in windows:
+            r[lo:hi] *= 0.55
+    elif name == "drift_plus_shift":
+        base = 0.11
+        slope = 0.019
+        for t in range(T):
+            r[t] = base + slope * np.sqrt(t + 1) + 0.004 * rng.standard_normal()
+        lo = int(0.68 * T)
+        hi = int(0.82 * T)
+        r[lo:hi] *= 0.85
+    else:
+        raise ValueError(f"Unknown regime: {name}")
+
+    return np.clip(r, 0.02, 1.60)
+
+
+def _realizable_theta_path(target: Array, radii: Array, max_delta_norm: float) -> tuple[Array, Array]:
+    T, d = target.shape
+    theta = np.zeros((T, d), dtype=float)
+    deltas = np.zeros((T, d), dtype=float)
+
+    prev = np.zeros(d, dtype=float)
+    for t in range(T):
+        desired = -radii[t] * target[t]
+        delta = desired - prev
+        norm = float(np.linalg.norm(delta))
+        if norm > max_delta_norm:
+            delta = (max_delta_norm / norm) * delta
+        curr = prev + delta
+        theta[t] = curr
+        deltas[t] = delta
+        prev = curr
+
+    return theta, deltas
+
+
+def _delta_to_example(
+    delta: Array,
+    w_star: Array,
+    rng: np.random.Generator,
+    mismatch_prob: float,
+    in_corruption_window: bool,
+) -> tuple[Array, float]:
+    # The update is g_t = 0.5 * sign(q_t - y_t) * z_t.
+    # Choosing z_t = ±2 delta and y_t in {±1} with the matching sign realizes g_t = delta.
+    delta_norm = float(np.linalg.norm(delta))
+    if delta_norm < 1e-12:
+        z = np.zeros_like(delta)
+        y = 1.0
+        return z, y
+
+    raw = 2.0 * delta
+    z_plus = raw
+    z_minus = -raw
+
+    # Choose label orientation using latent separator to keep examples plausible.
+    score_plus = float(np.dot(w_star, z_plus))
+    score_minus = float(np.dot(w_star, z_minus))
+    y_base_plus = 1.0 if score_plus >= 0.0 else -1.0
+    y_base_minus = 1.0 if score_minus >= 0.0 else -1.0
+
+    # Option A: y=-1, z=+2delta. Option B: y=+1, z=-2delta.
+    # Prefer the option whose implied label better matches latent base label.
+    cost_a = 0.0 if y_base_plus == -1.0 else 1.0
+    cost_b = 0.0 if y_base_minus == 1.0 else 1.0
+    if cost_a <= cost_b:
+        z = z_plus
+        y = -1.0
+    else:
+        z = z_minus
+        y = 1.0
+
+    # Realistic corruption burst: force occasional mismatches to represent bad data windows.
+    p = mismatch_prob
+    if in_corruption_window:
+        p = max(p, 0.28)
+    if rng.random() < p:
+        y = -y
+
+    return z, y
+
+
+def _is_corruption_window(name: str, t: int, T: int) -> bool:
+    if name != "corruption_burst":
+        return False
+    return (int(0.30 * T) <= t < int(0.42 * T)) or (int(0.60 * T) <= t < int(0.72 * T))
 
 
 def synthesize_sequence(
@@ -144,77 +204,25 @@ def synthesize_sequence(
 ) -> SynthesizedSequence:
     rng = np.random.default_rng(cfg.seed)
 
-    target, w_star_path, sqrt_diag_path, difficulty_path, leader_weight_path, rotation = generate_target_regime(
-        regime, T, cfg.d, cfg.seed + 101
-    )
+    target, w_star_path = _target_direction_path(regime, T, cfg.d, rng)
+    radii = _magnitude_schedule(regime, T, rng)
+    theta_path, deltas = _realizable_theta_path(target, radii, cfg.max_delta_norm)
 
     z = np.zeros((T, cfg.d), dtype=float)
     y = np.zeros(T, dtype=float)
     realized = np.zeros((T, cfg.d), dtype=float)
 
-    theta = np.zeros(cfg.d, dtype=float)
-
     for t in range(T):
-        x_t = action_ftl(theta)
-        w_star_t = w_star_path[t]
-        sqrt_diag_t = sqrt_diag_path[t]
-        diff_t = float(difficulty_path[t])
-        leader_w_t = float(leader_weight_path[t])
-
-        best_score = np.inf
-        best_z = None
-        best_y = None
-        best_theta_next = None
-
-        for _ in range(cfg.n_candidates):
-            if regime == "bursty_corruption" and diff_t >= 0.9:
-                # Corruption burst: concentrated feature direction and unstable labels.
-                anchor = np.zeros(cfg.d, dtype=float)
-                anchor[0] = 1.0
-                z_cand = _normalize(anchor + 0.12 * rng.standard_normal(cfg.d))
-                base_margin = float(np.dot(w_star_t, z_cand))
-                if rng.random() < 0.25:
-                    noisy_margin = base_margin + cfg.label_noise_std * float(rng.standard_normal())
-                    y_base = 1.0 if noisy_margin >= 0.0 else -1.0
-                else:
-                    y_base = 1.0 if (t % 2 == 0) else -1.0
-            else:
-                z_cand = _sample_covariate(rng, sqrt_diag_t, rotation)
-                base_margin = float(np.dot(w_star_t, z_cand))
-                noisy_margin = base_margin + cfg.label_noise_std * float(rng.standard_normal())
-                y_base = 1.0 if noisy_margin >= 0.0 else -1.0
-
-            for y_cand in (y_base, -y_base):
-                q = float(np.dot(x_t, z_cand))
-                grad = _grad_sign(q, y_cand)
-                theta_next = theta + grad * z_cand
-                u_next = action_ftl(theta_next)
-
-                leader_err = float(np.sum((u_next - target[t]) ** 2))
-                ftl_loss = 0.5 * abs(q - y_cand)
-                # Prefer non-extreme margins and avoid too many forced flips.
-                realism_pen = abs(base_margin)
-                difficulty_pen = abs(ftl_loss - diff_t)
-                flip_pen = cfg.flip_penalty if y_cand != y_base else 0.0
-
-                score = (
-                    cfg.leader_weight * leader_w_t * leader_err
-                    + cfg.realism_weight * realism_pen
-                    + cfg.difficulty_weight * difficulty_pen
-                    + flip_pen
-                )
-                if score < best_score:
-                    best_score = score
-                    best_z = z_cand
-                    best_y = float(y_cand)
-                    best_theta_next = theta_next
-
-        assert best_z is not None and best_y is not None and best_theta_next is not None
-
-        z[t] = best_z
-        y[t] = best_y
-        theta = best_theta_next
-        realized[t] = action_ftl(theta)
+        z_t, y_t = _delta_to_example(
+            deltas[t],
+            w_star_path[t],
+            rng,
+            mismatch_prob=cfg.label_mismatch_prob,
+            in_corruption_window=_is_corruption_window(regime, t, T),
+        )
+        z[t] = z_t
+        y[t] = y_t
+        realized[t] = action_ftl(theta_path[t])
 
     return SynthesizedSequence(
         z=z,
@@ -228,7 +236,6 @@ def synthesize_sequence(
 def regime_names() -> list[str]:
     return [
         "stable_benign",
-        "gradual_drift",
-        "regime_shift",
-        "bursty_corruption",
+        "corruption_burst",
+        "drift_plus_shift",
     ]
