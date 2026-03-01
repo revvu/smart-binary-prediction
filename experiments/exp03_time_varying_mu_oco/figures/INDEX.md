@@ -1,21 +1,26 @@
 # Figure Index (exp03)
 
-- Label: `fig:exp03_constant_mu_regret`
-  Title: `SMART in Quadratic OCO with Constant mu_t = 1/4`
-  File: `fig_exp03_constant_mu_regret_comparison.png`
-  Source: `outputs/figures/constant_0.25_regret.png`
+- Label: `fig:exp03_stable_benign_regret`
+  Title: `Stable Benign Quadratic OCO: SMART Tracks FTL Without Switching`
+  File: `fig_exp03_stable_benign_regret.png`
+  Source: `outputs/figures/stable_benign_regret.png`
 
-- Label: `fig:exp03_step_mu_schedule`
-  Title: `Step-Change mu_t Schedule (3/4 then 1/4)`
-  File: `fig_exp03_step_mu_schedule.png`
-  Source: `outputs/figures/step_0.75_to_0.25_mu.png`
+- Label: `fig:exp03_corruption_burst_regret`
+  Title: `Corruption-Burst Quadratic OCO: SMART Reduces FTL Degradation`
+  File: `fig_exp03_corruption_burst_regret.png`
+  Source: `outputs/figures/corruption_burst_regret.png`
 
-- Label: `fig:exp03_step_mu_regret`
-  Title: `SMART Regret Under Step-Change mu_t Environment`
-  File: `fig_exp03_step_mu_regret_comparison.png`
-  Source: `outputs/figures/step_0.75_to_0.25_regret.png`
+- Label: `fig:exp03_drift_shift_regret`
+  Title: `Drift-Plus-Shift Quadratic OCO: Representative Mixed-Regime Adaptation`
+  File: `fig_exp03_drift_plus_shift_regret.png`
+  Source: `outputs/figures/drift_plus_shift_regret.png`
 
-- Label: `fig:exp03_random_mu_regret`
-  Title: `SMART Regret Under Random Time-Varying mu_t`
-  File: `fig_exp03_random_mu_regret_comparison.png`
-  Source: `outputs/figures/uniform_random_regret.png`
+- Label: `fig:exp03_corruption_burst_diag`
+  Title: `Corruption-Burst Diagnostics: Regret and Switch Statistic`
+  File: `fig_exp03_corruption_burst_diagnostics.png`
+  Source: `outputs/figures/corruption_burst_diagnostics.png`
+
+- Label: `fig:exp03_drift_shift_diag`
+  Title: `Drift-Plus-Shift Diagnostics: Regret and Switch Statistic`
+  File: `fig_exp03_drift_plus_shift_diagnostics.png`
+  Source: `outputs/figures/drift_plus_shift_diagnostics.png`

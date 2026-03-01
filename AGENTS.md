@@ -41,6 +41,17 @@ If a request touches SMART theory/behavior and `smart_algorithm.md` is not refer
 - Keep experiment changes self-contained; do not couple experiments via ad hoc relative imports.
 - Do not delete historical outputs unless asked.
 
+## Required experimental design gate
+
+Before implementing or revising any experiment, explicitly document:
+
+1. the SMART behavior claim the experiment must show (e.g., preserve optimism, protect in hard regimes, interpretable switch),
+2. the exact sequence families used to show that claim,
+3. why each sequence is realistic/plausible for the domain,
+4. acceptance criteria for success (what plot behavior would count as evidence).
+
+Do not proceed to code/plot generation until this sequence-design gate is written in the experiment `README.md`.
+
 ## New experiment conventions
 
 For each new experiment under `experiments/expNN_<short_name>/`:
@@ -71,11 +82,12 @@ For each new experiment under `experiments/expNN_<short_name>/`:
 
 When iterating on SMART experiments, prioritize this sequence:
 
-1. Define regime families (benign, drift, abrupt shift, corruption bursts).
-2. Run baselines (`FTL`, robust policy) and SMART variants (theoretical and empirical thresholds).
-3. Log switch diagnostics (`Sigma_t`, threshold, switch round, pre/post switch regret).
-4. Sweep threshold scaling to quantify calibration sensitivity.
-5. Promote only the clearest figures to `<experiment>/figures/`.
+1. Define the paper claim first (what SMART property is being demonstrated).
+2. Design sequence families to elicit that property (benign, hard, representative mixed regime).
+3. Run baselines (`FTL`, robust policy) and SMART variants (theoretical and empirical thresholds).
+4. Log switch diagnostics (`Sigma_t`, threshold, switch round, pre/post switch regret).
+5. Sweep threshold scaling to quantify calibration sensitivity.
+6. Promote only the clearest figures to `<experiment>/figures/`.
 
 ## Progress optimization checklist
 
@@ -89,7 +101,10 @@ Use this checklist for each experiment update:
 - explicit comparator definition in docs
 3. Interpretability:
 - at least one diagnostic figure explaining *why* SMART behaved as observed
-4. Documentation sync:
+4. Sequence quality:
+- each sequence has an explicit rationale tied to a SMART claim
+- at least one benign, one hard, and one representative mixed regime
+5. Documentation sync:
 - update `README.md` and `figures/INDEX.md` together
 
 ## Safety

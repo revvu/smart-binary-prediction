@@ -14,6 +14,7 @@ class OCOConfig:
     n: int = 1000
     domain_low: float = -1.0
     domain_high: float = 1.0
+    threshold_scale: float = 1.0
     seed: int = 0
 
     @property
@@ -142,9 +143,9 @@ def run_smart(mu: Array, cfg: OCOConfig, q: Array | None = None, anytime_lr: boo
         q = np.ones(n, dtype=float)
 
     ftl = run_ftl(mu, cfg, q=q)
-    ogd = run_ogd(mu, cfg, q=q, anytime_lr=anytime_lr)
     sigma = compute_sigma_eq6(mu, cfg, q=q)
-    threshold = 2.0 * np.sqrt(n)
+    threshold = cfg.threshold_scale * 2.0 * np.sqrt(n)
+    lo, hi = cfg.domain
 
     switch_round = n + 1
     for t in range(1, n + 1):
@@ -153,8 +154,21 @@ def run_smart(mu: Array, cfg: OCOConfig, q: Array | None = None, anytime_lr: boo
             break
 
     actions = np.zeros(n + 1, dtype=float)
+    switched = False
     for t in range(1, n + 1):
-        actions[t] = ftl["actions"][t] if t < switch_round else ogd["actions"][t]
+        if t < switch_round:
+            actions[t] = ftl["actions"][t]
+            continue
+
+        if not switched:
+            # Reset robust branch at switch point.
+            actions[t] = 0.0
+            switched = True
+            continue
+
+        _, grad_prev = _loss_and_grad(actions[t - 1], float(mu[t - 2]), float(q[t - 2]))
+        eta_prev = (1.0 / np.sqrt(t - switch_round + 1)) if anytime_lr else cfg.eta_fixed
+        actions[t] = _project(actions[t - 1] - eta_prev * grad_prev, lo, hi)
 
     regret = _regret_from_actions(actions, mu, cfg, q=q)
     return {

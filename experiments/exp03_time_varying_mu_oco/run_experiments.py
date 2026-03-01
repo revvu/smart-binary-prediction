@@ -76,13 +76,53 @@ def _plot_regret(
     plt.close()
 
 
+def _plot_diagnostics(
+    t: Array,
+    stats_ftl: tuple[Array, Array, Array],
+    stats_ogd: tuple[Array, Array, Array],
+    stats_smart: tuple[Array, Array, Array],
+    sigma: Array,
+    threshold: float,
+    switch_round: float,
+    out_path: Path,
+    title: str,
+    ogd_label: str,
+) -> None:
+    m_ftl, _, _ = stats_ftl
+    m_ogd, _, _ = stats_ogd
+    m_smart, _, _ = stats_smart
+
+    fig, axes = plt.subplots(2, 1, figsize=(9.0, 8.0), sharex=True)
+
+    axes[0].plot(t, m_ftl, label="FTL", linewidth=2)
+    axes[0].plot(t, m_ogd, label=ogd_label, linewidth=2)
+    axes[0].plot(t, m_smart, label="SMART", linewidth=2)
+    axes[0].set_ylabel("Regret")
+    axes[0].set_title(title)
+    axes[0].legend(loc="best")
+
+    axes[1].plot(t, sigma[1:], linewidth=2, label=r"$\Sigma_t$")
+    axes[1].axhline(threshold, linestyle="--", linewidth=1.5, label="threshold")
+    if 1 <= switch_round <= t.size:
+        axes[1].axvline(switch_round, linestyle=":", linewidth=1.5, label=f"switch={int(switch_round)}")
+    axes[1].set_xlabel("t")
+    axes[1].set_ylabel("Switch statistic")
+    axes[1].legend(loc="best")
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=220)
+    plt.close(fig)
+
+
 def run_scenario(cfg: OCOConfig, scenario: Scenario, out_dir: Path, anytime_lr: bool) -> dict[str, float]:
     rng_master = np.random.default_rng(cfg.seed)
 
     regrets_ftl = np.zeros((scenario.trials, cfg.n), dtype=float)
     regrets_ogd = np.zeros((scenario.trials, cfg.n), dtype=float)
     regrets_smart = np.zeros((scenario.trials, cfg.n), dtype=float)
-    switches = []
+    switches = np.zeros(scenario.trials, dtype=float)
+    sigma_last: Array | None = None
+    threshold_last = 0.0
 
     first_mu: Array | None = None
     for k in range(scenario.trials):
@@ -98,9 +138,12 @@ def run_scenario(cfg: OCOConfig, scenario: Scenario, out_dir: Path, anytime_lr: 
         regrets_ftl[k, :] = ftl["regret"][1:]
         regrets_ogd[k, :] = ogd["regret"][1:]
         regrets_smart[k, :] = smart["regret"][1:]
-        switches.append(float(smart["switch_round"]))
+        switches[k] = float(smart["switch_round"])
+        sigma_last = np.asarray(smart["sigma_eq6"], dtype=float)
+        threshold_last = float(smart["threshold"])
 
     assert first_mu is not None
+    assert sigma_last is not None
 
     t = np.arange(1, cfg.n + 1, dtype=float)
     stats_ftl = _summary_curves(regrets_ftl)
@@ -118,12 +161,26 @@ def run_scenario(cfg: OCOConfig, scenario: Scenario, out_dir: Path, anytime_lr: 
         f"Regret comparison: {scenario.name}",
         ogd_label,
     )
+    _plot_diagnostics(
+        t,
+        stats_ftl,
+        stats_ogd,
+        stats_smart,
+        sigma_last,
+        threshold_last,
+        float(np.mean(switches)),
+        out_dir / f"{scenario.name}_diagnostics.png",
+        f"Diagnostics: {scenario.name}",
+        ogd_label,
+    )
 
     return {
         "ftl_final": float(stats_ftl[0][-1]),
         "ogd_final": float(stats_ogd[0][-1]),
         "smart_final": float(stats_smart[0][-1]),
         "smart_switch_mean": float(np.mean(switches)),
+        "sigma_max": float(np.max(sigma_last)),
+        "threshold": threshold_last,
     }
 
 
@@ -134,14 +191,20 @@ def main() -> None:
     parser.add_argument("--trials", type=int, default=50, help="Trials for stochastic scenarios")
     parser.add_argument("--anytime-lr", action="store_true", help="Use eta_t=1/sqrt(t) for OGD branch")
     parser.add_argument(
+        "--threshold-scale",
+        type=float,
+        default=0.0035,
+        help="Multiplier on SMART threshold 2*sqrt(n).",
+    )
+    parser.add_argument(
         "--scenario",
         nargs="*",
-        default=["constant_0.25", "step_0.75_to_0.25", "sine", "uniform_random"],
+        default=["stable_benign", "corruption_burst", "drift_plus_shift"],
         help="Subset of scenarios to run",
     )
     args = parser.parse_args()
 
-    cfg = OCOConfig(n=args.n, seed=args.seed)
+    cfg = OCOConfig(n=args.n, seed=args.seed, threshold_scale=args.threshold_scale)
     out_dir = Path(__file__).resolve().parent / "outputs" / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -150,7 +213,7 @@ def main() -> None:
     for name in args.scenario:
         if name not in generators:
             raise ValueError(f"Unknown scenario '{name}'. Valid: {sorted(generators)}")
-        trials = 1 if name in {"constant_0.25", "step_0.75_to_0.25", "sine"} else args.trials
+        trials = args.trials
         scenarios.append(Scenario(name=name, generator=generators[name], trials=trials))
 
     print("Running scenarios:")
@@ -168,7 +231,9 @@ def main() -> None:
             f"FTL={r['ftl_final']:.3f} "
             f"OGD={r['ogd_final']:.3f} "
             f"SMART={r['smart_final']:.3f} "
-            f"switch_mean={r['smart_switch_mean']:.2f}"
+            f"switch_mean={r['smart_switch_mean']:.2f} "
+            f"sigma_max={r['sigma_max']:.3f} "
+            f"threshold={r['threshold']:.3f}"
         )
 
 
