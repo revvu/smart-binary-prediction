@@ -39,6 +39,32 @@ Demonstrate three core SMART behaviors:
 - `OGD`: robust baseline (fixed or anytime learning rate).
 - `SMART`: starts optimistically and switches to robust behavior using the paper’s switching statistic.
 
+## Worst-Case Baseline Specification (Why OGD Here)
+
+Robust baseline used in Exp03:
+
+- **Online Gradient Descent (OGD)** on a bounded 1D domain `[-1,1]`.
+
+Where this specification comes from:
+
+1. For convex losses with bounded gradients on bounded domains, OGD is a standard worst-case baseline with sublinear regret (`O(sqrt(n))` scale).
+2. Our loss is convex in `a`:
+   - `ell_t(a)=0.5*(a-mu_t)^2`,
+   - gradient is `a-mu_t`,
+   - and both `a` and `mu_t` are bounded in this experiment.
+
+Why this is appropriate in this setting:
+
+1. The action space is exactly a bounded interval, which is the canonical OGD setup.
+2. OGD does not assume stationarity of `mu_t`, so it is a natural robust comparator under drift/corruption.
+3. SMART’s robust branch should be a method with reliable worst-case behavior; OGD provides that role cleanly here.
+
+Implementation details:
+
+1. Fixed-rate branch: `eta = 2/sqrt(n)`.
+2. Anytime branch: `eta_t = 1/sqrt(t)`.
+3. Update rule: gradient step on current loss, then projection back to `[-1,1]`.
+
 ## Input Sequence Design: What `mu_t` Means and How We Generate It
 
 The input sequence is the most important design choice in this experiment.  

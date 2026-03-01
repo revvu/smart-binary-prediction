@@ -25,6 +25,29 @@ This experiment compares:
 - `FTRL` (robust baseline),
 - `SMART` (start optimistic, switch when evidence says optimism is failing).
 
+## Worst-Case Baseline Specification (Why This Is FTRL)
+
+Robust baseline used in Exp04:
+
+- **FTRL with quadratic regularization on the unit Euclidean ball**.
+
+Concrete specification:
+
+`x_t^FTRL = argmin_{x in X} { <theta_{t-1}, x> + (sqrt(t)/(2*eta0)) * ||x||_2^2 }`,  
+with `X = {x : ||x||_2 <= 1}` and `theta_{t-1}` the cumulative linearized gradient.
+
+Where this specification comes from:
+
+1. This is the standard FTRL template: cumulative linearized loss + strongly convex regularizer.
+2. Quadratic regularization over an `l2` ball yields a closed-form projected update:
+   - `Proj_X( -(eta0/sqrt(t)) * theta_{t-1} )`.
+
+Why this is appropriate here:
+
+1. The loss is linearized each round in vector space, so FTRL is directly applicable.
+2. The domain is exactly bounded in `l2`, matching the projection form.
+3. It provides a robust, stable baseline that is meaningful against optimistic FTL in nonstationary regimes.
+
 ## Why True FTL Becomes Difficult in This Setting
 
 This is the core motivation for the experiment redesign.
@@ -108,6 +131,29 @@ For each horizon `n`:
 
 This yields the paper-facing `Regret` vs `Horizon` figure.
 
+## Metric-Driven Sequence Selection (New)
+
+To improve figure quality, Exp04 now uses a metric-driven selection stage before the main horizon sweep.
+
+What is searched:
+
+1. `max_delta_norm` candidates: controls how quickly cumulative state can move each round.
+2. `label_mismatch_prob` candidates: controls base mismatch/corruption intensity.
+
+How candidates are scored:
+
+1. `stable_benign` score favors `SMART ~= FTL` and penalizes cases where robust beats FTL.
+2. `corruption_burst` score favors large improvement of SMART over FTL.
+3. `drift_plus_shift` score favors meaningful improvement over FTL without pathological behavior.
+
+How selected parameters are used:
+
+1. For each regime, evaluate a small parameter grid on probe horizons.
+2. Choose the best-scoring parameter pair for that regime.
+3. Run the full horizon figure using those selected parameters.
+
+This keeps realism constraints while making the paper figure more illustrative.
+
 ## Input Sequence Design (Exact Regime Recipes)
 
 This section is the most important part of Exp04.
@@ -181,6 +227,12 @@ No single-sequence switch-statistic traces are included in curated paper figures
 ```bash
 cd experiments/exp04_leader_path_synthesis
 python run_experiment.py --t-max 1000 --t-step 100 --runs 8 --d 5 --max-delta-norm 0.45
+```
+
+Disable metric-driven auto-selection and force manual parameters:
+
+```bash
+python run_experiment.py --no-auto-select --max-delta-norm 0.45 --label-mismatch-prob 0.02
 ```
 
 ## Outputs

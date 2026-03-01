@@ -52,6 +52,16 @@ Before implementing or revising any experiment, explicitly document:
 
 Do not proceed to code/plot generation until this sequence-design gate is written in the experiment `README.md`.
 
+## Required worst-case baseline specification
+
+Each experiment README must include a dedicated section that states:
+
+1. which algorithm is used as the worst-case/robust baseline,
+2. where that specification comes from (theory, standard reduction, or implementation derivation),
+3. why that specific formulation is appropriate for the experiment's loss/domain.
+
+If using FTRL, do not write only "FTRL". You must specify the concrete objective (regularizer, constraints, update form) and explain why it is the correct FTRL instantiation for the setting.
+
 ## Primary figure contract (paper default)
 
 Unless the user explicitly asks otherwise, experiment figures should use:
@@ -127,6 +137,8 @@ Use this checklist for each experiment update:
 - at least one benign, one hard, and one representative mixed regime
 5. Documentation sync:
 - update `README.md` and `figures/INDEX.md` together
+6. Baseline clarity:
+- README includes a robust-baseline specification section with source and appropriateness justification
 
 ## Safety
 
