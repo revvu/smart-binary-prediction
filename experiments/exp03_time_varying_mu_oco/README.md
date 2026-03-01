@@ -16,7 +16,7 @@ Demonstrate SMART's core mechanism in a clean 1D OCO setting:
 
 1. Preserve optimistic performance in benign regimes.
 2. Protect against realistic hard/nonstationary regimes.
-3. Show interpretable switching behavior (switch timing vs horizon) as supplementary diagnostics.
+3. Show comparative horizon-level behavior across regimes.
 
 The key design variable is the input sequence `mu_t`. Sequence quality determines whether the plots are informative.
 
@@ -83,8 +83,7 @@ python run_experiments.py --scenario stable_benign corruption_burst drift_plus_s
 
 Figures are written to:
 
-- `outputs/figures/final_regret_vs_horizon_by_scenario.png` (primary)
-- `outputs/figures/switch_round_vs_horizon_by_scenario.png` (supplementary)
+- `outputs/figures/exp03_quadratic_oco_final_regret_by_horizon.png`
 
 ## Known issues
 

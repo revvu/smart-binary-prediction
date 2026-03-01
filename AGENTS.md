@@ -63,6 +63,15 @@ Unless the user explicitly asks otherwise, experiment figures should use:
 
 Do not treat single-sequence prefix regret traces (`regret vs t` on one fixed-length run) as the primary result figure. Prefix traces can be included only as supplementary diagnostics.
 
+## Publication figure standards
+
+For figures intended for manuscript inclusion:
+
+1. use descriptive, professional chart titles (specific but concise),
+2. use clean axis labels (e.g., `Horizon`, `Final Regret`) without verbose sentences,
+3. use descriptive output filenames that encode experiment and figure purpose,
+4. avoid vague labels like `plot1`, `result`, `curve`, or ambiguous abbreviations in final figure names.
+
 ## New experiment conventions
 
 For each new experiment under `experiments/expNN_<short_name>/`:

@@ -7,7 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.eval import final_regrets, run_curves
+from src.eval import final_regrets
 from src.synthesis import SynthesisConfig, regime_names, synthesize_sequence
 
 
@@ -21,6 +21,15 @@ class RunConfig:
     label_mismatch_prob: float = 0.02
     threshold_scale: float = 0.01
     seed: int = 7
+
+
+def _regime_title(name: str) -> str:
+    mapping = {
+        "stable_benign": "Stable Benign Sequence",
+        "corruption_burst": "Corruption Burst Sequence",
+        "drift_plus_shift": "Drift Plus Shift Sequence",
+    }
+    return mapping.get(name, name.replace("_", " ").title())
 
 
 def _plot_regret_grid(t_grid, stats_by_regime, out_path: Path) -> None:
@@ -43,50 +52,17 @@ def _plot_regret_grid(t_grid, stats_by_regime, out_path: Path) -> None:
             if np.any(hi > lo):
                 ax.fill_between(t_grid, lo, hi, alpha=0.18, color=line.get_color())
 
-        ax.set_title(regime.replace("_", " "))
-        ax.set_xlabel("T")
-        ax.set_ylabel("Final regret")
+        ax.set_title(_regime_title(regime))
+        ax.set_xlabel("Horizon")
+        ax.set_ylabel("Final Regret")
         ax.legend(loc="best")
 
     for j in range(len(regimes), len(axes)):
         axes[j].axis("off")
 
-    fig.suptitle("Leader-synthesized realistic regimes: final regret vs horizon", fontsize=16)
+    fig.suptitle("Online Linear Classification: Final Regret by Horizon", fontsize=16)
     fig.tight_layout()
     fig.savefig(out_path, dpi=220, bbox_inches="tight")
-    plt.close(fig)
-
-
-def _plot_single_sequence_diagnostics(regime: str, seq, curves, out_dir: Path) -> None:
-    T = seq.z.shape[0]
-    t = np.arange(1, T + 1)
-
-    # Leader alignment
-    cos_sim = np.sum(seq.target_leaders * seq.realized_leaders, axis=1)
-
-    fig, axes = plt.subplots(3, 1, figsize=(10, 11), sharex=True)
-
-    axes[0].plot(t, curves.regret_ftl[1:], label="FTL", linewidth=2)
-    axes[0].plot(t, curves.regret_ftrl[1:], label="FTRL", linewidth=2)
-    axes[0].plot(t, curves.regret_smart[1:], label="SMART", linewidth=2)
-    axes[0].set_ylabel("Prefix regret")
-    axes[0].set_title(f"{regime.replace('_', ' ')}: regret trajectories")
-    axes[0].legend(loc="best")
-
-    axes[1].plot(t, curves.sigma[1:], label=r"$\Sigma_t$", linewidth=2)
-    axes[1].axhline(curves.threshold, linestyle="--", linewidth=1.5, label="threshold")
-    if 1 <= curves.switch_round <= T:
-        axes[1].axvline(curves.switch_round, linestyle=":", linewidth=1.5, label=f"switch={curves.switch_round}")
-    axes[1].set_ylabel("Switch statistic")
-    axes[1].legend(loc="best")
-
-    axes[2].plot(t, cos_sim, linewidth=2)
-    axes[2].set_ylabel("cos(target, realized)")
-    axes[2].set_xlabel("t")
-    axes[2].set_ylim(-1.05, 1.05)
-
-    fig.tight_layout()
-    fig.savefig(out_dir / f"{regime}_diagnostics.png", dpi=220, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -162,18 +138,7 @@ def main() -> None:
             "switch_mean": switch_runs.mean(axis=0),
         }
 
-        # Diagnostic plot at max horizon using first run seed.
-        diag_cfg = SynthesisConfig(
-            d=cfg.d,
-            max_delta_norm=cfg.max_delta_norm,
-            label_mismatch_prob=cfg.label_mismatch_prob,
-            seed=cfg.seed + 99991,
-        )
-        seq_diag = synthesize_sequence(T=cfg.t_max, regime=regime, cfg=diag_cfg)
-        curves = run_curves(seq_diag.z, seq_diag.y, threshold_scale=thr_scale)
-        _plot_single_sequence_diagnostics(regime, seq_diag, curves, out_dir)
-
-    _plot_regret_grid(t_grid, stats_by_regime, out_dir / "regret_vs_horizon_by_regime.png")
+    _plot_regret_grid(t_grid, stats_by_regime, out_dir / "exp04_olc_final_regret_by_horizon.png")
 
     print("Final-regret summary (at max horizon)")
     for regime in args.regime:

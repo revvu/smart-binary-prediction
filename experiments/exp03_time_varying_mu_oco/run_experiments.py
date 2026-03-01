@@ -29,6 +29,15 @@ def _summary_curves(vals: Array) -> dict[str, Array]:
     return {"mean": mean, "lo": mean - 1.96 * se, "hi": mean + 1.96 * se}
 
 
+def _scenario_title(name: str) -> str:
+    mapping = {
+        "stable_benign": "Stable Benign Sequence",
+        "corruption_burst": "Corruption Burst Sequence",
+        "drift_plus_shift": "Drift Plus Shift Sequence",
+    }
+    return mapping.get(name, name.replace("_", " ").title())
+
+
 def _plot_regret_grid(horizons: Array, stats_by_scenario: dict[str, dict[str, dict[str, Array]]], out_path: Path) -> None:
     scenarios = list(stats_by_scenario.keys())
     cols = 2
@@ -48,36 +57,18 @@ def _plot_regret_grid(horizons: Array, stats_by_scenario: dict[str, dict[str, di
             if np.any(hi > lo):
                 ax.fill_between(horizons, lo, hi, alpha=0.18, color=line.get_color())
 
-        ax.set_title(scenario.replace("_", " "))
-        ax.set_xlabel("Horizon n")
-        ax.set_ylabel("Final regret at horizon n")
+        ax.set_title(_scenario_title(scenario))
+        ax.set_xlabel("Horizon")
+        ax.set_ylabel("Final Regret")
         ax.legend(loc="best")
 
     for j in range(len(scenarios), len(axes)):
         axes[j].axis("off")
 
-    fig.suptitle("Quadratic OCO: final regret vs horizon (fresh sequence each horizon)", fontsize=15)
+    fig.suptitle("Quadratic OCO: Final Regret by Horizon", fontsize=15)
     fig.tight_layout()
     fig.savefig(out_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
-
-
-def _plot_switch_vs_horizon(horizons: Array, switch_stats: dict[str, dict[str, Array]], out_path: Path) -> None:
-    plt.figure(figsize=(9, 5))
-    for scenario, s in switch_stats.items():
-        mean = s["mean"]
-        lo = s["lo"]
-        hi = s["hi"]
-        line = plt.plot(horizons, mean, linewidth=2, label=scenario.replace("_", " "))[0]
-        if np.any(hi > lo):
-            plt.fill_between(horizons, lo, hi, alpha=0.18, color=line.get_color())
-    plt.xlabel("Horizon n")
-    plt.ylabel("SMART switch round")
-    plt.title("SMART switch timing vs horizon")
-    plt.legend(loc="best")
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=220, bbox_inches="tight")
-    plt.close()
 
 
 def run_scenario(
@@ -167,9 +158,7 @@ def main() -> None:
         }
         switch_stats[sc.name] = stats["switch"]
 
-    _plot_regret_grid(horizons, stats_by_scenario, out_dir / "final_regret_vs_horizon_by_scenario.png")
-    _plot_switch_vs_horizon(horizons, switch_stats, out_dir / "switch_round_vs_horizon_by_scenario.png")
-
+    _plot_regret_grid(horizons, stats_by_scenario, out_dir / "exp03_quadratic_oco_final_regret_by_horizon.png")
     print("\nFinal-regret summary at max horizon")
     for sc in scenarios:
         s = stats_by_scenario[sc.name]

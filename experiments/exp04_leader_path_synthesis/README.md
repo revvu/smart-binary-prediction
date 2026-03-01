@@ -53,13 +53,13 @@ Experiment 4 should focus on exactly three realistic sequences:
 
 1. SMART preserves upside in easy regimes (`stable_benign`).
 2. SMART protects against hard but realistic events (`corruption_burst`).
-3. SMART adapts coherently in mixed nonstationarity (`drift_plus_shift`) and the switch is explained by `Sigma_t` vs threshold.
+3. SMART adapts coherently in mixed nonstationarity (`drift_plus_shift`).
 
 ### Primary plotting contract
 
 - Primary paper figure type: `final regret vs horizon`.
 - For each horizon `n`, evaluate on fresh sequences of length `n`.
-- Single-sequence regret trajectories are supplementary diagnostics only.
+- Do not use single-sequence switch/statistic traces in curated paper figures.
 
 ## Online learning setup and FTRL definition
 
@@ -110,12 +110,11 @@ Notes:
 
 - The runner uses an empirically calibrated threshold scale for SMART (`--threshold-scale`, default `0.01`) to expose meaningful switch behavior in this OLC setting.
 - A single threshold scale is used across all three sequences for comparability.
-- For paper figures, keep outputs restricted to the three sequence types above and report both regret curves and switch diagnostics.
+- For paper figures, keep outputs restricted to horizon-vs-final-regret comparisons across the three sequence types.
 
 ## Outputs
 
-- `outputs/figures/regret_vs_horizon_by_regime.png` (primary)
-- `outputs/figures/<regime>_diagnostics.png` (supplementary)
+- `outputs/figures/exp04_olc_final_regret_by_horizon.png`
 
 ## Figures
 
