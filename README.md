@@ -8,6 +8,7 @@ This repository now separates experiment code from manuscript context.
   - `exp01_best_of_all_worlds/`
   - `exp02_online_linear_classification/`
   - `exp03_time_varying_mu_oco/`
+  - `exp04_leader_path_synthesis/`
 - `paper/`: manuscript and figure context for writing
   - `manuscripts/`: conference/journal versions (`aistats`, `colt`, `ms`, `arxiv`)
   - `shared/`: shared `.tex` and `.bib` files

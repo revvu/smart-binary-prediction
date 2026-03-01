@@ -17,6 +17,7 @@ Primary goal: make it easy to add and iterate on new experiments, then promote s
   - `exp01_best_of_all_worlds/`
   - `exp02_online_linear_classification/`
   - `exp03_time_varying_mu_oco/`
+  - `exp04_leader_path_synthesis/`
   - future experiments: `expNN_<short_name>/`
 - `paper/`
   - `manuscripts/`
