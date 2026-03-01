@@ -12,6 +12,10 @@ Secondary claim:
 
 - Using empirical estimates of the robust threshold `g(T)` can improve practical switching behavior versus a fixed theoretical bound.
 
+### Paper-ready background paragraph
+
+This experiment tests whether the same measured-optimism principle from binary prediction transfers to a higher-dimensional online linear classification problem. In this setting, FTL-like behavior is expected to perform very well on separable or weakly noisy data, while robust policies are expected to dominate on adversarial label processes. SMART is intended to interpolate between these regimes by monitoring an online regret-trace proxy and switching only when optimistic behavior appears unreliable. The empirical objective is therefore not only lower average regret, but also interpretable adaptation: matching optimistic performance on benign streams and preventing catastrophic degradation on adversarial streams.
+
 ## Experiment design
 
 Problem setup (as implemented):
@@ -43,6 +47,14 @@ Drivers:
 - On benign streams: SMART tracks optimistic baseline quality.
 - On adversarial streams: SMART avoids linear-regret collapse and remains competitive with robust baseline.
 - Empirical-threshold SMART shows meaningful practical gains when switching earlier/later than conservative theoretical thresholds.
+
+### Figures intended for paper inclusion
+
+Curated figure files are provided in `figures/` with labels and titles listed in `figures/INDEX.md`.
+
+- `fig:exp02_olc_main` demonstrates end-to-end algorithm comparison across canonical OLC sequence families.
+- `fig:exp02_empirical_g` documents empirical threshold calibration relative to theoretical references.
+- `fig:exp02_case_grid` provides per-family regret trends to support regime-specific discussion.
 
 ## Problems and limitations we are currently encountering
 

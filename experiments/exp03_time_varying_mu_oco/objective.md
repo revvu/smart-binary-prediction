@@ -14,6 +14,10 @@ Core empirical question:
 
 This directly supports the paper's broader claim that SMART is modular and extends beyond binary prediction into OCO-style settings.
 
+### Paper-ready background paragraph
+
+This experiment isolates a tractable convex setting where the loss landscape evolves through a time-varying center parameter `mu_t`. It is designed to test whether SMART can remain competitive when the environment is nonstationary but structured: constant phases, abrupt regime shifts, and stochastic drift in `mu_t`. The central empirical question is whether the switching mechanism can preserve optimistic behavior when appropriate while maintaining robustness when temporal variation makes pure FTL behavior unreliable.
+
 ## Experiment design
 
 Implemented components:
@@ -39,6 +43,14 @@ Notebook sources are archived under `notebooks/` for traceability.
 1. Constant scenario reproduces baseline behavior (sanity check).
 2. Step-change scenario reveals whether SMART detects deterioration and benefits from switching.
 3. Additional scenarios (`sine`, `uniform_random`) stress test adaptation under smooth/random drift.
+
+### Figures intended for paper inclusion
+
+Curated figure files are provided in `figures/` with labels and titles listed in `figures/INDEX.md`.
+
+- `fig:exp03_constant_mu_regret` establishes baseline behavior under stationary loss centers.
+- `fig:exp03_step_mu_schedule` and `fig:exp03_step_mu_regret` jointly present the regime-shift setup and algorithm response.
+- `fig:exp03_random_mu_regret` supports claims about adaptation under stochastic nonstationarity.
 
 ## Problems and limitations we are currently encountering
 

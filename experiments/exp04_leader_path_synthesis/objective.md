@@ -10,6 +10,10 @@ This experiment is designed to produce **more realistic and interpretable demons
 
 The purpose is to replace overly obvious synthetic patterns (e.g., trivial alternating labels) with sequences that look more like plausible data streams under covariate and concept shift.
 
+### Paper-ready background paragraph
+
+This experiment is intended as a realism-oriented bridge between stylized theory and applied online learning. Rather than relying on overtly adversarial handcrafted sequences, it generates plausible feature-label streams with controlled nonstationarity and corruption, while still spanning the algorithmic regimes needed to evaluate SMART. The key narrative is that SMART should preserve opportunistic performance in stable regimes, react appropriately in shifted/corrupted regimes, and provide interpretable switching dynamics tied to measurable changes in online difficulty.
+
 ## Experimental setup
 
 ### Data generation model
@@ -62,6 +66,14 @@ For demonstration clarity, SMART uses a calibrated threshold scale (base plus re
 2. SMART performs near FTL in benign/stable settings.
 3. SMART avoids large degradation in harder/non-stationary regimes.
 4. Diagnostics show that switching dynamics are interpretable relative to regime changes.
+
+### Figures intended for paper inclusion
+
+Curated figure files are provided in `figures/` with labels and titles listed in `figures/INDEX.md`.
+
+- `fig:exp04_horizon_grid` is the primary summary figure across realistic regimes.
+- `fig:exp04_stable_diag` documents expected benign-regime behavior and no-switch dynamics.
+- `fig:exp04_shift_diag` and `fig:exp04_burst_diag` support discussion of adaptation under regime transitions and corruption bursts.
 
 ## Known limitations and issues
 
