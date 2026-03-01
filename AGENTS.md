@@ -41,13 +41,32 @@ If a request touches SMART theory/behavior and `smart_algorithm.md` is not refer
 - Keep experiment changes self-contained; do not couple experiments via ad hoc relative imports.
 - Do not delete historical outputs unless asked.
 
+## Experiment README standard (primary objective)
+
+Experiment `README.md` files are treated as standalone technical reports that can be read alongside the main paper by an advisor/reviewer.
+
+The writing goal is high-signal clarity:
+
+1. make the experiment objective and paper claim explicit,
+2. define the setup and metric precisely,
+3. specify sequence/data generation concretely (distributional form, schedules, key parameters),
+4. explain algorithm/comparator definitions concretely (especially SMART switch rule and robust baseline),
+5. explain non-obvious computational design choices and approximations (including why exact alternatives are impractical),
+6. interpret what the results show and what they do not show,
+7. state limits/non-claims clearly.
+
+Notes:
+
+- prioritize conceptual and methodological specificity over environment-lock or operational runbook detail;
+- replication commands may be included, but they are secondary to conceptual clarity.
+
 ## Required experimental design gate
 
 Before implementing or revising any experiment, explicitly document:
 
 1. the SMART behavior claim the experiment must show (e.g., preserve optimism, protect in hard regimes, interpretable switch),
 2. the exact sequence families used to show that claim,
-3. why each sequence is realistic/plausible for the domain,
+3. why each sequence is appropriate for the claim (and whether it is illustrative vs representative),
 4. acceptance criteria for success (what plot behavior would count as evidence).
 
 Do not proceed to code/plot generation until this sequence-design gate is written in the experiment `README.md`.
@@ -87,11 +106,12 @@ For figures intended for manuscript inclusion:
 For each new experiment under `experiments/expNN_<short_name>/`:
 
 - include a local `README.md` with:
-  - experiment question
-  - experiment design and known limitations
-  - dependency setup
-  - exact run commands
-  - output paths
+  - experiment objective and claim
+  - formal setup (loss, comparator, regret definition)
+  - exact sequence/data generation model
+  - robust baseline specification and SMART policy definition
+  - results interpretation and limits/non-claims
+  - output paths / figure provenance
 - place generated artifacts in a local `outputs/` folder (or clearly named equivalent)
 - use deterministic seeds where possible and document them
 - include a single entry-point command/script for reproduction
@@ -139,6 +159,13 @@ Use this checklist for each experiment update:
 - update `README.md` and `figures/INDEX.md` together
 6. Baseline clarity:
 - README includes a robust-baseline specification section with source and appropriateness justification
+
+## Math formatting in README files
+
+When writing mathematical content in experiment READMEs:
+
+1. prefer Markdown math (`$...$` inline, `$$...$$` display) for equations and formal expressions,
+2. avoid using backticked code formatting for mathematical formulas unless the content is truly code or CLI syntax.
 
 ## Safety
 

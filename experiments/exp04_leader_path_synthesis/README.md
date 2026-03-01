@@ -1,332 +1,199 @@
-# exp04_leader_path_synthesis
+# Experiment 04: Leader-Path Synthesis for SMART in Online Linear Classification
 
-Experiment 04 studies SMART in online linear classification with a sequence-construction method that keeps the experiment realistic and computationally tractable.
+## Why this experiment exists
 
-## Background (Undergraduate-Level)
+This experiment is designed to answer one practical question for the paper:
 
-At each round `t`, the learner chooses a vector `x_t` in the unit ball (`||x_t||<=1`) and then sees an example `(z_t, y_t)`:
+Can SMART preserve optimistic performance in benign regimes while still protecting against nonstationary regime shifts in online linear classification?
 
-- `z_t` is a feature vector (`||z_t||<=1`),
-- `y_t` is a label in `{ -1, +1 }`.
+The experiment is intentionally *illustrative* rather than fully realistic. The goal is to produce clean, interpretable evidence for the mechanism behind SMART (switching from optimistic to robust behavior at the right time), not to claim a domain benchmark.
 
-The loss used here is:
+## What this experiment is testing
 
-- $\ell_t(x)=\frac{1}{2}\left|\langle z_t,x\rangle-y_t\right|$.
+We evaluate three policies:
 
-Intuition:
+- `FTL` (optimistic baseline)
+- `FTRL` (robust baseline)
+- `SMART` (starts as FTL, switches once to FTRL based on an online regret signal)
 
-1. `x_t` makes a score `q_t = <z_t, x_t>`.
-2. If `q_t` is close to label `y_t`, loss is small.
-3. If `q_t` is far from `y_t`, loss is large.
+The target empirical story is:
 
-This experiment compares:
+1. In benign conditions, SMART should look like FTL (no optimism tax).
+2. Under sustained shift, SMART should improve over pure FTL.
+3. In mixed regimes, SMART should land between optimistic and robust extremes in a sensible way.
 
-- `FTL` (optimistic),
-- `FTRL` (robust baseline),
-- `SMART` (start optimistic, switch when evidence says optimism is failing).
+## Formal setup
 
-## Worst-Case Baseline Specification (Why This Is FTRL)
+At round $t$, the learner chooses $x_t$ in the unit Euclidean ball:
 
-Robust baseline used in Exp04:
+$$
+X = \{x \in \mathbb{R}^d : \|x\|_2 \le 1\}
+$$
 
-- **FTRL with quadratic regularization on the unit Euclidean ball**.
+Then it observes $(z_t, y_t)$ with label $y_t \in \{-1, +1\}$ and incurs loss:
 
-Concrete specification:
+$$
+\ell_t(x) = \tfrac{1}{2}\,|\langle z_t, x\rangle - y_t|
+$$
 
-`x_t^FTRL = argmin_{x in X} { <theta_{t-1}, x> + (sqrt(t)/(2*eta0)) * ||x||_2^2 }`,  
-with `X = {x : ||x||_2 <= 1}` and `theta_{t-1}` the cumulative linearized gradient.
+Reported metric is regret to the best fixed action on the prefix:
 
-Where this specification comes from:
+$$
+\mathrm{Reg}_A(n) = \sum_{t=1}^n \ell_t(x_t^A) - \min_{x \in X}\sum_{t=1}^n \ell_t(x)
+$$
 
-1. This is the standard FTRL template: cumulative linearized loss + strongly convex regularizer.
-2. Quadratic regularization over an `l2` ball yields a closed-form projected update:
-   - `Proj_X( -(eta0/sqrt(t)) * theta_{t-1} )`.
+The robust baseline is concrete FTRL with quadratic regularization and $\sqrt{t}$ scaling:
 
-Why this is appropriate here:
+$$
+x_t^{\mathrm{FTRL}} = \Pi_X\!\left(-\frac{\eta_0}{\sqrt{t}}\,\theta_{t-1}\right),\quad \eta_0 = \sqrt{2}.
+$$
 
-1. The loss is linearized each round in vector space, so FTRL is directly applicable.
-2. The domain is exactly bounded in `l2`, matching the projection form.
-3. It provides a robust, stable baseline that is meaningful against optimistic FTL in nonstationary regimes.
+This is the correct robust comparator family in this implementation because updates are linearized in vector space and actions are constrained to an $\ell_2$ ball.
 
-## Why True FTL Becomes Difficult in This Setting
+## Why leader-path synthesis is used
 
-This is the core motivation for the experiment redesign.
+### The computational issue
 
-In online linear classification, a literal “true FTL” benchmark over prefixes can be expensive because:
+In this setting, two quantities repeatedly require solving prefix-level optimization structure:
 
-1. At each round `t`, FTL depends on cumulative gradient/state up to `t-1`.
-2. If you build arbitrary synthetic sequences and then try to recover exact leader behavior by repeated optimization, you may need many prefix solves.
-3. Doing this over many horizons and many trials multiplies the cost heavily.
+1. The comparator term $\min_x \sum_{i\le t} \ell_i(x)$ (for every $t$, horizon, run, regime).
+2. SMART's online switch statistic $\Sigma_t$, which also depends on prefix best-action losses.
 
-In short: if sequence generation and leader computation are decoupled, exact repeated prefix optimization can become a bottleneck.
+Even with the current optimized evaluation code, these prefix recomputations are quadratic in horizon ($O(T^2 d)$ work per run for comparator-like quantities). If we additionally generated arbitrary sequences and tried to recover exact leader behavior by generic prefix optimization each round, cost would increase further and quickly dominate the horizon sweep.
 
-## How We Redesigned the Experiment
+With 3 regimes, 48 runs, and 40 horizons ($25..1000$ step $25$), brute-force prefix optimization on arbitrary synthetic sequences becomes a practical bottleneck.
 
-We redesigned Exp04 so leader behavior is computable in closed form by construction.
+### The design response
 
-High-level idea:
+Instead of sampling $(z_t, y_t)$ first and solving for leaders afterward, this experiment does the reverse:
 
-1. Instead of first generating arbitrary `(z_t, y_t)` and then solving for leaders,
-2. we construct a realizable path of cumulative gradients `theta_t`,
-3. and then generate `(z_t, y_t)` to match that path.
+1. Construct a target leader-direction path over time.
+2. Construct a realizable cumulative gradient path $\theta_t$ with bounded increments.
+3. Convert each increment $\Delta_t = \theta_t - \theta_{t-1}$ into a feature-label pair $(z_t, y_t)$ that realizes that update.
 
-This makes FTL updates simple and fast.
+This makes the generated sequence explicitly compatible with the intended leader dynamics and avoids an additional expensive outer optimization loop during sequence construction.
 
-## Step-by-Step: Why Results Are Computable in the New Formulation
+## Exact data-generating process (DGP)
 
-Let `u_t` be a desired leader direction at round `t`.
+Default dimension is $d=5$.
 
-### Step 1: Choose regime-specific target directions
+For each regime, synthesis builds:
 
-For each scenario, define a target direction path:
+1. A target direction path on the unit sphere (`target_leaders`).
+2. A latent separator path (`w_star_path`) used to orient labels plausibly.
+3. A radius schedule $r_t$ controlling cumulative-gradient magnitude.
+4. A realizable $\theta_t$ path with per-step cap $\|\Delta_t\| \le \texttt{max\_delta\_norm}$.
+5. A mismatch schedule that controls deterministic label flips over time.
 
-- `u_1, ..., u_T`, where each `u_t` is unit-norm.
+### Common construction details
 
-### Step 2: Choose magnitude schedule
+- $\theta_t^{\text{des}} = -r_t u_t$ where $u_t$ is target direction.
+- Realizability cap: if $\|\Delta_t\| > \texttt{max\_delta\_norm}$, scale $\Delta_t$ down to the cap.
+- Example realization uses $z_t = \pm 2\Delta_t$ and $y_t \in \{-1,+1\}$ so induced gradient matches $\Delta_t$ under the chosen loss.
+- Label mismatch is deterministic-rate controlled (accumulator-based flip mask), not i.i.d. Bernoulli, to reduce unnecessary Monte Carlo jaggedness.
 
-Define radii `r_t` controlling how strongly the cumulative state points in that direction.
+### Regime A: `stable_benign`
 
-Construct desired cumulative state:
+Purpose: optimism safety.
 
-- `theta_t^des = - r_t * u_t`.
+- Direction path stays near a fixed anchor.
+- Radius grows smoothly: $r_t \approx 0.10 + 0.020\sqrt{t+1}$ with small noise.
+- Very low mismatch (0.00 in fixed illustrative mode).
 
-### Step 3: Enforce per-round realizability
+Fixed illustrative parameters used for the main plot:
 
-Per-round gradient updates must be feasible, so we cap increment size:
+- `max_delta_norm=0.35`
+- `label_mismatch_prob=0.00`
+- `threshold_scale=0.015`
+- `direction_noise_scale=0.65`
 
-- `Delta_t = theta_t - theta_{t-1}`,
-- enforce `||Delta_t|| <= 0.5`.
+### Regime B: `persistent_shift`
 
-This matches the maximum update size implied by bounded features in this loss setup.
+Purpose: sustained shift where pure FTL should fail.
 
-### Step 4: Convert `Delta_t` into an example `(z_t, y_t)`
+- Early segment near anchor $v_1$, then smooth transition toward $v_2$.
+- Direction shift window in synthesis path: roughly rounds $140..900$.
+- Radius shrinks post-shift (down to ~60% of pre-shift trend) to reduce leader stability.
+- Mismatch rate increases during the hard window (base + boosted schedule).
 
-We choose feature-label pairs so the induced gradient equals the desired update.
+Fixed illustrative parameters:
 
-Using the gradient form
+- `max_delta_norm=0.45`
+- `label_mismatch_prob=0.05`
+- `threshold_scale=0.006`
+- `direction_noise_scale=1.20`
 
-- `g_t = 0.5 * sign(<z_t, x_t> - y_t) * z_t`,
+### Regime C: `delayed_hardening`
 
-we set `z_t` proportional to `Delta_t` (with sign and label choice selected to match plausibility and update direction), so `g_t` reproduces `Delta_t`.
+Purpose: representative mixed nonstationarity.
 
-### Step 5: Compute FTL cheaply
+- Early benign phase.
+- Mid-phase gradual drift.
+- Later transition toward a new anchor ($v_3$) with higher mismatch.
+- Hardening boundaries are delayed relative to Regime B.
 
-Now cumulative state is simply:
+Fixed illustrative parameters:
 
-- `theta_t = sum_{s<=t} g_s`.
+- `max_delta_norm=0.45`
+- `label_mismatch_prob=0.12`
+- `threshold_scale=0.005`
+- `direction_noise_scale=0.50`
 
-FTL action is closed form:
+## SMART switch definition used here
 
-- `x_t^FTL = -theta_{t-1} / ||theta_{t-1}||` (or `0` if denominator is zero).
+SMART tracks an online lower-bound-style FTL regret statistic $\Sigma_t$ and switches once when:
 
-No repeated numerical optimizer is needed.
+$$
+\Sigma_t \ge \text{threshold}, \qquad \text{threshold} = \texttt{threshold\_scale}\cdot\sqrt{2T}.
+$$
 
-### Step 6: Run horizon-level evaluation
+After switching, SMART uses the robust FTRL policy for the remainder of the horizon.
 
-For each horizon `n`:
+## Evaluation protocol
 
-1. generate fresh sequences of length `n` from the same regime recipe,
-2. run `FTL`, `FTRL`, and `SMART`,
-3. record regret at horizon `n`.
+Primary figure contract (paper-facing):
 
-This yields the paper-facing `Regret` vs `Horizon` figure.
+- x-axis: Horizon
+- y-axis: regret at that horizon
+- each horizon is a fresh sequence of exactly that length
+- horizons: $25, 50, \ldots, 1000$
+- runs per horizon: 48
+- seed base: 7
 
-## Metric-Driven Sequence Selection (New)
+Uncertainty bands are $\text{mean} \pm 1.96\,\text{SE}$.
 
-To improve figure quality, Exp04 now uses a metric-driven selection stage before the main horizon sweep.
+## Results from current default run
 
-What is searched:
+Latest default run (`python run_experiment.py --engine auto`) produced:
 
-1. `max_delta_norm` candidates: controls how quickly cumulative state can move each round.
-2. `label_mismatch_prob` candidates: controls base mismatch/corruption intensity.
+- `stable_benign`: `FTL=0.208`, `FTRL=0.710`, `SMART=0.208`, `switch_mean=1001.0`
+- `persistent_shift`: `FTL=0.556`, `FTRL=0.534`, `SMART=0.342`, `switch_mean=376.2`
+- `delayed_hardening`: `FTL=0.231`, `FTRL=0.432`, `SMART=0.255`, `switch_mean=907.3`
 
-How candidates are scored:
+Interpretation:
 
-1. `stable_benign` score favors `SMART ~= FTL` and penalizes cases where robust beats FTL.
-2. `persistent_shift` score favors large improvement of SMART over FTL under a sustained post-change regime.
-3. `delayed_hardening` score favors meaningful improvement over FTL while preserving a mixed-regime narrative.
-4. All regimes include penalties for unstable/non-smooth curves and excessively wide confidence bands.
+1. Stable benign: SMART is effectively identical to FTL, which is the intended no-tax behavior.
+2. Persistent shift: SMART clearly improves over both pure baselines in this constructed mixed regime by combining favorable prefix/suffix behavior.
+3. Delayed hardening: SMART is slightly worse than FTL but substantially better than robust FTRL, consistent with a pragmatic middle policy in gradual nonstationarity.
 
-How selected parameters are used:
+## What this experiment supports for the paper
 
-1. For each regime, evaluate a small parameter grid on probe horizons.
-2. Choose the best-scoring parameter pair for that regime.
-3. Run the full horizon figure using those selected parameters.
+This experiment supports the claim that SMART can be a useful single-switch compromise between optimism and robustness:
 
-This keeps realism constraints while making the paper figure more illustrative.
+- It does not pay unnecessary cost when optimism is reliable.
+- It mitigates sustained regime-shift damage.
+- It remains interpretable through explicit switch timing.
 
-## Input Sequence Design (Exact Regime Recipes)
+## Limits and non-claims
 
-This section is the most important part of Exp04.
+- Sequences are synthetic and mechanism-oriented; they are not a claim of real-world prevalence.
+- Results depend on the specific illustrative regime construction and threshold calibration.
+- This is evidence for the adaptation mechanism, not a universal dominance claim over all nonstationary classification streams.
 
-### 1) `stable_benign` (FTL-dominant)
+## Outputs and code map
 
-Purpose:
-- show optimism should be rewarded when environment is stable.
-
-Generation details:
-1. target directions stay near a fixed anchor direction with small noise,
-2. radius schedule grows smoothly,
-3. low mismatch/noise in label orientation choice.
-
-Expected behavior:
-- `FTL ≈ SMART`, robust baseline more conservative.
-
-### 2) `persistent_shift` (hard regime)
-
-Purpose:
-- model a single sustained regime break after a long benign prefix.
-
-Generation details:
-1. pre-shift rounds: target directions stay near a stable anchor,
-2. post-shift rounds: target direction jumps to a different anchor and stays there,
-3. cumulative-state magnitude is reduced after the break to make optimism less reliable,
-4. mismatch probability remains controlled to keep variance lower than bursty constructions.
-
-Expected behavior:
-- FTL regret worsens clearly at larger horizons; SMART should switch and reduce damage.
-
-### 3) `delayed_hardening` (representative mixed regime)
-
-Purpose:
-- model a realistic progression from easy to moderately hard to hard.
-
-Generation details:
-1. early phase: stable benign dynamics,
-2. middle phase: gradual hardening via smooth drift,
-3. late phase: moderate persistent shift to a new regime,
-4. bounded increments and controlled noise preserved.
-
-Expected behavior:
-- SMART should provide a middle ground between optimism and robustness with cleaner horizon-level separation.
-
-## Primary Figure Contract
-
-Paper-facing figure is:
-
-- x-axis: `Horizon`,
-- y-axis: `Regret`,
-- each horizon uses fresh sequences of that exact length.
-
-No single-sequence switch-statistic traces are included in curated paper figures.
-
-## Acceptance Criteria (Paper-Facing)
-
-1. `stable_benign`: SMART remains close to FTL over horizons.
-2. `persistent_shift`: SMART is clearly better than FTL over horizons.
-3. `delayed_hardening`: SMART tracks a favorable tradeoff in mixed nonstationarity.
-
-## Sequence Objectives (What Each Regime Demonstrates)
-
-1. `stable_benign`: optimism safety.
-Goal: show SMART should not pay a cost when FTL is already good (`SMART ≈ FTL`, both well below robust baseline).
-
-2. `persistent_shift`: hard regime protection.
-Goal: show a clear failure mode for pure FTL after sustained shift, where SMART’s switch reduces damage and can outperform both pure baselines by mixing prefix/suffix behavior.
-
-3. `delayed_hardening`: representative mixed behavior.
-Goal: show gradual nonstationarity where SMART is a pragmatic middle policy, improving over conservative robust behavior while staying close to optimistic performance when possible.
-
-## Online Learning Definition Used in Code
-
-- Action set: `X = {x in R^d : ||x||_2 <= 1}`.
-- Loss: `ell_t(x) = 0.5 * |<z_t, x> - y_t|`.
-- FTRL baseline:
-  - `x_t^FTRL = argmin_{x in X} { <theta_{t-1}, x> + (sqrt(t)/(2*eta0)) * ||x||_2^2 }`
-  - implemented as projection of `-(eta0/sqrt(t))*theta_{t-1}` onto `X`.
-
-## Run
-
-```bash
-cd experiments/exp04_leader_path_synthesis
-python run_experiment.py
-```
-
-Faster run on multi-core machines:
-
-```bash
-python run_experiment.py --jobs 8
-```
-
-Select evaluation engine:
-
-```bash
-python run_experiment.py --engine auto
-python run_experiment.py --engine python
-python run_experiment.py --engine numba
-```
-
-Notes:
-1. `auto` uses Numba if it is installed, otherwise Python.
-2. Some environments block multiprocessing semaphores; in those cases `--jobs > 1` falls back to serial execution.
-
-Default mode uses fixed illustrative per-regime settings (benign / hard reverse / mixed), no smoothing, and fresh per-horizon sequence draws (paper-primary protocol).
-
-Enable metric-driven auto-selection:
-
-```bash
-python run_experiment.py --auto-select
-```
-
-Disable smoothing or set a different smoothing window:
-
-```bash
-python run_experiment.py --smooth-window 1
-python run_experiment.py --smooth-window 5
-```
-
-Use coupled-prefix evaluation (single long sequence per run, useful only as a diagnostic trace view):
-
-```bash
-python run_experiment.py --coupled-horizons
-```
-
-## Outputs
-
-- `outputs/figures/exp04_olc_regret_by_horizon.png`
-
-Curated paper figure:
-
-- `figures/fig_exp04_olc_regret_by_horizon.png`
-
-## Files
-
-- `src/synthesis.py`: regime definitions and realizable sequence construction.
-- `src/eval.py`: FTL/FTRL/SMART evaluation.
-- `run_experiment.py`: horizon sweep and figure generation.
-
-## Known limitations
-
-1. Sequences are synthetic but structured; realism is controlled by model assumptions.
-2. Threshold scale calibration remains important.
-3. Conclusions depend on the chosen surrogate and comparator definitions.
-
-## Interpretation Notes (Common Questions)
-
-### Why can `stable_benign` be almost flat or gently increasing?
-
-In this regime SMART usually does not switch, so SMART overlaps FTL by design.  
-Whether the curve appears nearly flat or gently increasing depends on the benign directional-noise level (`direction_noise_scale`):
-
-1. lower benign noise -> FTL stays very close to the final comparator and regret is almost constant,
-2. moderate benign noise -> FTL/SMART increase smoothly with horizon while remaining much better than FTRL.
-
-### In `delayed_hardening`, why can SMART look closer to FTRL at smaller horizons and closer to FTL at larger horizons?
-
-Each horizon `n` is a fresh run with threshold proportional to `sqrt(n)`.
-This means:
-
-1. smaller horizons have lower thresholds and can trigger earlier switching,
-2. larger horizons have higher thresholds and may switch later (or not at all),
-3. regime phases are parameterized by fractions of horizon, so the effective hard segment location also changes with `n`.
-
-So this is a cross-horizon effect from independent horizon problems, not a single-run policy that switches back.
-
-### How can SMART beat both FTL and FTRL on a regime?
-
-SMART is a one-switch hybrid:
-
-1. it can use FTL behavior on easier prefixes,
-2. then switch and use FTRL behavior on harder suffixes.
-
-As a result, total horizon regret can be lower than either pure policy on that same horizon when the sequence has mixed phases.
+- Main figure: `figures/fig_exp04_olc_regret_by_horizon.png`
+- Generated output: `outputs/figures/exp04_olc_regret_by_horizon.png`
+- Sequence synthesis: `src/synthesis.py`
+- Evaluation logic (FTL/FTRL/SMART, regrets, switch signal): `src/eval.py`
+- Experiment runner and plotting: `run_experiment.py`
