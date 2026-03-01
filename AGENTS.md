@@ -52,6 +52,17 @@ Before implementing or revising any experiment, explicitly document:
 
 Do not proceed to code/plot generation until this sequence-design gate is written in the experiment `README.md`.
 
+## Primary figure contract (paper default)
+
+Unless the user explicitly asks otherwise, experiment figures should use:
+
+1. x-axis: horizon (`n`),
+2. y-axis: final regret at that horizon,
+3. for each horizon, evaluate on fresh sequence(s) of exactly that length,
+4. plot mean and uncertainty bands across replications when stochastic.
+
+Do not treat single-sequence prefix regret traces (`regret vs t` on one fixed-length run) as the primary result figure. Prefix traces can be included only as supplementary diagnostics.
+
 ## New experiment conventions
 
 For each new experiment under `experiments/expNN_<short_name>/`:
@@ -84,10 +95,11 @@ When iterating on SMART experiments, prioritize this sequence:
 
 1. Define the paper claim first (what SMART property is being demonstrated).
 2. Design sequence families to elicit that property (benign, hard, representative mixed regime).
-3. Run baselines (`FTL`, robust policy) and SMART variants (theoretical and empirical thresholds).
-4. Log switch diagnostics (`Sigma_t`, threshold, switch round, pre/post switch regret).
-5. Sweep threshold scaling to quantify calibration sensitivity.
-6. Promote only the clearest figures to `<experiment>/figures/`.
+3. Build horizon grids and run baselines (`FTL`, robust policy) and SMART variants over fresh sequences at each horizon.
+4. Produce primary `final regret vs horizon` plots first.
+5. Log switch diagnostics (`Sigma_t`, threshold, switch round, pre/post switch regret) as supplementary.
+6. Sweep threshold scaling to quantify calibration sensitivity.
+7. Promote only the clearest figures to `<experiment>/figures/`.
 
 ## Progress optimization checklist
 

@@ -55,6 +55,12 @@ Experiment 4 should focus on exactly three realistic sequences:
 2. SMART protects against hard but realistic events (`corruption_burst`).
 3. SMART adapts coherently in mixed nonstationarity (`drift_plus_shift`) and the switch is explained by `Sigma_t` vs threshold.
 
+### Primary plotting contract
+
+- Primary paper figure type: `final regret vs horizon`.
+- For each horizon `n`, evaluate on fresh sequences of length `n`.
+- Single-sequence regret trajectories are supplementary diagnostics only.
+
 ## Online learning setup and FTRL definition
 
 At round `t`, the learner picks `x_t` in the unit Euclidean ball:
@@ -108,8 +114,8 @@ Notes:
 
 ## Outputs
 
-- `outputs/figures/regret_vs_horizon_by_regime.png`
-- `outputs/figures/<regime>_diagnostics.png`
+- `outputs/figures/regret_vs_horizon_by_regime.png` (primary)
+- `outputs/figures/<regime>_diagnostics.png` (supplementary)
 
 ## Figures
 

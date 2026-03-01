@@ -16,7 +16,7 @@ Demonstrate SMART's core mechanism in a clean 1D OCO setting:
 
 1. Preserve optimistic performance in benign regimes.
 2. Protect against realistic hard/nonstationary regimes.
-3. Show interpretable switching behavior (`Sigma_t` crossing threshold) rather than only final regret.
+3. Show interpretable switching behavior (switch timing vs horizon) as supplementary diagnostics.
 
 The key design variable is the input sequence `mu_t`. Sequence quality determines whether the plots are informative.
 
@@ -46,15 +46,15 @@ Experiment 03 should focus on three realistic sequences:
 
 ## Acceptance criteria (for paper use)
 
-1. `stable_benign`: `SMART` is approximately `FTL` and usually does not switch.
-2. `corruption_burst`: `FTL` degrades sharply; `SMART` switches and materially lowers regret.
-3. `drift_plus_shift`: switch occurs around post-drift deterioration and `SMART` lands between optimistic and robust extremes.
-4. Diagnostics: at least one sequence must show clear `Sigma_t` threshold crossing aligned with regime change.
+1. `stable_benign`: `SMART` is approximately `FTL` over horizons and usually does not switch.
+2. `corruption_burst`: `FTL` grows significantly worse with horizon; `SMART` materially lowers final regret.
+3. `drift_plus_shift`: `SMART` lands between optimistic and robust extremes over horizons.
+4. Primary figure is final regret vs horizon using fresh sequences per horizon.
 
 ## Threshold calibration
 
 - In this setting, Eq.(6) `Sigma_t` values are often small relative to `2*sqrt(n)`.
-- The runner therefore exposes `--threshold-scale` and uses a calibrated default (`0.0035`) so switch behavior is observable and comparable across the three sequences.
+- The runner exposes `--threshold-scale` (default `0.0035`) so horizon-level behavior is comparable across the three sequences.
 
 ## Figures
 
@@ -64,13 +64,13 @@ Curated paper-candidate figures live in `figures/` with labels/titles mapped in 
 
 ```bash
 cd experiments/exp03_time_varying_mu_oco
-python run_experiments.py --n 1000 --trials 30 --threshold-scale 0.0035
+python run_experiments.py --n-max 1000 --n-step 100 --trials 30 --threshold-scale 0.0035
 ```
 
 Anytime OGD variant:
 
 ```bash
-python run_experiments.py --n 1000 --anytime-lr
+python run_experiments.py --n-max 1000 --n-step 100 --trials 30 --threshold-scale 0.0035 --anytime-lr
 ```
 
 Run selected scenarios only:
@@ -83,9 +83,8 @@ python run_experiments.py --scenario stable_benign corruption_burst drift_plus_s
 
 Figures are written to:
 
-- `outputs/figures/*_mu.png`
-- `outputs/figures/*_regret.png`
-- `outputs/figures/*_diagnostics.png`
+- `outputs/figures/final_regret_vs_horizon_by_scenario.png` (primary)
+- `outputs/figures/switch_round_vs_horizon_by_scenario.png` (supplementary)
 
 ## Known issues
 
