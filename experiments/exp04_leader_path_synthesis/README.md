@@ -216,6 +216,17 @@ No single-sequence switch-statistic traces are included in curated paper figures
 2. `persistent_shift`: SMART is clearly better than FTL over horizons.
 3. `delayed_hardening`: SMART tracks a favorable tradeoff in mixed nonstationarity.
 
+## Sequence Objectives (What Each Regime Demonstrates)
+
+1. `stable_benign`: optimism safety.
+Goal: show SMART should not pay a cost when FTL is already good (`SMART ≈ FTL`, both well below robust baseline).
+
+2. `persistent_shift`: hard regime protection.
+Goal: show a clear failure mode for pure FTL after sustained shift, where SMART’s switch reduces damage and can outperform both pure baselines by mixing prefix/suffix behavior.
+
+3. `delayed_hardening`: representative mixed behavior.
+Goal: show gradual nonstationarity where SMART is a pragmatic middle policy, improving over conservative robust behavior while staying close to optimistic performance when possible.
+
 ## Online Learning Definition Used in Code
 
 - Action set: `X = {x in R^d : ||x||_2 <= 1}`.
@@ -228,13 +239,46 @@ No single-sequence switch-statistic traces are included in curated paper figures
 
 ```bash
 cd experiments/exp04_leader_path_synthesis
-python run_experiment.py --t-max 1000 --t-step 100 --runs 12 --d 5 --max-delta-norm 0.45
+python run_experiment.py
 ```
 
-Disable metric-driven auto-selection and force manual parameters:
+Faster run on multi-core machines:
 
 ```bash
-python run_experiment.py --no-auto-select --max-delta-norm 0.45 --label-mismatch-prob 0.02
+python run_experiment.py --jobs 8
+```
+
+Select evaluation engine:
+
+```bash
+python run_experiment.py --engine auto
+python run_experiment.py --engine python
+python run_experiment.py --engine numba
+```
+
+Notes:
+1. `auto` uses Numba if it is installed, otherwise Python.
+2. Some environments block multiprocessing semaphores; in those cases `--jobs > 1` falls back to serial execution.
+
+Default mode uses fixed illustrative per-regime settings (benign / hard reverse / mixed), no smoothing, and fresh per-horizon sequence draws (paper-primary protocol).
+
+Enable metric-driven auto-selection:
+
+```bash
+python run_experiment.py --auto-select
+```
+
+Disable smoothing or set a different smoothing window:
+
+```bash
+python run_experiment.py --smooth-window 1
+python run_experiment.py --smooth-window 5
+```
+
+Use coupled-prefix evaluation (single long sequence per run, useful only as a diagnostic trace view):
+
+```bash
+python run_experiment.py --coupled-horizons
 ```
 
 ## Outputs
@@ -256,3 +300,33 @@ Curated paper figure:
 1. Sequences are synthetic but structured; realism is controlled by model assumptions.
 2. Threshold scale calibration remains important.
 3. Conclusions depend on the chosen surrogate and comparator definitions.
+
+## Interpretation Notes (Common Questions)
+
+### Why can `stable_benign` be almost flat or gently increasing?
+
+In this regime SMART usually does not switch, so SMART overlaps FTL by design.  
+Whether the curve appears nearly flat or gently increasing depends on the benign directional-noise level (`direction_noise_scale`):
+
+1. lower benign noise -> FTL stays very close to the final comparator and regret is almost constant,
+2. moderate benign noise -> FTL/SMART increase smoothly with horizon while remaining much better than FTRL.
+
+### In `delayed_hardening`, why can SMART look closer to FTRL at smaller horizons and closer to FTL at larger horizons?
+
+Each horizon `n` is a fresh run with threshold proportional to `sqrt(n)`.
+This means:
+
+1. smaller horizons have lower thresholds and can trigger earlier switching,
+2. larger horizons have higher thresholds and may switch later (or not at all),
+3. regime phases are parameterized by fractions of horizon, so the effective hard segment location also changes with `n`.
+
+So this is a cross-horizon effect from independent horizon problems, not a single-run policy that switches back.
+
+### How can SMART beat both FTL and FTRL on a regime?
+
+SMART is a one-switch hybrid:
+
+1. it can use FTL behavior on easier prefixes,
+2. then switch and use FTRL behavior on harder suffixes.
+
+As a result, total horizon regret can be lower than either pure policy on that same horizon when the sequence has mixed phases.
