@@ -1,2 +1,12 @@
 # Windows metadata sidecar files
 *:Zone.Identifier
+
+# Python cache artifacts
+**/__pycache__/
+**/.ipynb_checkpoints/
+
+# Generated experiment outputs (curated paper figures live in */figures/)
+experiments/*/outputs/
+
+# Local UI prototype files
+option2_botanical_paper.html
