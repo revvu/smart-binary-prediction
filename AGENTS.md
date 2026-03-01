@@ -57,7 +57,7 @@ Do not proceed to code/plot generation until this sequence-design gate is writte
 Unless the user explicitly asks otherwise, experiment figures should use:
 
 1. x-axis: horizon (`n`),
-2. y-axis: final regret at that horizon,
+2. y-axis: regret at that horizon,
 3. for each horizon, evaluate on fresh sequence(s) of exactly that length,
 4. plot mean and uncertainty bands across replications when stochastic.
 
@@ -68,7 +68,7 @@ Do not treat single-sequence prefix regret traces (`regret vs t` on one fixed-le
 For figures intended for manuscript inclusion:
 
 1. use descriptive, professional chart titles (specific but concise),
-2. use clean axis labels (e.g., `Horizon`, `Final Regret`) without verbose sentences,
+2. use clean axis labels (e.g., `Horizon`, `Regret`) without verbose sentences,
 3. use descriptive output filenames that encode experiment and figure purpose,
 4. avoid vague labels like `plot1`, `result`, `curve`, or ambiguous abbreviations in final figure names.
 
@@ -105,7 +105,7 @@ When iterating on SMART experiments, prioritize this sequence:
 1. Define the paper claim first (what SMART property is being demonstrated).
 2. Design sequence families to elicit that property (benign, hard, representative mixed regime).
 3. Build horizon grids and run baselines (`FTL`, robust policy) and SMART variants over fresh sequences at each horizon.
-4. Produce primary `final regret vs horizon` plots first.
+4. Produce primary `regret vs horizon` plots first.
 5. Log switch diagnostics (`Sigma_t`, threshold, switch round, pre/post switch regret) as supplementary.
 6. Sweep threshold scaling to quantify calibration sensitivity.
 7. Promote only the clearest figures to `<experiment>/figures/`.

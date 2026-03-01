@@ -59,13 +59,13 @@ def _plot_regret_grid(horizons: Array, stats_by_scenario: dict[str, dict[str, di
 
         ax.set_title(_scenario_title(scenario))
         ax.set_xlabel("Horizon")
-        ax.set_ylabel("Final Regret")
+        ax.set_ylabel("Regret")
         ax.legend(loc="best")
 
     for j in range(len(scenarios), len(axes)):
         axes[j].axis("off")
 
-    fig.suptitle("Quadratic OCO: Final Regret by Horizon", fontsize=15)
+    fig.suptitle("Quadratic OCO: Regret by Horizon", fontsize=15)
     fig.tight_layout()
     fig.savefig(out_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
@@ -109,7 +109,7 @@ def run_scenario(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run time-varying mu_t OCO experiments as final-regret-vs-horizon curves.")
+    parser = argparse.ArgumentParser(description="Run time-varying mu_t OCO experiments as regret-vs-horizon curves.")
     parser.add_argument("--n-max", type=int, default=1000, help="Maximum horizon")
     parser.add_argument("--n-step", type=int, default=100, help="Horizon step")
     parser.add_argument("--trials", type=int, default=30, help="Fresh sequences per horizon")
@@ -158,7 +158,7 @@ def main() -> None:
         }
         switch_stats[sc.name] = stats["switch"]
 
-    _plot_regret_grid(horizons, stats_by_scenario, out_dir / "exp03_quadratic_oco_final_regret_by_horizon.png")
+    _plot_regret_grid(horizons, stats_by_scenario, out_dir / "exp03_quadratic_oco_regret_by_horizon.png")
     print("\nFinal-regret summary at max horizon")
     for sc in scenarios:
         s = stats_by_scenario[sc.name]

@@ -54,13 +54,13 @@ def _plot_regret_grid(t_grid, stats_by_regime, out_path: Path) -> None:
 
         ax.set_title(_regime_title(regime))
         ax.set_xlabel("Horizon")
-        ax.set_ylabel("Final Regret")
+        ax.set_ylabel("Regret")
         ax.legend(loc="best")
 
     for j in range(len(regimes), len(axes)):
         axes[j].axis("off")
 
-    fig.suptitle("Online Linear Classification: Final Regret by Horizon", fontsize=16)
+    fig.suptitle("Online Linear Classification: Regret by Horizon", fontsize=16)
     fig.tight_layout()
     fig.savefig(out_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
@@ -138,7 +138,7 @@ def main() -> None:
             "switch_mean": switch_runs.mean(axis=0),
         }
 
-    _plot_regret_grid(t_grid, stats_by_regime, out_dir / "exp04_olc_final_regret_by_horizon.png")
+    _plot_regret_grid(t_grid, stats_by_regime, out_dir / "exp04_olc_regret_by_horizon.png")
 
     print("Final-regret summary (at max horizon)")
     for regime in args.regime:
