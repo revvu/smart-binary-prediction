@@ -25,6 +25,15 @@ Primary goal: make it easy to add and iterate on new experiments, then promote s
   - `figures/`
 - `archive/`
 
+## Required context files
+
+Before proposing or implementing SMART-related changes, read:
+
+- `smart_algorithm.md` (source of truth for SMART properties, calibration caveats, and experiment priorities)
+- `experiments/<target>/objective.md` (target experiment goals, design, and known issues)
+
+If a request touches SMART theory/behavior and `smart_algorithm.md` is not referenced in your reasoning, stop and read it first.
+
 ## Guardrails
 
 - Treat `paper/` as context-only unless the user explicitly requests paper edits.
@@ -44,13 +53,48 @@ For each new experiment under `experiments/expNN_<short_name>/`:
 - place generated artifacts in a local `outputs/` folder (or clearly named equivalent)
 - use deterministic seeds where possible and document them
 - include a single entry-point command/script for reproduction
+- add `objective.md` with:
+  - paper-ready background paragraph
+  - experiment hypothesis and design
+  - known limitations / failure modes
+  - explicit figure mapping
+- add a curated `figures/` folder with:
+  - only paper-candidate plots
+  - descriptive filenames
+  - `INDEX.md` containing label/title/source mapping
 
 ## Figure promotion workflow
 
 1. Generate candidate figures under the owning experiment folder.
-2. Select final figure(s) for manuscript use.
-3. Copy/move final figure(s) into `paper/figures/` with stable filenames.
-4. Keep old exploratory plots in experiment folders.
+2. Curate final paper-candidate figures into `<experiment>/figures/` with `INDEX.md`.
+3. Ensure `objective.md` figure references match `figures/INDEX.md`.
+4. Only then copy/move selected figure(s) into `paper/figures/` with stable filenames.
+5. Keep exploratory/diagnostic plots in experiment-local output folders.
+
+## SMART workflow defaults
+
+When iterating on SMART experiments, prioritize this sequence:
+
+1. Define regime families (benign, drift, abrupt shift, corruption bursts).
+2. Run baselines (`FTL`, robust policy) and SMART variants (theoretical and empirical thresholds).
+3. Log switch diagnostics (`Sigma_t`, threshold, switch round, pre/post switch regret).
+4. Sweep threshold scaling to quantify calibration sensitivity.
+5. Promote only the clearest figures to `<experiment>/figures/`.
+
+## Progress optimization checklist
+
+Use this checklist for each experiment update:
+
+1. Reproducibility:
+- fixed seeds
+- one-command run path
+2. Comparability:
+- same horizons/replicates across compared algorithms
+- explicit comparator definition in docs
+3. Interpretability:
+- at least one diagnostic figure explaining *why* SMART behaved as observed
+4. Documentation sync:
+- update `README.md`, `objective.md`, and `figures/INDEX.md` together
 
 ## Safety
 
