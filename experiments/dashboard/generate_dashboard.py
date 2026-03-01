@@ -140,175 +140,257 @@ def _build_html(payload_json: str) -> str:
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SMART Experiment Reports</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,500&family=Fira+Code:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f4f6f8;
-      --ink: #101827;
-      --ink-soft: #4a5568;
-      --line: #d7dee8;
-      --card: #ffffff;
-      --accent: #0f7a64;
-      --accent-soft: #d9f4ed;
-      --shadow: 0 14px 36px rgba(17, 30, 50, 0.10);
-      --r: 16px;
+      --bg: #f5f0e8;
+      --bg-paper: #fffdf7;
+      --bg-warm: #faf6ed;
+      --bg-inset: #f0ebe0;
+      --text-ink: #2c2418;
+      --text-body: #4a3f30;
+      --text-faded: #8a7e6b;
+      --text-ghost: #b8ad98;
+      --accent-terracotta: #c4634a;
+      --accent-sage: #6b8f71;
+      --accent-ochre: #c49a3c;
+      --accent-navy: #364b6b;
+      --border-rule: #d4cbb8;
+      --border-light: #e5ded0;
     }
-    * { box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      margin: 0;
-      color: var(--ink);
-      font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
-      background:
-        radial-gradient(900px 520px at -5% -10%, #e8f8f2 12%, transparent 65%),
-        radial-gradient(1000px 520px at 110% 0%, #e7efff 10%, transparent 62%),
-        var(--bg);
+      font-family: "Libre Baskerville", Georgia, serif;
+      background: var(--bg);
+      color: var(--text-body);
+      min-height: 100vh;
+      font-size: 18px;
     }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
     .container {
-      max-width: 1160px;
+      max-width: 1220px;
       margin: 0 auto;
-      padding: 24px 18px 56px;
+      padding: 2.5rem;
     }
-    .top {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      padding: 20px 22px;
-      box-shadow: var(--shadow);
-      margin-bottom: 14px;
+
+    .masthead {
+      text-align: center;
+      padding: 3.8rem 2.4rem 2.5rem;
+      border-bottom: 2px solid var(--text-ink);
+      animation: fadeIn 0.8s ease;
     }
-    .title {
-      margin: 0;
-      font-size: clamp(1.35rem, 2.8vw, 2rem);
-      letter-spacing: -0.02em;
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
-    .subtitle {
-      margin: 8px 0 0;
-      color: var(--ink-soft);
-      line-height: 1.5;
+    .masthead-overline {
+      font-family: "Fira Code", monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+      color: var(--text-faded);
+      margin-bottom: 0.8rem;
     }
-    .tabbar-wrap {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      padding: 8px 0;
-      backdrop-filter: blur(6px);
+    .masthead h1 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--text-ink);
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
     }
-    .tabbar {
+    .masthead-sub {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.5rem;
+      font-style: italic;
+      color: var(--text-faded);
+      font-weight: 400;
+    }
+    .masthead-sub code {
+      font-family: "Fira Code", monospace;
+      font-size: 0.95rem;
+      font-style: normal;
+      color: var(--accent-terracotta);
+      background: rgba(196, 99, 74, 0.08);
+      padding: 0.1em 0.4em;
+      border-radius: 2px;
+    }
+
+    .nav-bar {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.88);
-      padding: 8px;
-      box-shadow: var(--shadow);
+      justify-content: center;
+      gap: 0;
+      border-bottom: 1px solid var(--border-rule);
+      background: var(--bg-warm);
+      animation: fadeIn 0.8s ease 0.15s both;
     }
-    .tab {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--ink);
-      border-radius: 999px;
-      padding: 8px 13px;
-      white-space: nowrap;
-      font-size: 0.92rem;
+    .nav-item {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 1.2rem 1.9rem;
+      color: var(--text-faded);
       cursor: pointer;
-      transition: transform 160ms ease, background 160ms ease;
+      border: none;
+      background: none;
+      position: relative;
+      transition: all 0.3s ease;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
     }
-    .tab:hover { transform: translateY(-1px); }
-    .tab.active {
-      background: var(--accent-soft);
-      border-color: #9cd9c8;
-      color: #065846;
+    .nav-item:hover { color: var(--text-body); }
+    .nav-item.active {
+      color: var(--accent-terracotta);
+      background: var(--bg-paper);
       font-weight: 600;
     }
-    .panel { display: none; margin-top: 14px; }
-    .panel.active { display: block; }
+    .nav-item.active::before {
+      content: "§";
+      margin-right: 0.4rem;
+      opacity: 0.6;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.35s ease; }
+
     .report {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
-      overflow: hidden;
+      background: var(--bg-paper);
+      padding: 3.5rem 4.25rem;
+      min-height: 60vh;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
-    .report-head {
-      padding: 18px 22px 12px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #fbfdfc 0%, #f7fbf9 100%);
+
+    .title-block {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2.4rem;
+      border-bottom: 1px solid var(--border-light);
     }
-    .report-head h2 {
-      margin: 0;
-      font-size: 1.18rem;
-      letter-spacing: -0.01em;
+    .exp-number {
+      font-family: "Fira Code", monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--accent-terracotta);
+      display: inline-block;
+      border: 1px solid rgba(196, 99, 74, 0.3);
+      padding: 0.3em 1em;
+      border-radius: 2px;
+      margin-bottom: 1rem;
     }
-    .report-body {
-      padding: 18px 22px 22px;
+    .title-block h2 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--text-ink);
+      margin-bottom: 0.6rem;
+      line-height: 1.15;
     }
+    .title-block .origin {
+      font-size: 1.2rem;
+      font-style: italic;
+      color: var(--text-faded);
+    }
+    .title-block .origin code {
+      font-family: "Fira Code", monospace;
+      font-size: 0.95rem;
+      font-style: normal;
+      color: var(--accent-navy);
+    }
+
     .md {
-      font-size: 0.97rem;
-      line-height: 1.62;
-      color: #1f2738;
+      font-size: 1.1rem;
+      line-height: 2;
+      color: var(--text-body);
       overflow-wrap: anywhere;
+      text-align: justify;
+      hyphens: auto;
     }
     .md h1, .md h2, .md h3, .md h4, .md h5, .md h6 {
-      margin: 1.05em 0 0.5em;
-      line-height: 1.25;
-      font-family: "IBM Plex Serif", "Georgia", serif;
-      letter-spacing: -0.01em;
-      color: #121b2d;
+      font-family: "Cormorant Garamond", serif;
+      color: var(--text-ink);
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+      margin: 1.4em 0 0.45em;
     }
-    .md p { margin: 0.55em 0 0.9em; }
-    .md ul, .md ol { margin: 0.45em 0 0.9em 1.2em; }
-    .md li { margin-bottom: 0.3em; }
+    .md h1 { font-size: 2.65rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.35em; }
+    .md h2 { font-size: 2rem; }
+    .md h3 { font-size: 1.5rem; }
+    .md p { margin: 0 0 1.3rem; }
+    .md ul, .md ol { margin: 0.35rem 0 1.2rem 1.5rem; }
+    .md li { margin-bottom: 0.45rem; }
+
     .md code {
-      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-family: "Fira Code", monospace;
       font-size: 0.88em;
-      background: #eef2f7;
-      border: 1px solid #dee6f0;
-      border-radius: 6px;
-      padding: 0.08em 0.34em;
+      color: var(--accent-navy);
+      background: rgba(54, 75, 107, 0.06);
+      border: 1px solid rgba(54, 75, 107, 0.12);
+      border-radius: 2px;
+      padding: 0.15em 0.45em;
     }
     .md pre {
-      margin: 0.9em 0;
-      padding: 11px;
-      border-radius: 10px;
-      border: 1px solid #273148;
-      background: #111827;
-      color: #e5ecff;
+      margin: 1rem 0 1.4rem;
+      padding: 0.9rem;
+      background: var(--bg-inset);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      color: var(--text-ink);
       overflow: auto;
     }
     .md pre code {
+      color: inherit;
       padding: 0;
       border: 0;
       background: transparent;
-      color: inherit;
     }
-    .md a { color: var(--accent); text-decoration: none; }
+    .md a { color: var(--accent-navy); text-decoration: none; border-bottom: 1px dotted rgba(54, 75, 107, 0.35); }
     .md a:hover { text-decoration: underline; }
 
     .fig-section {
-      margin-top: 22px;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
+      margin-top: 2.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-light);
     }
     .fig-section h3 {
-      margin: 0 0 10px;
-      font-size: 1.05rem;
-      letter-spacing: -0.01em;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.9rem;
+      color: var(--text-ink);
+      margin: 0 0 1rem;
     }
     .gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.2rem;
     }
     .figure {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      overflow: clip;
     }
-    .figure a {
-      display: block;
-      background: #f5f8fb;
-    }
+    .figure a { display: block; background: #f7f2e8; }
     .figure img {
       width: 100%;
       display: block;
@@ -316,38 +398,58 @@ def _build_html(payload_json: str) -> str:
       object-fit: contain;
     }
     .figure-meta {
-      padding: 10px;
-      border-top: 1px solid var(--line);
+      padding: 0.95rem 1.05rem;
+      border-top: 1px solid var(--border-light);
     }
     .figure-title {
-      margin: 0 0 6px;
-      font-size: 0.92rem;
-      color: #22304a;
+      margin: 0 0 0.35rem;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.3rem;
+      color: var(--text-ink);
     }
     .figure-file {
       margin: 0;
-      color: var(--ink-soft);
-      font-size: 0.84rem;
+      color: var(--text-faded);
+      font-size: 0.9rem;
     }
-    .empty {
-      color: var(--ink-soft);
-      font-style: italic;
+    .empty { color: var(--text-faded); font-style: italic; }
+    .paper-end {
+      text-align: center;
+      margin-top: 3.4rem;
+      color: var(--text-ghost);
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.5em;
+    }
+
+    @media (max-width: 768px) {
+      body { font-size: 17px; }
+      .container { padding: 1.2rem; }
+      .report { padding: 2.4rem 1.8rem; }
+      .masthead { padding: 2.8rem 1.2rem 1.8rem; }
+      .masthead h1 { font-size: 2.7rem; }
+      .masthead-sub { font-size: 1.2rem; }
+      .title-block h2 { font-size: 2.25rem; }
+      .md { font-size: 1.03rem; line-height: 1.85; }
+      .md h1 { font-size: 2.1rem; }
+      .md h2 { font-size: 1.7rem; }
+      .md h3 { font-size: 1.35rem; }
+      .nav-bar { overflow-x: auto; justify-content: flex-start; }
+      .nav-item { font-size: 1.1rem; padding: 1.05rem 1.3rem; }
+      .gallery { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="container">
-    <section class="top">
-      <h1 class="title">SMART Experiment Reports</h1>
-      <p class="subtitle">Overview tab renders <code>smart_algorithm.md</code>. Each experiment tab renders its README as a report with figures appended at the end.</p>
-    </section>
-
-    <div class="tabbar-wrap">
-      <div id="tabs" class="tabbar"></div>
-    </div>
-
+  <div class="container">
+    <header class="masthead">
+      <div class="masthead-overline">Experiment Reports · SMART Algorithm</div>
+      <h1>SMART Experiment<br>Reports</h1>
+      <p class="masthead-sub">Overview renders <code>smart_algorithm.md</code> — each experiment tab renders its README as a report with appended figures.</p>
+    </header>
+    <nav id="tabs" class="nav-bar"></nav>
     <div id="panels"></div>
-  </main>
+  </div>
 
   <script>
     const payload = __PAYLOAD_JSON__;
@@ -466,23 +568,40 @@ def _build_html(payload_json: str) -> str:
       return html;
     }
 
+    function titleFromSlug(slug) {
+      return slug.replace(/^exp\\d+_/, "").replaceAll("_", " ").replace(/\\b\\w/g, (c) => c.toUpperCase());
+    }
+
+    function expNumber(slug) {
+      const m = slug.match(/^exp(\\d+)_/);
+      return m ? m[1] : "--";
+    }
+
     function overviewHtml() {
       return '<article class="report">' +
-        '<header class="report-head"><h2>SMART Algorithm Overview</h2></header>' +
-        '<section class="report-body md">' + renderMarkdown(payload.smartAlgorithm) + '</section>' +
+        '<header class="title-block">' +
+        '<div class="exp-number">Overview</div>' +
+        '<h2>SMART Algorithm Deep Dive</h2>' +
+        '<p class="origin">Source: <code>smart_algorithm.md</code></p>' +
+        '</header>' +
+        '<section class="md">' + renderMarkdown(payload.smartAlgorithm) + '</section>' +
+        '<div class="paper-end">· · ·</div>' +
         '</article>';
     }
 
     function experimentHtml(exp) {
       return '<article class="report">' +
-        '<header class="report-head"><h2>' + escHtml(exp.displayName) + '</h2></header>' +
-        '<section class="report-body">' +
-        '<div class="md">' + renderMarkdown(exp.readme || "") + '</div>' +
+        '<header class="title-block">' +
+        '<div class="exp-number">Experiment ' + expNumber(exp.slug) + '</div>' +
+        '<h2>' + escHtml(titleFromSlug(exp.slug)) + '</h2>' +
+        '<p class="origin">' + escHtml(exp.displayName || exp.slug) + '</p>' +
+        '</header>' +
+        '<section class="md">' + renderMarkdown(exp.readme || "") + '</section>' +
         '<section class="fig-section">' +
         '<h3>Figures</h3>' +
         renderFigures(exp.figures) +
         '</section>' +
-        '</section>' +
+        '<div class="paper-end">· · ·</div>' +
         '</article>';
     }
 
@@ -504,9 +623,9 @@ def _build_html(payload_json: str) -> str:
 
     for (const tab of tabs) {
       const b = document.createElement("button");
-      b.className = "tab";
+      b.className = "nav-item";
       b.dataset.tab = tab.key;
-      b.textContent = tab.label;
+      b.textContent = tab.key === "overview" ? "Overview" : titleFromSlug(tab.label);
       tabsRoot.appendChild(b);
     }
 
@@ -516,14 +635,18 @@ def _build_html(payload_json: str) -> str:
     }
 
     function activate(key) {
-      document.querySelectorAll(".tab").forEach((el) => el.classList.toggle("active", el.dataset.tab === key));
+      document.querySelectorAll(".nav-item").forEach((el) => el.classList.toggle("active", el.dataset.tab === key));
       document.querySelectorAll(".panel").forEach((el) => el.classList.toggle("active", el.dataset.tab === key));
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetClear();
+        window.MathJax.typesetPromise().catch(() => {});
+      }
     }
 
     tabsRoot.addEventListener("click", (ev) => {
       const t = ev.target;
       if (!(t instanceof HTMLElement)) return;
-      if (!t.classList.contains("tab")) return;
+      if (!t.classList.contains("nav-item")) return;
       activate(t.dataset.tab || "overview");
     });
 
