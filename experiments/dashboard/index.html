@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SMART Experiment Reports</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --ink: #101827;
+      --ink-soft: #4a5568;
+      --line: #d7dee8;
+      --card: #ffffff;
+      --accent: #0f7a64;
+      --accent-soft: #d9f4ed;
+      --shadow: 0 14px 36px rgba(17, 30, 50, 0.10);
+      --r: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(900px 520px at -5% -10%, #e8f8f2 12%, transparent 65%),
+        radial-gradient(1000px 520px at 110% 0%, #e7efff 10%, transparent 62%),
+        var(--bg);
+    }
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 24px 18px 56px;
+    }
+    .top {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .title {
+      margin: 0;
+      font-size: clamp(1.35rem, 2.8vw, 2rem);
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+    .tabbar-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 8px 0;
+      backdrop-filter: blur(6px);
+    }
+    .tabbar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.88);
+      padding: 8px;
+      box-shadow: var(--shadow);
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 13px;
+      white-space: nowrap;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+    .tab:hover { transform: translateY(-1px); }
+    .tab.active {
+      background: var(--accent-soft);
+      border-color: #9cd9c8;
+      color: #065846;
+      font-weight: 600;
+    }
+    .panel { display: none; margin-top: 14px; }
+    .panel.active { display: block; }
+    .report {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .report-head {
+      padding: 18px 22px 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fbfdfc 0%, #f7fbf9 100%);
+    }
+    .report-head h2 {
+      margin: 0;
+      font-size: 1.18rem;
+      letter-spacing: -0.01em;
+    }
+    .report-body {
+      padding: 18px 22px 22px;
+    }
+    .md {
+      font-size: 0.97rem;
+      line-height: 1.62;
+      color: #1f2738;
+      overflow-wrap: anywhere;
+    }
+    .md h1, .md h2, .md h3, .md h4, .md h5, .md h6 {
+      margin: 1.05em 0 0.5em;
+      line-height: 1.25;
+      font-family: "IBM Plex Serif", "Georgia", serif;
+      letter-spacing: -0.01em;
+      color: #121b2d;
+    }
+    .md p { margin: 0.55em 0 0.9em; }
+    .md ul, .md ol { margin: 0.45em 0 0.9em 1.2em; }
+    .md li { margin-bottom: 0.3em; }
+    .md code {
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.88em;
+      background: #eef2f7;
+      border: 1px solid #dee6f0;
+      border-radius: 6px;
+      padding: 0.08em 0.34em;
+    }
+    .md pre {
+      margin: 0.9em 0;
+      padding: 11px;
+      border-radius: 10px;
+      border: 1px solid #273148;
+      background: #111827;
+      color: #e5ecff;
+      overflow: auto;
+    }
+    .md pre code {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+    }
+    .md a { color: var(--accent); text-decoration: none; }
+    .md a:hover { text-decoration: underline; }
+
+    .fig-section {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+    .fig-section h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .figure {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .figure a {
+      display: block;
+      background: #f5f8fb;
+    }
+    .figure img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/10;
+      object-fit: contain;
+    }
+    .figure-meta {
+      padding: 10px;
+      border-top: 1px solid var(--line);
+    }
+    .figure-title {
+      margin: 0 0 6px;
+      font-size: 0.92rem;
+      color: #22304a;
+    }
+    .figure-file {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+    }
+    .empty {
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="top">
+      <h1 class="title">SMART Experiment Reports</h1>
+      <p class="subtitle">Overview tab renders <code>smart_algorithm.md</code>. Each experiment tab renders its README as a report with figures appended at the end.</p>
+    </section>
+
+    <div class="tabbar-wrap">
+      <div id="tabs" class="tabbar"></div>
+    </div>
+
+    <div id="panels"></div>
+  </main>
+
+  <script>
+    const payload = {"smartAlgorithm": "# SMART Algorithm Deep Dive\n\n## 1) What SMART is really doing\n\nSMART (Switching via Monotone Adapted Regret Traces) is a one-switch meta-policy that combines:\n\n- an optimistic policy (`FTL`), strong on benign instances,\n- a robust policy (`W`) with known worst-case regret bound `g(n)`.\n\nThe core guarantee target is:\n\n\\[\n\\mathrm{Reg}(\\text{SMART},\\ell^n)\n\\lesssim\n\\gamma\\cdot \\min\\{\\mathrm{Reg}(\\mathrm{FTL},\\ell^n),\\ g(n)\\}\n\\]\n\nwith:\n\n- deterministic threshold: `gamma = 2` (plus small additive constant),\n- randomized threshold: `gamma = e/(e-1) \\approx 1.58` (plus small additive constant).\n\nThe paper’s converse lower bound (`~1.4335`) means this is close to optimal in a strong sense.\n\n## 2) The mathematical hinge: adapted, monotone, anytime FTL trace\n\nThe algorithm is possible because of the exact decomposition:\n\n\\[\n\\mathrm{Reg}(\\mathrm{FTL},\\ell^n)\n= \\sum_{t=1}^n \\big(L_t(a^*_{t-1}) - L_t(a^*_t)\\big)\n\\]\n\nwhere `L_t` is cumulative loss up to `t`, and `a^*_t` is the hindsight minimizer up to `t`.\n\nDefine:\n\n\\[\n\\Sigma_t := \\sum_{i=1}^t \\big(L_i(a^*_{i-1}) - L_i(a^*_i)\\big)\n\\]\n\nThen:\n\n1. `Sigma_t` is **adapted** (computable online at time `t`),\n2. `Sigma_t` is **monotone nondecreasing**,\n3. `Sigma_t` is an **anytime lower bound** on final FTL regret (`Sigma_t <= Reg(FTL, l^n)`), with equality at `t=n`.\n\nThis is exactly what turns hindsight-style regret comparison into an online stopping rule.\n\n## 3) Canonical SMART policy (single switch)\n\nFor threshold `theta`:\n\n1. play FTL while `Sigma_t <= theta`,\n2. at first violation, switch permanently to robust policy `W`,\n3. reset losses for `W` (fresh start on suffix).\n\nThe reset is not cosmetic. It is structurally required for the proof decomposition into:\n\n- pre-switch regret part (`FTL` segment),\n- post-switch regret part (`W` on suffix).\n\nWithout reset, the clean additive decomposition used for competitive analysis can fail.\n\n## 4) Ski-rental reduction: what is equivalent and what is not\n\nEquivalent structure:\n\n- continue FTL = keep renting,\n- switch to `W` = buy,\n- cumulative FTL-trace growth = rental accumulation,\n- `g(n-\\tau)` = post-switch purchase-like cost.\n\nNot literally identical:\n\n- rental increments are sequence-dependent (not fixed 1),\n- post-switch cost is `g(n-\\tau)` not fixed constant, though monotone.\n\nBut the competitive-analysis machinery still transfers almost exactly.\n\n## 5) Deterministic vs randomized threshold\n\n### Deterministic\nSet `theta = g(n)`.\n\nGuarantee (paper):\n\n\\[\n\\mathrm{Reg}(\\text{SMART},\\ell^n)\n\\le\n2\\min\\{\\mathrm{Reg}(\\mathrm{FTL},\\ell^n), g(n)\\} + O(1)\n\\]\n\n### Randomized\nSample\n\n\\[\n\\theta = g(n)\\log(1 + (e-1)U),\\quad U\\sim \\mathrm{Unif}[0,1]\n\\]\n\nGuarantee (paper):\n\n\\[\n\\mathbb{E}[\\mathrm{Reg}(\\text{SMART},\\ell^n)]\n\\le\n\\frac{e}{e-1}\\min\\{\\mathrm{Reg}(\\mathrm{FTL},\\ell^n), g(n)\\} + O(1)\n\\]\n\nInterpretation:\n\n- deterministic is simpler and robustly understandable,\n- randomized is tighter and minimax-optimal in the ski-rental analogue.\n\n## 6) Independent sanity checks (not tied to repo implementations)\n\nI ran lightweight Monte Carlo checks of the normalized ski-rental-style model.\n\n### Check A: randomized threshold gives ~constant ratio\nFor normalized `g=1`, across many `r = Reg(FTL)/g`, expected ratio stayed near `1.58` as theory predicts.\n\n### Check B: deterministic threshold = 2-competitive optimum (single-threshold family)\nFor deterministic scaled threshold `theta = c g`, worst-case ratio in this family is:\n\n\\[\n\\max\\{1+c,\\ 1+1/c\\}\n\\]\n\nMinimized at `c=1`, giving ratio `2`.\n\n### Check C: calibration sensitivity is real\nIf threshold scale is misspecified (`theta` too low or too high), worst-case ratio degrades quickly. In numerical sweeps:\n\n- under-scaling (`alpha=0.7`) produced worst-case around `~2.0`,\n- over-scaling (`alpha=1.5`) produced worst-case around `~1.9`,\n- near-correct scale (`alpha~1`) stayed near `~1.58`.\n\nImplication: empirical threshold estimation must be treated as a first-class modeling problem, not a detail.\n\n## 7) What the lower bound implies for design\n\nThe paper’s converse (~`1.4335`) has practical consequences:\n\n1. Do not chase exact `min(Reg(FTL), g)`; impossible in general.\n2. Multi-switch strategies may beat `1.58` in principle, but only modestly (gap to `1.4335` is limited).\n3. The single-switch template is a strong bias unless there is clear evidence of repeated regime reversals.\n\n## 8) Subtle but critical specification details\n\nAny correct SMART implementation must specify these explicitly:\n\n1. **What exactly is `Sigma_t`?**\n- Must correspond to FTL regret trace from decomposition, not arbitrary proxy.\n\n2. **What is `g`?**\n- fixed-horizon theoretical bound,\n- empirical estimated bound,\n- path-dependent bound (`g(l^n)` style extension).\n\n3. **Switch timing convention**\n- switch when `Sigma_t > theta` vs `>=` matters around ties/discrete increments.\n\n4. **Post-switch reset semantics**\n- robust algorithm runs on suffix only (proof-critical in baseline theory).\n\n5. **Comparator definition**\n- best fixed action over full horizon vs per-suffix comparator must be consistent with reported regret.\n\n6. **Randomization semantics**\n- threshold sampled once globally vs resampled per run/per horizon.\n\nMany implementation mismatches in practice come from one of these six points.\n\n## 9) Where SMART is strongest, and where it is weak\n\n### Strong\n\n- Mixed environments with mostly benign behavior and occasional adversarial phases.\n- Settings where robust algorithm has a clean, trusted `g(n)`.\n- Use cases where one major regime transition dominates.\n\n### Weak / fragile\n\n- Fast oscillations that would benefit from multiple switches.\n- Miscalibrated or noisy `g` estimates.\n- Environments where FTL trace proxy is weakly correlated with future regret danger.\n\n## 10) Experiment implications and redesign guidance\n\nIf we want stronger empirical evidence, experiments should answer these precise questions:\n\n1. **Switch quality**\n- How often is switch too early / too late / never?\n- What is regret penalty decomposition from each failure mode?\n\n2. **Threshold calibration curves**\n- Plot competitive ratio surrogate vs threshold scale.\n- Include both theoretical and empirical `g`.\n\n3. **Regime-transition stress tests**\n- single abrupt shift,\n- smooth drift,\n- burst corruption,\n- repeated switching.\n\n4. **Decomposition diagnostics**\n- track `Sigma_t`, threshold, switch time,\n- track pre-switch vs post-switch regret contributions separately.\n\n5. **Robustness to modeling choices**\n- loss surrogate variants,\n- comparator variants,\n- norm constraints.\n\n### A better experiment template (recommended)\n\nFor each setting (binary, OLC, quadratic OCO):\n\n1. Create four regimes: benign, drift, one-shift, bursty-corruption.\n2. Evaluate `{FTL, robust baseline, SMART-theory, SMART-empirical}`.\n3. Report:\n- final regret,\n- regret-vs-time,\n- switch statistics (`switch rate`, `median switch time`, `never-switch rate`),\n- calibration sensitivity curve.\n\nThis directly tests SMART’s intended behavior rather than only final aggregate regret.\n\n## 11) Correctness checklist for future implementations\n\nUse this as a hard gate before trusting plots:\n\n1. Unit tests verify FTL decomposition numerically on small synthetic cases.\n2. Monotonicity of `Sigma_t` is asserted.\n3. Deterministic threshold special cases:\n- very high threshold => SMART == FTL,\n- threshold ~0 => immediate switch behavior.\n4. Randomized-threshold empirical ratio on normalized toy model is near `1.58`.\n5. Reset/no-reset behavior is explicit and tested.\n6. Reproducibility: seeded, deterministic pipelines for all figure scripts.\n\n## 12) Applications and interpretation\n\nSMART is best understood as a **risk-budgeted optimism controller**:\n\n- optimism phase exploits easy structure quickly,\n- switch rule enforces a monotone risk budget,\n- robust phase caps tail behavior.\n\nThis applies naturally to:\n\n- online classification with distribution shift,\n- recommendation/ranking under occasional adversarial behavior,\n- operations/control systems with rare but severe regime breaks.\n\nIn applied terms, SMART provides a transparent policy knob: threshold policy (`theory`, `empirical`, or hybrid) controls aggressiveness of optimism.\n\n## 13) Open technical directions worth exploring\n\n1. Multi-switch SMART with provable competitive ratio between `1.4335` and `1.58`.\n2. Data-adaptive threshold laws with finite-sample calibration guarantees.\n3. Partial-information/bandit analogues of adapted regret traces.\n4. Confidence-aware SMART: switch based on posterior uncertainty in `g` and trace.\n5. Path-dependent robust bounds (`g(\\ell^n)`) beyond small-loss experts.\n\n## 14) Properties\n\nThis section summarizes properties of SMART that are especially useful for designing and interpreting experiments.\n\n### 14.1 Structural Properties\n\n1. **Single-switch monotonicity**\n- Once SMART switches to the robust policy, it never returns to FTL.\n- This reduces policy oscillation but introduces irreversibility cost if the environment later becomes benign again.\n\n2. **Trace-driven stopping rule**\n- SMART's decision variable is not raw loss but the adapted regret trace `Sigma_t`.\n- This is critical: sequence geometry of `Sigma_t` (early growth vs late growth) strongly affects behavior.\n\n3. **Prefix/suffix decomposition**\n- With reset semantics, SMART regret decomposes naturally into:\n  - prefix (FTL) segment,\n  - suffix (robust) segment.\n- This decomposition is the main reason guarantees are analyzable.\n\n4. **Scale dependence on `g`**\n- SMART is invariant to many details except threshold scaling against true robust difficulty.\n- If `g` is miscalibrated, switching can become systematically early or late.\n\n### 14.2 Quantitative/Competitive Properties\n\n1. **Deterministic threshold optimality within single-threshold family**\n- For threshold `theta = c g`, worst-case competitive ratio behaves like\n  `max(1+c, 1+1/c)`, minimized at `c=1` with ratio `2`.\n\n2. **Randomized threshold equalization effect**\n- The paper's threshold law approximately equalizes expected ratio across hardness levels.\n- This explains why the expected factor is nearly constant near `e/(e-1)`.\n\n3. **Near-optimality gap is small**\n- Upper bound ~`1.58`, lower bound ~`1.4335`.\n- This suggests single-switch SMART is already close to fundamental limits.\n\n### 14.3 Practical/Implementation Properties\n\n1. **Specification sensitivity**\n- Small implementation choices matter:\n  - `>` vs `>=` switch trigger,\n  - reset vs no-reset post-switch,\n  - horizon-specific vs anytime threshold,\n  - comparator definition.\n\n2. **Calibration fragility**\n- Threshold misspecification can significantly degrade competitive behavior.\n- Empirical threshold estimation should be treated as a core component.\n\n3. **Interpretability**\n- SMART is interpretable as a risk budget controller:\n  - spend optimism while trace budget is low,\n  - switch when budget is exhausted.\n\n## 15) Experiments To Explore\n\nThis section proposes experiments that are likely to produce the most informative revisions to the empirical story.\n\n### 15.1 Core diagnostic experiments\n\n1. **Switch quality audit**\n- For each run, label switch as:\n  - too early,\n  - near-optimal,\n  - too late,\n  - never.\n- Report frequency and regret penalty by category.\n\n2. **Trace decomposition plots**\n- For each regime, plot:\n  - `Sigma_t`,\n  - threshold,\n  - switch round,\n  - pre-switch and post-switch regret components.\n\n3. **Calibration frontier**\n- Sweep threshold scaling factors and plot:\n  - final regret of FTL / robust / SMART,\n  - switch-time distributions,\n  - competitive-ratio surrogate.\n\n### 15.2 Regime design experiments\n\n1. **Timing sensitivity**\n- Hold total hardness fixed; vary onset time of adversarial phase.\n- Measure how switch timing changes and how much regret is avoidable.\n\n2. **Recovery/irreversibility stress test**\n- Sequence pattern: benign -> adversarial burst -> benign.\n- Quantify the price of one-way switching versus a hypothetical multi-switch oracle.\n\n3. **Smooth drift vs abrupt shift**\n- Compare linear drift and one-time jump with matched aggregate difficulty.\n- Identify when single-switch policies are structurally sufficient.\n\n4. **Burst frequency experiment**\n- Keep total corruption mass fixed but vary burst fragmentation.\n- Tests whether SMART's one-switch bias is vulnerable to repeated short bursts.\n\n### 15.3 Cross-domain application experiments\n\n1. **Online linear classification with realistic shifts**\n- Covariate shift + label-noise bursts + separator drift.\n- Evaluate whether SMART tracks FTL on easy phases and robust baseline on hard phases.\n\n2. **Recommendation under manipulation bursts**\n- User-interest stability with periodic bot/fraud perturbations.\n- Show practical utility of switching behavior over static optimistic strategies.\n\n3. **Clinical policy drift simulation**\n- Stable treatment response followed by protocol/population shift.\n- Evaluate safety-performance tradeoff under adversarial/benign mixtures.\n\n### 15.4 Validation experiments for implementation correctness\n\n1. **Ablation on switch rule details**\n- Compare `>` vs `>=`, reset vs no-reset, fixed vs empirical thresholds.\n\n2. **Reproducibility harness**\n- Fixed seeds, deterministic configs, and CI checks for all main figures.\n\n3. **Toy-theory consistency checks**\n- Validate deterministic `2x` and randomized `~1.58x` behavior on controlled synthetic tasks.\n\n---\n\n## Bottom line\n\nThe deepest insight of SMART is not merely “switch once.”\nIt is the discovery that FTL admits an online-computable, monotone regret trace that makes a hindsight-comparison objective operational in real time.\n\nThat structural bridge is why competitive-analysis tools become relevant, why the guarantees are strong, and why implementation details around the trace/threshold/reset are non-negotiable for correctness.\n\n## 16) What SMART Experiments Must Demonstrate (Paper Focus)\n\nTo be paper-useful, SMART experiments should demonstrate mechanism validity, not just isolated wins.\n\n1. **No unnecessary optimism tax in benign regimes**\n- When optimism is correct, SMART should stay close to FTL and avoid overpaying for robustness.\n\n2. **Robust protection in hard regimes**\n- When optimistic behavior becomes unreliable, SMART should switch and avoid FTL-style blow-ups.\n\n3. **Interpretable adaptation**\n- The switch should be explainable via `Sigma_t` crossing threshold near meaningful regime deterioration.\n- Diagnostics should support a causal narrative (what changed, when, and why SMART reacted).\n\nThis is the central empirical story: SMART should track the better side of the optimism/robustness tradeoff, with switching behavior that is both effective and interpretable.\n", "experiments": [{"slug": "exp01_best_of_all_worlds", "displayName": "exp01_best_of_all_worlds", "readme": "# exp01_best_of_all_worlds\n\nLegacy SMART/binary-prediction experiment set from the original `Best-of-All-Worlds` repo.\n\n## Objective\n\nThis experiment is the main empirical validation for the binary-prediction claims:\n\n1. SMART tracks FTL on benign/stochastic sequences where FTL is strong.\n2. SMART avoids FTL's linear-regret failures on adversarial/worst-case-style sequences.\n3. SMART stays close to the better benchmark (FTL vs robust baseline) up to a constant factor.\n4. On loss-based sequences that hurt AdaHedge, SMART remains competitive.\n\n## Experimental design\n\nThe codebase uses synthetic binary sequences that span easy-to-hard regimes.\n\n- Easy regime:\n  - i.i.d. Bernoulli sequences (`generate_iid_sequence`)\n  - Goal: show FTL and SMART perform similarly while robust worst-case algorithms are conservative.\n- Hard regime:\n  - FMG-style sequences (`generate_FMG_sequence`, `generate_highlossFMG_ftl`)\n  - Goal: increase lead changes/crossings and show FTL degrades while SMART transitions toward robust behavior.\n- Loss-based regime:\n  - targeted loss-difference sequence generation (`loss_based_sequence_generation`), e.g. `n^0.4`.\n  - Goal: reproduce settings where AdaHedge underperforms and SMART remains strong.\n\n## Entry points\n\n- `python graph_driver.py`\n- `python blackwells_worst_experimentation.py`\n- `python graphing_gui.py`\n\n## Main code locations\n\n- `Scripts/`: algorithm and sequence-generation logic\n- `Graphs/`: saved plots\n- `Playground/`: exploratory UI/testing scripts\n\n## Known issues\n\n1. Legacy structure is non-modular; reproducing specific figures is not always one-command.\n2. Seeds/config are not consistently pinned across all drivers.\n3. `Graphs/` contains mixed historical and paper-candidate outputs.\n4. Multiple algorithm variants exist; some runs are not clearly aligned to final paper configs.\n\n## Notes\n\n- This experiment retains original layout for compatibility.\n", "figures": []}, {"slug": "exp02_online_linear_classification", "displayName": "exp02_online_linear_classification", "readme": "# exp02_online_linear_classification\n\nOCO experiment set comparing FTRL, FTL, SMART, and empirical SMART variants.\n\n## Objective\n\nThis experiment extends the SMART narrative to online linear classification:\n\n- SMART should preserve optimistic performance on benign streams.\n- SMART should avoid blow-ups on adversarial label patterns.\n- Empirical threshold estimates can improve practical switch timing versus conservative theory-only thresholds.\n\n## Experimental design\n\nProblem setup:\n\n- Sequential linear prediction with bounded features and comparator in a bounded norm ball.\n- Loss surrogate: `0.5 * |z_t · x_t - y_t|` (code family).\n\nCompared policies:\n\n- FTL/FTRL baselines\n- SMART with theoretical threshold\n- SMART with empirical `g(T)`\n\nSequence families (`sequence_generation.py`):\n\n- random i.i.d.-style linearly separable stream\n- Massart-noise stream\n- adversarial label-flip stream\n- switching-leader stream\n\n## Entry points\n\n- `python driver.py`\n- `python fast_driver.py`\n- `python exact_ftl_driver.py`\n\n## Main code locations\n\n- `algorithms.py`, `fast_algorithms.py`, `exact_ftl.py`\n- `sequence_generation.py`\n- pre-generated figures at repository root of this experiment\n\n## Figures\n\nCurated paper-candidate figures live in `figures/` with labels/titles mapped in `figures/INDEX.md`.\n\n## Known issues\n\n1. Exact FTL is computationally expensive due to repeated constrained prefix solves.\n2. Empirical `g(T)` estimation is expensive for large `g_runs`.\n3. Regret values are sensitive to surrogate/normalization/comparator definitions.\n4. Fast approximations are tractable but can drift from exact FTL behavior.\n\n## Notes\n\n- This experiment retains original layout for compatibility.\n- Use this folder as the source of truth for OLC figures.\n", "figures": [{"filename": "fig_exp02_empirical_threshold_g_vs_theory.png", "src": "../exp02_online_linear_classification/figures/fig_exp02_empirical_threshold_g_vs_theory.png", "title": "Empirical Robust Threshold g(T) vs Theoretical References"}, {"filename": "fig_exp02_olc_regret_by_sequence_family.png", "src": "../exp02_online_linear_classification/figures/fig_exp02_olc_regret_by_sequence_family.png", "title": "Online Linear Classification Regret by Sequence Family"}, {"filename": "fig_exp02_olc_regret_comparison_main.png", "src": "../exp02_online_linear_classification/figures/fig_exp02_olc_regret_comparison_main.png", "title": "Online Linear Classification: FTL/FTRL/SMART Regret Across Sequence Families"}]}, {"slug": "exp03_time_varying_mu_oco", "displayName": "exp03_time_varying_mu_oco", "readme": "# exp03_time_varying_mu_oco\n\nExperiment 03 studies SMART in a simple 1D online convex optimization setting with quadratic losses:\n\n- $\\ell_t(a)=\\frac{1}{2}(a-\\mu_t)^2$\n\nThe implementation in this folder is a cleaned Python version derived from the uploaded notebooks.\n\n## Background (Undergraduate-Level)\n\nAt each round `t`, the algorithm chooses a number `a_t` in a fixed interval (the code uses `[-1, 1]`), then observes a loss function\n\n- $\\ell_t(a)=\\frac{1}{2}(a-\\mu_t)^2$.\n\nThis is just a parabola centered at `mu_t`. Intuitively:\n\n- if `a_t` is close to `mu_t`, loss is small;\n- if `a_t` is far from `mu_t`, loss is large.\n\nSo the full problem is about tracking a moving target `mu_t` over time.\n\nWhy this experiment matters for SMART:\n\n1. It is mathematically clean and easy to interpret.\n2. It isolates sequence effects: how the environment (`mu_t`) changes controls which algorithm wins.\n3. It lets us test SMART’s intended role: optimistic when safe, robust when needed.\n\n## Objective\n\nDemonstrate three core SMART behaviors:\n\n1. In benign environments, SMART should behave like the optimistic baseline (FTL).\n2. In harder nonstationary environments, SMART should avoid optimistic failures.\n3. Across horizons, SMART should track a favorable tradeoff between optimistic and robust baselines.\n\n## Algorithms in this experiment\n\n- `FTL`: Follow-The-Leader baseline.\n- `OGD`: robust baseline (fixed or anytime learning rate).\n- `SMART`: starts optimistically and switches to robust behavior using the paper’s switching statistic.\n\n## Worst-Case Baseline Specification (Why OGD Here)\n\nRobust baseline used in Exp03:\n\n- **Online Gradient Descent (OGD)** on a bounded 1D domain `[-1,1]`.\n\nWhere this specification comes from:\n\n1. For convex losses with bounded gradients on bounded domains, OGD is a standard worst-case baseline with sublinear regret (`O(sqrt(n))` scale).\n2. Our loss is convex in `a`:\n   - `ell_t(a)=0.5*(a-mu_t)^2`,\n   - gradient is `a-mu_t`,\n   - and both `a` and `mu_t` are bounded in this experiment.\n\nWhy this is appropriate in this setting:\n\n1. The action space is exactly a bounded interval, which is the canonical OGD setup.\n2. OGD does not assume stationarity of `mu_t`, so it is a natural robust comparator under drift/corruption.\n3. SMART’s robust branch should be a method with reliable worst-case behavior; OGD provides that role cleanly here.\n\nImplementation details:\n\n1. Fixed-rate branch: `eta = 2/sqrt(n)`.\n2. Anytime branch: `eta_t = 1/sqrt(t)`.\n3. Update rule: gradient step on current loss, then projection back to `[-1,1]`.\n\n## Input Sequence Design: What `mu_t` Means and How We Generate It\n\nThe input sequence is the most important design choice in this experiment.  \nEach scenario defines a full horizon-length sequence `mu_1, ..., mu_n`.\n\n### 1) `stable_benign` (FTL-dominant)\n\nGoal:\n- represent a mostly stable environment where optimism should work.\n\nGeneration (step-by-step):\n1. Start near a positive center (`~0.60`).\n2. Update with an AR(1)-style rule:\n   - strong pull to the center,\n   - small Gaussian noise each round.\n3. Clip values to stay in a bounded range.\n\nEffect:\n- `mu_t` moves slowly with low noise, so FTL should perform well.\n\n### 2) `corruption_burst` (adversarial-realistic)\n\nGoal:\n- represent a stable process with short, severe disruptions.\n\nGeneration (step-by-step):\n1. Start from a stable positive baseline (`~0.55`) plus small noise.\n2. Insert two time windows (bursts).\n3. Inside each burst, force `mu_t` to a strong negative regime (plus noise).\n4. Outside bursts, return to baseline behavior.\n\nEffect:\n- an optimistic policy that trusts recent history can be damaged during bursts.\n- SMART should gain by switching.\n\n### 3) `drift_plus_shift` (representative mixed regime)\n\nGoal:\n- represent a practical nonstationary stream with both gradual and abrupt change.\n\nGeneration (step-by-step):\n1. Early phase: long benign regime near `~0.55`.\n2. Middle phase: gradual drift downward.\n3. Late phase: one sustained shift to a negative regime (`~ -0.70` with noise).\n4. Clip to bounds.\n\nEffect:\n- this combines easy and hard periods in one realistic-style trajectory.\n\n## Experimental Protocol (Primary Figure Contract)\n\nPrimary figure type is `Regret` vs `Horizon`:\n\n1. Choose a grid of horizons `n` (for example `100, 200, ..., 1000`).\n2. For each horizon `n`, generate fresh sequences of length `n`.\n3. Run all algorithms on each sequence.\n4. Record regret at the end of that horizon.\n5. Plot mean regret (and uncertainty bands when stochastic) against horizon.\n\nThis is intentionally not a single-sequence prefix trace.\n\n## Acceptance Criteria (Paper-Facing)\n\n1. `stable_benign`: SMART is close to FTL across horizons.\n2. `corruption_burst`: SMART is substantially better than FTL as horizon grows.\n3. `drift_plus_shift`: SMART lies between optimistic and robust extremes in a meaningful way.\n\n## Threshold Calibration\n\nIn this quadratic setting, the raw switching statistic can be numerically small relative to default theoretical scaling, so:\n\n- we expose `--threshold-scale` (default `0.0035`),\n- and report results under that explicit calibration.\n\n## Run\n\n```bash\ncd experiments/exp03_time_varying_mu_oco\npython run_experiments.py --n-max 1000 --n-step 100 --trials 30 --threshold-scale 0.0035\n```\n\nAnytime OGD variant:\n\n```bash\npython run_experiments.py --n-max 1000 --n-step 100 --trials 30 --threshold-scale 0.0035 --anytime-lr\n```\n\nRun specific scenarios:\n\n```bash\npython run_experiments.py --scenario stable_benign corruption_burst drift_plus_shift\n```\n\n## Outputs\n\n- `outputs/figures/exp03_quadratic_oco_regret_by_horizon.png`\n\nCurated paper figure:\n\n- `figures/fig_exp03_quadratic_oco_regret_by_horizon.png`\n\n## Known limitations\n\n1. Sequences are synthetic but structured; they are not fitted from a real dataset.\n2. Conclusions depend on the chosen domain bounds and robust baseline (OGD schedule).\n3. Threshold calibration remains an explicit modeling choice.\n", "figures": [{"filename": "fig_exp03_quadratic_oco_regret_by_horizon.png", "src": "../exp03_time_varying_mu_oco/figures/fig_exp03_quadratic_oco_regret_by_horizon.png", "title": "Quadratic OCO: Regret by Horizon Across Sequence Regimes"}]}, {"slug": "exp04_leader_path_synthesis", "displayName": "exp04_leader_path_synthesis", "readme": "# exp04_leader_path_synthesis\n\nExperiment 04 studies SMART in online linear classification with a sequence-construction method that keeps the experiment realistic and computationally tractable.\n\n## Background (Undergraduate-Level)\n\nAt each round `t`, the learner chooses a vector `x_t` in the unit ball (`||x_t||<=1`) and then sees an example `(z_t, y_t)`:\n\n- `z_t` is a feature vector (`||z_t||<=1`),\n- `y_t` is a label in `{ -1, +1 }`.\n\nThe loss used here is:\n\n- $\\ell_t(x)=\\frac{1}{2}\\left|\\langle z_t,x\\rangle-y_t\\right|$.\n\nIntuition:\n\n1. `x_t` makes a score `q_t = <z_t, x_t>`.\n2. If `q_t` is close to label `y_t`, loss is small.\n3. If `q_t` is far from `y_t`, loss is large.\n\nThis experiment compares:\n\n- `FTL` (optimistic),\n- `FTRL` (robust baseline),\n- `SMART` (start optimistic, switch when evidence says optimism is failing).\n\n## Worst-Case Baseline Specification (Why This Is FTRL)\n\nRobust baseline used in Exp04:\n\n- **FTRL with quadratic regularization on the unit Euclidean ball**.\n\nConcrete specification:\n\n`x_t^FTRL = argmin_{x in X} { <theta_{t-1}, x> + (sqrt(t)/(2*eta0)) * ||x||_2^2 }`,  \nwith `X = {x : ||x||_2 <= 1}` and `theta_{t-1}` the cumulative linearized gradient.\n\nWhere this specification comes from:\n\n1. This is the standard FTRL template: cumulative linearized loss + strongly convex regularizer.\n2. Quadratic regularization over an `l2` ball yields a closed-form projected update:\n   - `Proj_X( -(eta0/sqrt(t)) * theta_{t-1} )`.\n\nWhy this is appropriate here:\n\n1. The loss is linearized each round in vector space, so FTRL is directly applicable.\n2. The domain is exactly bounded in `l2`, matching the projection form.\n3. It provides a robust, stable baseline that is meaningful against optimistic FTL in nonstationary regimes.\n\n## Why True FTL Becomes Difficult in This Setting\n\nThis is the core motivation for the experiment redesign.\n\nIn online linear classification, a literal “true FTL” benchmark over prefixes can be expensive because:\n\n1. At each round `t`, FTL depends on cumulative gradient/state up to `t-1`.\n2. If you build arbitrary synthetic sequences and then try to recover exact leader behavior by repeated optimization, you may need many prefix solves.\n3. Doing this over many horizons and many trials multiplies the cost heavily.\n\nIn short: if sequence generation and leader computation are decoupled, exact repeated prefix optimization can become a bottleneck.\n\n## How We Redesigned the Experiment\n\nWe redesigned Exp04 so leader behavior is computable in closed form by construction.\n\nHigh-level idea:\n\n1. Instead of first generating arbitrary `(z_t, y_t)` and then solving for leaders,\n2. we construct a realizable path of cumulative gradients `theta_t`,\n3. and then generate `(z_t, y_t)` to match that path.\n\nThis makes FTL updates simple and fast.\n\n## Step-by-Step: Why Results Are Computable in the New Formulation\n\nLet `u_t` be a desired leader direction at round `t`.\n\n### Step 1: Choose regime-specific target directions\n\nFor each scenario, define a target direction path:\n\n- `u_1, ..., u_T`, where each `u_t` is unit-norm.\n\n### Step 2: Choose magnitude schedule\n\nDefine radii `r_t` controlling how strongly the cumulative state points in that direction.\n\nConstruct desired cumulative state:\n\n- `theta_t^des = - r_t * u_t`.\n\n### Step 3: Enforce per-round realizability\n\nPer-round gradient updates must be feasible, so we cap increment size:\n\n- `Delta_t = theta_t - theta_{t-1}`,\n- enforce `||Delta_t|| <= 0.5`.\n\nThis matches the maximum update size implied by bounded features in this loss setup.\n\n### Step 4: Convert `Delta_t` into an example `(z_t, y_t)`\n\nWe choose feature-label pairs so the induced gradient equals the desired update.\n\nUsing the gradient form\n\n- `g_t = 0.5 * sign(<z_t, x_t> - y_t) * z_t`,\n\nwe set `z_t` proportional to `Delta_t` (with sign and label choice selected to match plausibility and update direction), so `g_t` reproduces `Delta_t`.\n\n### Step 5: Compute FTL cheaply\n\nNow cumulative state is simply:\n\n- `theta_t = sum_{s<=t} g_s`.\n\nFTL action is closed form:\n\n- `x_t^FTL = -theta_{t-1} / ||theta_{t-1}||` (or `0` if denominator is zero).\n\nNo repeated numerical optimizer is needed.\n\n### Step 6: Run horizon-level evaluation\n\nFor each horizon `n`:\n\n1. generate fresh sequences of length `n` from the same regime recipe,\n2. run `FTL`, `FTRL`, and `SMART`,\n3. record regret at horizon `n`.\n\nThis yields the paper-facing `Regret` vs `Horizon` figure.\n\n## Metric-Driven Sequence Selection (New)\n\nTo improve figure quality, Exp04 now uses a metric-driven selection stage before the main horizon sweep.\n\nWhat is searched:\n\n1. `max_delta_norm` candidates: controls how quickly cumulative state can move each round.\n2. `label_mismatch_prob` candidates: controls base mismatch/corruption intensity.\n\nHow candidates are scored:\n\n1. `stable_benign` score favors `SMART ~= FTL` and penalizes cases where robust beats FTL.\n2. `persistent_shift` score favors large improvement of SMART over FTL under a sustained post-change regime.\n3. `delayed_hardening` score favors meaningful improvement over FTL while preserving a mixed-regime narrative.\n4. All regimes include penalties for unstable/non-smooth curves and excessively wide confidence bands.\n\nHow selected parameters are used:\n\n1. For each regime, evaluate a small parameter grid on probe horizons.\n2. Choose the best-scoring parameter pair for that regime.\n3. Run the full horizon figure using those selected parameters.\n\nThis keeps realism constraints while making the paper figure more illustrative.\n\n## Input Sequence Design (Exact Regime Recipes)\n\nThis section is the most important part of Exp04.\n\n### 1) `stable_benign` (FTL-dominant)\n\nPurpose:\n- show optimism should be rewarded when environment is stable.\n\nGeneration details:\n1. target directions stay near a fixed anchor direction with small noise,\n2. radius schedule grows smoothly,\n3. low mismatch/noise in label orientation choice.\n\nExpected behavior:\n- `FTL ≈ SMART`, robust baseline more conservative.\n\n### 2) `persistent_shift` (hard regime)\n\nPurpose:\n- model a single sustained regime break after a long benign prefix.\n\nGeneration details:\n1. pre-shift rounds: target directions stay near a stable anchor,\n2. post-shift rounds: target direction jumps to a different anchor and stays there,\n3. cumulative-state magnitude is reduced after the break to make optimism less reliable,\n4. mismatch probability remains controlled to keep variance lower than bursty constructions.\n\nExpected behavior:\n- FTL regret worsens clearly at larger horizons; SMART should switch and reduce damage.\n\n### 3) `delayed_hardening` (representative mixed regime)\n\nPurpose:\n- model a realistic progression from easy to moderately hard to hard.\n\nGeneration details:\n1. early phase: stable benign dynamics,\n2. middle phase: gradual hardening via smooth drift,\n3. late phase: moderate persistent shift to a new regime,\n4. bounded increments and controlled noise preserved.\n\nExpected behavior:\n- SMART should provide a middle ground between optimism and robustness with cleaner horizon-level separation.\n\n## Primary Figure Contract\n\nPaper-facing figure is:\n\n- x-axis: `Horizon`,\n- y-axis: `Regret`,\n- each horizon uses fresh sequences of that exact length.\n\nNo single-sequence switch-statistic traces are included in curated paper figures.\n\n## Acceptance Criteria (Paper-Facing)\n\n1. `stable_benign`: SMART remains close to FTL over horizons.\n2. `persistent_shift`: SMART is clearly better than FTL over horizons.\n3. `delayed_hardening`: SMART tracks a favorable tradeoff in mixed nonstationarity.\n\n## Sequence Objectives (What Each Regime Demonstrates)\n\n1. `stable_benign`: optimism safety.\nGoal: show SMART should not pay a cost when FTL is already good (`SMART ≈ FTL`, both well below robust baseline).\n\n2. `persistent_shift`: hard regime protection.\nGoal: show a clear failure mode for pure FTL after sustained shift, where SMART’s switch reduces damage and can outperform both pure baselines by mixing prefix/suffix behavior.\n\n3. `delayed_hardening`: representative mixed behavior.\nGoal: show gradual nonstationarity where SMART is a pragmatic middle policy, improving over conservative robust behavior while staying close to optimistic performance when possible.\n\n## Online Learning Definition Used in Code\n\n- Action set: `X = {x in R^d : ||x||_2 <= 1}`.\n- Loss: `ell_t(x) = 0.5 * |<z_t, x> - y_t|`.\n- FTRL baseline:\n  - `x_t^FTRL = argmin_{x in X} { <theta_{t-1}, x> + (sqrt(t)/(2*eta0)) * ||x||_2^2 }`\n  - implemented as projection of `-(eta0/sqrt(t))*theta_{t-1}` onto `X`.\n\n## Run\n\n```bash\ncd experiments/exp04_leader_path_synthesis\npython run_experiment.py\n```\n\nFaster run on multi-core machines:\n\n```bash\npython run_experiment.py --jobs 8\n```\n\nSelect evaluation engine:\n\n```bash\npython run_experiment.py --engine auto\npython run_experiment.py --engine python\npython run_experiment.py --engine numba\n```\n\nNotes:\n1. `auto` uses Numba if it is installed, otherwise Python.\n2. Some environments block multiprocessing semaphores; in those cases `--jobs > 1` falls back to serial execution.\n\nDefault mode uses fixed illustrative per-regime settings (benign / hard reverse / mixed), no smoothing, and fresh per-horizon sequence draws (paper-primary protocol).\n\nEnable metric-driven auto-selection:\n\n```bash\npython run_experiment.py --auto-select\n```\n\nDisable smoothing or set a different smoothing window:\n\n```bash\npython run_experiment.py --smooth-window 1\npython run_experiment.py --smooth-window 5\n```\n\nUse coupled-prefix evaluation (single long sequence per run, useful only as a diagnostic trace view):\n\n```bash\npython run_experiment.py --coupled-horizons\n```\n\n## Outputs\n\n- `outputs/figures/exp04_olc_regret_by_horizon.png`\n\nCurated paper figure:\n\n- `figures/fig_exp04_olc_regret_by_horizon.png`\n\n## Files\n\n- `src/synthesis.py`: regime definitions and realizable sequence construction.\n- `src/eval.py`: FTL/FTRL/SMART evaluation.\n- `run_experiment.py`: horizon sweep and figure generation.\n\n## Known limitations\n\n1. Sequences are synthetic but structured; realism is controlled by model assumptions.\n2. Threshold scale calibration remains important.\n3. Conclusions depend on the chosen surrogate and comparator definitions.\n\n## Interpretation Notes (Common Questions)\n\n### Why can `stable_benign` be almost flat or gently increasing?\n\nIn this regime SMART usually does not switch, so SMART overlaps FTL by design.  \nWhether the curve appears nearly flat or gently increasing depends on the benign directional-noise level (`direction_noise_scale`):\n\n1. lower benign noise -> FTL stays very close to the final comparator and regret is almost constant,\n2. moderate benign noise -> FTL/SMART increase smoothly with horizon while remaining much better than FTRL.\n\n### In `delayed_hardening`, why can SMART look closer to FTRL at smaller horizons and closer to FTL at larger horizons?\n\nEach horizon `n` is a fresh run with threshold proportional to `sqrt(n)`.\nThis means:\n\n1. smaller horizons have lower thresholds and can trigger earlier switching,\n2. larger horizons have higher thresholds and may switch later (or not at all),\n3. regime phases are parameterized by fractions of horizon, so the effective hard segment location also changes with `n`.\n\nSo this is a cross-horizon effect from independent horizon problems, not a single-run policy that switches back.\n\n### How can SMART beat both FTL and FTRL on a regime?\n\nSMART is a one-switch hybrid:\n\n1. it can use FTL behavior on easier prefixes,\n2. then switch and use FTRL behavior on harder suffixes.\n\nAs a result, total horizon regret can be lower than either pure policy on that same horizon when the sequence has mixed phases.\n", "figures": [{"filename": "fig_exp04_olc_regret_by_horizon.png", "src": "../exp04_leader_path_synthesis/figures/fig_exp04_olc_regret_by_horizon.png", "title": "Online Linear Classification: Regret by Horizon Across Sequence Regimes"}]}]};
+
+    function escHtml(s) {
+      return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    function inlineMd(s) {
+      let x = escHtml(s);
+      x = x.replace(/`([^`]+)`/g, "<code>$1</code>");
+      x = x.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      x = x.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      return x;
+    }
+
+    function renderMarkdown(md) {
+      if (!md || !md.trim()) return '<p class="empty">No markdown content found.</p>';
+      const lines = md.replace(/\r\n/g, "\n").split("\n");
+      let out = "";
+      let inCode = false;
+      let listType = null;
+      let para = [];
+
+      function flushPara() {
+        if (para.length) {
+          out += "<p>" + inlineMd(para.join(" ")) + "</p>";
+          para = [];
+        }
+      }
+
+      function closeList() {
+        if (listType) {
+          out += listType === "ol" ? "</ol>" : "</ul>";
+          listType = null;
+        }
+      }
+
+      for (const rawLine of lines) {
+        const trimmed = rawLine.trim();
+        if (trimmed.startsWith("```")) {
+          flushPara();
+          closeList();
+          if (!inCode) {
+            inCode = true;
+            out += "<pre><code>";
+          } else {
+            inCode = false;
+            out += "</code></pre>";
+          }
+          continue;
+        }
+        if (inCode) {
+          out += escHtml(rawLine) + "\n";
+          continue;
+        }
+        if (!trimmed) {
+          flushPara();
+          closeList();
+          continue;
+        }
+        const h = trimmed.match(/^(#{1,6})\s+(.*)$/);
+        if (h) {
+          flushPara();
+          closeList();
+          out += "<h" + h[1].length + ">" + inlineMd(h[2]) + "</h" + h[1].length + ">";
+          continue;
+        }
+        const ul = trimmed.match(/^[-*]\s+(.*)$/);
+        if (ul) {
+          flushPara();
+          if (listType !== "ul") {
+            closeList();
+            listType = "ul";
+            out += "<ul>";
+          }
+          out += "<li>" + inlineMd(ul[1]) + "</li>";
+          continue;
+        }
+        const ol = trimmed.match(/^\d+\.\s+(.*)$/);
+        if (ol) {
+          flushPara();
+          if (listType !== "ol") {
+            closeList();
+            listType = "ol";
+            out += "<ol>";
+          }
+          out += "<li>" + inlineMd(ol[1]) + "</li>";
+          continue;
+        }
+        para.push(trimmed);
+      }
+
+      flushPara();
+      closeList();
+      return out;
+    }
+
+    function renderFigures(figures) {
+      if (!figures || figures.length === 0) {
+        return '<p class="empty">No figures found in this experiment\'s <code>figures/</code> folder.</p>';
+      }
+      let html = '<div class="gallery">';
+      for (const fig of figures) {
+        html += '<article class="figure">' +
+          '<a href="' + fig.src + '" target="_blank" rel="noopener noreferrer">' +
+          '<img src="' + fig.src + '" alt="' + escHtml(fig.title) + '" loading="lazy" />' +
+          '</a>' +
+          '<div class="figure-meta">' +
+          '<p class="figure-title">' + escHtml(fig.title) + '</p>' +
+          '<p class="figure-file"><code>' + escHtml(fig.filename) + '</code></p>' +
+          '</div>' +
+          '</article>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function overviewHtml() {
+      return '<article class="report">' +
+        '<header class="report-head"><h2>SMART Algorithm Overview</h2></header>' +
+        '<section class="report-body md">' + renderMarkdown(payload.smartAlgorithm) + '</section>' +
+        '</article>';
+    }
+
+    function experimentHtml(exp) {
+      return '<article class="report">' +
+        '<header class="report-head"><h2>' + escHtml(exp.displayName) + '</h2></header>' +
+        '<section class="report-body">' +
+        '<div class="md">' + renderMarkdown(exp.readme || "") + '</div>' +
+        '<section class="fig-section">' +
+        '<h3>Figures</h3>' +
+        renderFigures(exp.figures) +
+        '</section>' +
+        '</section>' +
+        '</article>';
+    }
+
+    const tabs = [{ key: "overview", label: "Overview" }];
+    for (const exp of payload.experiments) {
+      tabs.push({ key: exp.slug, label: exp.slug });
+    }
+
+    const tabsRoot = document.getElementById("tabs");
+    const panelsRoot = document.getElementById("panels");
+
+    function addPanel(key, html) {
+      const panel = document.createElement("section");
+      panel.className = "panel";
+      panel.dataset.tab = key;
+      panel.innerHTML = html;
+      panelsRoot.appendChild(panel);
+    }
+
+    for (const tab of tabs) {
+      const b = document.createElement("button");
+      b.className = "tab";
+      b.dataset.tab = tab.key;
+      b.textContent = tab.label;
+      tabsRoot.appendChild(b);
+    }
+
+    addPanel("overview", overviewHtml());
+    for (const exp of payload.experiments) {
+      addPanel(exp.slug, experimentHtml(exp));
+    }
+
+    function activate(key) {
+      document.querySelectorAll(".tab").forEach((el) => el.classList.toggle("active", el.dataset.tab === key));
+      document.querySelectorAll(".panel").forEach((el) => el.classList.toggle("active", el.dataset.tab === key));
+    }
+
+    tabsRoot.addEventListener("click", (ev) => {
+      const t = ev.target;
+      if (!(t instanceof HTMLElement)) return;
+      if (!t.classList.contains("tab")) return;
+      activate(t.dataset.tab || "overview");
+    });
+
+    activate("overview");
+  </script>
+</body>
+</html>
