@@ -143,8 +143,9 @@ What is searched:
 How candidates are scored:
 
 1. `stable_benign` score favors `SMART ~= FTL` and penalizes cases where robust beats FTL.
-2. `corruption_burst` score favors large improvement of SMART over FTL.
-3. `drift_plus_shift` score favors meaningful improvement over FTL without pathological behavior.
+2. `persistent_shift` score favors large improvement of SMART over FTL under a sustained post-change regime.
+3. `delayed_hardening` score favors meaningful improvement over FTL while preserving a mixed-regime narrative.
+4. All regimes include penalties for unstable/non-smooth curves and excessively wide confidence bands.
 
 How selected parameters are used:
 
@@ -171,32 +172,33 @@ Generation details:
 Expected behavior:
 - `FTL ≈ SMART`, robust baseline more conservative.
 
-### 2) `corruption_burst` (adversarial-realistic)
+### 2) `persistent_shift` (hard regime)
 
 Purpose:
-- model transient but severe data-quality/manipulation episodes.
+- model a single sustained regime break after a long benign prefix.
 
 Generation details:
-1. outside bursts: target directions remain near baseline anchor,
-2. inside two burst windows: target directions become unstable/alternating around alternate anchors,
-3. radius is softened in bursts (making optimism more fragile),
-4. label mismatch probability is increased during bursts.
+1. pre-shift rounds: target directions stay near a stable anchor,
+2. post-shift rounds: target direction jumps to a different anchor and stays there,
+3. cumulative-state magnitude is reduced after the break to make optimism less reliable,
+4. mismatch probability remains controlled to keep variance lower than bursty constructions.
 
 Expected behavior:
-- FTL regret worsens; SMART should switch and reduce damage.
+- FTL regret worsens clearly at larger horizons; SMART should switch and reduce damage.
 
-### 3) `drift_plus_shift` (representative mixed regime)
+### 3) `delayed_hardening` (representative mixed regime)
 
 Purpose:
-- model practical nonstationarity: smooth drift plus one structural change.
+- model a realistic progression from easy to moderately hard to hard.
 
 Generation details:
-1. early/mid phase: smooth interpolation from one direction toward another,
-2. late phase: sustained jump to new direction,
-3. moderate noise and bounded increments preserved.
+1. early phase: stable benign dynamics,
+2. middle phase: gradual hardening via smooth drift,
+3. late phase: moderate persistent shift to a new regime,
+4. bounded increments and controlled noise preserved.
 
 Expected behavior:
-- SMART should provide a middle ground between optimism and robustness.
+- SMART should provide a middle ground between optimism and robustness with cleaner horizon-level separation.
 
 ## Primary Figure Contract
 
@@ -211,8 +213,8 @@ No single-sequence switch-statistic traces are included in curated paper figures
 ## Acceptance Criteria (Paper-Facing)
 
 1. `stable_benign`: SMART remains close to FTL over horizons.
-2. `corruption_burst`: SMART is clearly better than FTL over horizons.
-3. `drift_plus_shift`: SMART tracks a favorable tradeoff in mixed nonstationarity.
+2. `persistent_shift`: SMART is clearly better than FTL over horizons.
+3. `delayed_hardening`: SMART tracks a favorable tradeoff in mixed nonstationarity.
 
 ## Online Learning Definition Used in Code
 
@@ -226,7 +228,7 @@ No single-sequence switch-statistic traces are included in curated paper figures
 
 ```bash
 cd experiments/exp04_leader_path_synthesis
-python run_experiment.py --t-max 1000 --t-step 100 --runs 8 --d 5 --max-delta-norm 0.45
+python run_experiment.py --t-max 1000 --t-step 100 --runs 12 --d 5 --max-delta-norm 0.45
 ```
 
 Disable metric-driven auto-selection and force manual parameters:

@@ -14,6 +14,7 @@ class SynthesisConfig:
     d: int = 5
     max_delta_norm: float = 0.45
     label_mismatch_prob: float = 0.02
+    hard_window_mismatch_boost: float = 0.10
     seed: int = 0
 
 
@@ -59,32 +60,31 @@ def _target_direction_path(name: str, T: int, d: int, rng: np.random.Generator) 
         for t in range(T):
             target[t] = _normalize(v1 + 0.01 * rng.standard_normal(d))
             w_star[t] = _normalize(v1 + 0.03 * rng.standard_normal(d))
-    elif name == "corruption_burst":
-        # Mostly stable separator, with transient instability in observed leader signal.
-        b1 = (int(0.30 * T), int(0.42 * T))
-        b2 = (int(0.60 * T), int(0.72 * T))
-        for t in range(T):
-            if b1[0] <= t < b1[1]:
-                anchor = v2 if (t % 2 == 0) else -v2
-                target[t] = _normalize(anchor + 0.03 * rng.standard_normal(d))
-            elif b2[0] <= t < b2[1]:
-                anchor = v3 if (t % 2 == 0) else -v3
-                target[t] = _normalize(anchor + 0.03 * rng.standard_normal(d))
-            else:
-                target[t] = _normalize(v1 + 0.015 * rng.standard_normal(d))
-            w_star[t] = _normalize(v1 + 0.04 * rng.standard_normal(d))
-    elif name == "drift_plus_shift":
-        shift_center = int(0.70 * T)
+    elif name == "persistent_shift":
+        shift_center = int(0.62 * T)
         for t in range(T):
             if t < shift_center:
-                alpha = t / max(shift_center - 1, 1)
-                drift_target = _smooth_rotation(v1, v2, 0.40 * alpha)
-                drift_star = _smooth_rotation(v1, v2, 0.50 * alpha)
-                target[t] = _normalize(drift_target + 0.012 * rng.standard_normal(d))
-                w_star[t] = _normalize(drift_star + 0.03 * rng.standard_normal(d))
+                target[t] = _normalize(v1 + 0.012 * rng.standard_normal(d))
+                w_star[t] = _normalize(v1 + 0.03 * rng.standard_normal(d))
             else:
-                jump_target = _smooth_rotation(v1, v2, 0.85)
-                jump_star = _smooth_rotation(v1, v2, 0.92)
+                target[t] = _normalize(v2 + 0.014 * rng.standard_normal(d))
+                w_star[t] = _normalize(v2 + 0.035 * rng.standard_normal(d))
+    elif name == "delayed_hardening":
+        hard_start = int(0.55 * T)
+        shift_center = int(0.78 * T)
+        for t in range(T):
+            if t < hard_start:
+                target[t] = _normalize(v1 + 0.010 * rng.standard_normal(d))
+                w_star[t] = _normalize(v1 + 0.028 * rng.standard_normal(d))
+            elif t < shift_center:
+                alpha = (t - hard_start) / max(shift_center - hard_start - 1, 1)
+                drift_target = _smooth_rotation(v1, v2, 0.40 * alpha)
+                drift_star = _smooth_rotation(v1, v2, 0.45 * alpha)
+                target[t] = _normalize(drift_target + 0.012 * rng.standard_normal(d))
+                w_star[t] = _normalize(drift_star + 0.032 * rng.standard_normal(d))
+            else:
+                jump_target = _smooth_rotation(v1, v3, 0.70)
+                jump_star = _smooth_rotation(v1, v3, 0.78)
                 target[t] = _normalize(jump_target + 0.015 * rng.standard_normal(d))
                 w_star[t] = _normalize(jump_star + 0.04 * rng.standard_normal(d))
     else:
@@ -102,23 +102,22 @@ def _magnitude_schedule(name: str, T: int, rng: np.random.Generator) -> Array:
         slope = 0.020
         for t in range(T):
             r[t] = base + slope * np.sqrt(t + 1) + 0.003 * rng.standard_normal()
-    elif name == "corruption_burst":
+    elif name == "persistent_shift":
         base = 0.10
         slope = 0.022
         for t in range(T):
-            r[t] = base + slope * np.sqrt(t + 1) + 0.004 * rng.standard_normal()
-        # Soften theta growth during corruption windows to make optimism more fragile.
-        windows = [(int(0.30 * T), int(0.42 * T)), (int(0.60 * T), int(0.72 * T))]
-        for lo, hi in windows:
-            r[lo:hi] *= 0.55
-    elif name == "drift_plus_shift":
+            r[t] = base + slope * np.sqrt(t + 1) + 0.003 * rng.standard_normal()
+        lo = int(0.62 * T)
+        r[lo:] *= 0.72
+    elif name == "delayed_hardening":
         base = 0.11
         slope = 0.019
         for t in range(T):
-            r[t] = base + slope * np.sqrt(t + 1) + 0.004 * rng.standard_normal()
-        lo = int(0.68 * T)
-        hi = int(0.82 * T)
+            r[t] = base + slope * np.sqrt(t + 1) + 0.003 * rng.standard_normal()
+        lo = int(0.55 * T)
+        hi = int(0.78 * T)
         r[lo:hi] *= 0.85
+        r[hi:] *= 0.74
     else:
         raise ValueError(f"Unknown regime: {name}")
 
@@ -151,6 +150,7 @@ def _delta_to_example(
     rng: np.random.Generator,
     mismatch_prob: float,
     in_corruption_window: bool,
+    hard_window_boost: float,
 ) -> tuple[Array, float]:
     # The update is g_t = 0.5 * sign(q_t - y_t) * z_t.
     # Choosing z_t = ±2 delta and y_t in {±1} with the matching sign realizes g_t = delta.
@@ -181,10 +181,10 @@ def _delta_to_example(
         z = z_minus
         y = 1.0
 
-    # Realistic corruption burst: force occasional mismatches to represent bad data windows.
+    # Hard-window mismatch increase to model difficult post-change data.
     p = mismatch_prob
     if in_corruption_window:
-        p = max(p, 0.28)
+        p = max(p, hard_window_boost)
     if rng.random() < p:
         y = -y
 
@@ -192,9 +192,9 @@ def _delta_to_example(
 
 
 def _is_corruption_window(name: str, t: int, T: int) -> bool:
-    if name != "corruption_burst":
+    if name != "persistent_shift":
         return False
-    return (int(0.30 * T) <= t < int(0.42 * T)) or (int(0.60 * T) <= t < int(0.72 * T))
+    return int(0.62 * T) <= t
 
 
 def synthesize_sequence(
@@ -219,6 +219,7 @@ def synthesize_sequence(
             rng,
             mismatch_prob=cfg.label_mismatch_prob,
             in_corruption_window=_is_corruption_window(regime, t, T),
+            hard_window_boost=cfg.hard_window_mismatch_boost,
         )
         z[t] = z_t
         y[t] = y_t
@@ -236,6 +237,6 @@ def synthesize_sequence(
 def regime_names() -> list[str]:
     return [
         "stable_benign",
-        "corruption_burst",
-        "drift_plus_shift",
+        "persistent_shift",
+        "delayed_hardening",
     ]

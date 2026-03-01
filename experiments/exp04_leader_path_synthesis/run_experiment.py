@@ -16,7 +16,7 @@ class RunConfig:
     d: int = 5
     t_max: int = 1000
     t_step: int = 100
-    runs: int = 8
+    runs: int = 12
     max_delta_norm: float = 0.45
     label_mismatch_prob: float = 0.02
     threshold_scale: float = 0.01
@@ -31,13 +31,17 @@ class SelectedConfig:
     mean_ftl: float
     mean_ftrl: float
     mean_smart: float
+    curve_ftl: np.ndarray
+    curve_ftrl: np.ndarray
+    curve_smart: np.ndarray
+    mean_ci_halfwidth: float
 
 
 def _regime_title(name: str) -> str:
     mapping = {
         "stable_benign": "Stable Benign Sequence",
-        "corruption_burst": "Corruption Burst Sequence",
-        "drift_plus_shift": "Drift Plus Shift Sequence",
+        "persistent_shift": "Persistent Shift Sequence",
+        "delayed_hardening": "Delayed Hardening Sequence",
     }
     return mapping.get(name, name.replace("_", " ").title())
 
@@ -65,6 +69,7 @@ def _plot_regret_grid(t_grid, stats_by_regime, out_path: Path) -> None:
         ax.set_title(_regime_title(regime))
         ax.set_xlabel("Horizon")
         ax.set_ylabel("Regret")
+        ax.set_ylim(bottom=0.0)
         ax.legend(loc="best")
 
     for j in range(len(regimes), len(axes)):
@@ -84,24 +89,77 @@ def _summary_stats(vals: np.ndarray) -> dict[str, np.ndarray]:
     return {"mean": mean, "lo": mean - 1.96 * se, "hi": mean + 1.96 * se}
 
 
-def _selection_score(regime: str, mean_ftl: float, mean_ftrl: float, mean_smart: float) -> float:
+def _curve_roughness(curve: np.ndarray) -> float:
+    if curve.size < 3:
+        return 0.0
+    return float(np.mean(np.abs(np.diff(curve, n=2))))
+
+
+def _monotone_drop_penalty(curve: np.ndarray) -> float:
+    if curve.size < 2:
+        return 0.0
+    d = np.diff(curve)
+    return float(np.sum(np.maximum(0.0, -d)))
+
+
+def _selection_score(
+    regime: str,
+    curve_ftl: np.ndarray,
+    curve_ftrl: np.ndarray,
+    curve_smart: np.ndarray,
+    mean_ci_halfwidth: float,
+) -> float:
     """
     Score candidate parameterizations based on paper-facing behavior goals:
     - stable: SMART ~= FTL, and FTL should be at least as good as robust.
     - hard: SMART should materially improve over FTL.
     - mixed: SMART should improve over FTL while staying in a plausible middle regime.
     """
+    mean_ftl = float(np.mean(curve_ftl))
+    mean_ftrl = float(np.mean(curve_ftrl))
+    mean_smart = float(np.mean(curve_smart))
+    ftl_last = float(curve_ftl[-1])
+    ftrl_last = float(curve_ftrl[-1])
+    smart_last = float(curve_smart[-1])
+    rough_pen = _curve_roughness(curve_smart) + 0.5 * _curve_roughness(curve_ftl)
+    drop_pen = _monotone_drop_penalty(curve_smart) + 0.5 * _monotone_drop_penalty(curve_ftl)
+    ci_pen = 1.5 * mean_ci_halfwidth
+    negative_pen = 4.0 * max(0.0, -float(np.min(curve_smart)))
+
     if regime == "stable_benign":
-        return -abs(mean_smart - mean_ftl) - 2.0 * max(0.0, mean_ftl - mean_ftrl)
+        return (
+            -abs(smart_last - ftl_last)
+            - 0.75 * float(np.mean(np.abs(curve_smart - curve_ftl)))
+            - 2.0 * max(0.0, ftl_last - ftrl_last)
+            - rough_pen
+            - drop_pen
+            - ci_pen
+            - negative_pen
+        )
 
-    if regime == "corruption_burst":
-        return (mean_ftl - mean_smart) - 0.5 * max(0.0, mean_smart - mean_ftrl)
+    if regime == "persistent_shift":
+        return (
+            (ftl_last - smart_last)
+            + 0.40 * (mean_ftl - mean_smart)
+            - 0.40 * max(0.0, smart_last - ftrl_last)
+            - 1.2 * rough_pen
+            - 1.2 * drop_pen
+            - ci_pen
+            - negative_pen
+        )
 
-    # drift_plus_shift
-    improve = mean_ftl - mean_smart
-    worse_than_ftl_penalty = 2.0 * max(0.0, mean_smart - mean_ftl)
-    too_better_than_robust_penalty = 0.25 * max(0.0, mean_ftrl - mean_smart)
-    return improve - worse_than_ftl_penalty - too_better_than_robust_penalty
+    # delayed_hardening
+    midpoint = 0.5 * (curve_ftl + curve_ftrl)
+    mid_pen = float(np.mean(np.abs(curve_smart - midpoint)))
+    return (
+        0.8 * (ftl_last - smart_last)
+        + 0.4 * (mean_ftl - mean_smart)
+        - 0.6 * mid_pen
+        - 0.8 * rough_pen
+        - 0.8 * drop_pen
+        - ci_pen
+        - negative_pen
+    )
 
 
 def _evaluate_candidate(
@@ -115,28 +173,42 @@ def _evaluate_candidate(
     max_delta_norm: float,
     label_mismatch_prob: float,
 ) -> SelectedConfig:
-    ftl_vals: list[float] = []
-    ftrl_vals: list[float] = []
-    smart_vals: list[float] = []
+    H = len(horizons)
+    ftl_vals = np.zeros((runs, H), dtype=float)
+    ftrl_vals = np.zeros((runs, H), dtype=float)
+    smart_vals = np.zeros((runs, H), dtype=float)
 
     for r in range(runs):
-        for h in horizons:
+        for j, h in enumerate(horizons):
             synth_cfg = SynthesisConfig(
                 d=d,
                 max_delta_norm=max_delta_norm,
                 label_mismatch_prob=label_mismatch_prob,
+                hard_window_mismatch_boost=max(0.06, label_mismatch_prob + 0.04),
                 seed=seed + 5000 * r + 37 * h,
             )
             seq = synthesize_sequence(T=h, regime=regime, cfg=synth_cfg)
             ftl_reg, ftrl_reg, smart_reg, _ = final_regrets(seq.z, seq.y, threshold_scale=threshold_scale)
-            ftl_vals.append(ftl_reg)
-            ftrl_vals.append(ftrl_reg)
-            smart_vals.append(smart_reg)
+            ftl_vals[r, j] = ftl_reg
+            ftrl_vals[r, j] = ftrl_reg
+            smart_vals[r, j] = smart_reg
 
-    mean_ftl = float(np.mean(ftl_vals))
-    mean_ftrl = float(np.mean(ftrl_vals))
-    mean_smart = float(np.mean(smart_vals))
-    score = _selection_score(regime, mean_ftl, mean_ftrl, mean_smart)
+    curve_ftl = np.mean(ftl_vals, axis=0)
+    curve_ftrl = np.mean(ftrl_vals, axis=0)
+    curve_smart = np.mean(smart_vals, axis=0)
+    mean_ftl = float(np.mean(curve_ftl))
+    mean_ftrl = float(np.mean(curve_ftrl))
+    mean_smart = float(np.mean(curve_smart))
+
+    if runs > 1:
+        se_ftl = np.std(ftl_vals, axis=0, ddof=1) / np.sqrt(runs)
+        se_ftrl = np.std(ftrl_vals, axis=0, ddof=1) / np.sqrt(runs)
+        se_smart = np.std(smart_vals, axis=0, ddof=1) / np.sqrt(runs)
+        mean_ci_halfwidth = float(np.mean(1.96 * (se_ftl + se_ftrl + se_smart) / 3.0))
+    else:
+        mean_ci_halfwidth = 0.0
+
+    score = _selection_score(regime, curve_ftl, curve_ftrl, curve_smart, mean_ci_halfwidth)
 
     return SelectedConfig(
         max_delta_norm=max_delta_norm,
@@ -145,6 +217,10 @@ def _evaluate_candidate(
         mean_ftl=mean_ftl,
         mean_ftrl=mean_ftrl,
         mean_smart=mean_smart,
+        curve_ftl=curve_ftl,
+        curve_ftrl=curve_ftrl,
+        curve_smart=curve_smart,
+        mean_ci_halfwidth=mean_ci_halfwidth,
     )
 
 
@@ -154,9 +230,9 @@ def _select_configs(
 ) -> dict[str, SelectedConfig]:
     # Small, fast search grid chosen for reproducibility and interpretability.
     delta_grid = [0.35, 0.45, 0.55]
-    mismatch_grid = [0.00, 0.02, 0.06, 0.10]
-    probe_horizons = [max(cfg.t_step, 300), max(cfg.t_step, 700), cfg.t_max]
-    probe_runs = min(4, cfg.runs)
+    mismatch_grid = [0.00, 0.01, 0.02, 0.04, 0.06]
+    probe_horizons = list(np.arange(max(cfg.t_step, 200), cfg.t_max + 1, max(cfg.t_step, 200), dtype=int))
+    probe_runs = min(6, cfg.runs)
 
     selected: dict[str, SelectedConfig] = {}
     for regime in regimes:
@@ -182,10 +258,10 @@ def _select_configs(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Leader-path synthesis experiment for SMART in online linear classification.")
+    parser = argparse.ArgumentParser(description="Metric-driven sequence synthesis experiment for SMART in online linear classification.")
     parser.add_argument("--t-max", type=int, default=1000)
     parser.add_argument("--t-step", type=int, default=100)
-    parser.add_argument("--runs", type=int, default=8)
+    parser.add_argument("--runs", type=int, default=12)
     parser.add_argument("--d", type=int, default=5)
     parser.add_argument("--max-delta-norm", type=float, default=0.45)
     parser.add_argument("--label-mismatch-prob", type=float, default=0.02)
@@ -235,7 +311,8 @@ def main() -> None:
                 f"max_delta={s.max_delta_norm:.2f} "
                 f"mismatch={s.label_mismatch_prob:.2f} "
                 f"score={s.score:.3f} "
-                f"[probe mean regrets FTL={s.mean_ftl:.3f}, FTRL={s.mean_ftrl:.3f}, SMART={s.mean_smart:.3f}]"
+                f"[probe mean regrets FTL={s.mean_ftl:.3f}, FTRL={s.mean_ftrl:.3f}, SMART={s.mean_smart:.3f}, "
+                f"mean_ci={s.mean_ci_halfwidth:.3f}]"
             )
 
     for regime in regimes:
@@ -280,7 +357,7 @@ def main() -> None:
 
     _plot_regret_grid(t_grid, stats_by_regime, out_dir / "exp04_olc_regret_by_horizon.png")
 
-    print("Final-regret summary (at max horizon)")
+    print("Regret summary (at max horizon)")
     for regime in args.regime:
         s = stats_by_regime[regime]
         print(
