@@ -22,6 +22,7 @@ python experiments/dashboard/generate_dashboard.py
 This writes:
 
 - `experiments/dashboard/index.html`
+- `experiments/dashboard/assets/` (copied experiment figures for self-contained deploys)
 
 ## Viewing
 

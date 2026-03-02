@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import os
 import re
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,6 +11,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENTS_DIR = ROOT / "experiments"
 OUTPUT_HTML = ROOT / "experiments" / "dashboard" / "index.html"
+ASSETS_DIR = OUTPUT_HTML.parent / "assets"
 SMART_ALGO_MD = ROOT / "smart_algorithm.md"
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"}
 
@@ -73,6 +74,10 @@ def _parse_figure_titles_from_index(index_md: str) -> dict[str, str]:
 
 
 def _discover_experiments() -> list[ExperimentItem]:
+    if ASSETS_DIR.exists():
+        shutil.rmtree(ASSETS_DIR)
+    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+
     exp_dirs = sorted(
         [p for p in EXPERIMENTS_DIR.iterdir() if p.is_dir() and re.match(r"^exp\d+_", p.name)],
         key=lambda p: p.name,
@@ -91,9 +96,13 @@ def _discover_experiments() -> list[ExperimentItem]:
 
         figures: list[FigureItem] = []
         if figures_dir.exists():
+            exp_assets_dir = ASSETS_DIR / exp_dir.name
+            exp_assets_dir.mkdir(parents=True, exist_ok=True)
             for f in sorted(figures_dir.iterdir(), key=lambda p: p.name):
                 if f.is_file() and f.suffix.lower() in IMAGE_EXTS:
-                    rel_src = os.path.relpath(f, OUTPUT_HTML.parent).replace("\\", "/")
+                    copied = exp_assets_dir / f.name
+                    shutil.copy2(f, copied)
+                    rel_src = copied.relative_to(OUTPUT_HTML.parent).as_posix()
                     figures.append(
                         FigureItem(
                             filename=f.name,
