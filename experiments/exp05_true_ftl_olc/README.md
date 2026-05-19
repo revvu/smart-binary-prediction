@@ -127,6 +127,34 @@ $$
 
 This quantity is adapted because it is known after observing round $t$, monotone by the FTL be-the-leader decomposition, and satisfies $\Sigma_T=\mathrm{Reg}_T(\mathrm{FTL})$. That is why experiment 5 is a faithful SMART implementation: the stopping rule uses the true online-computable FTL regret trace, not a proxy.
 
+### Note: the exact experiment 2 mistake
+
+The specific mistake in experiment 2 was treating the absolute-value objective as a generic prefix ERM problem and then approximating its FTL state with subgradients chosen at the played prediction. That obscured the special identity above.
+
+The fast path accumulated
+
+$$
+\theta_t=\sum_{i\le t} g_i z_i,
+$$
+
+where $g_i\in\partial_q\frac12|q-y_i|$ was chosen from the prediction actually played on round $i$. At exact-fit boundary points $q=y_i$, the implementation used $g_i=0$. That is a valid subgradient choice for a linearized-loss algorithm, but it is not the true cumulative state of the original restricted-domain loss. The true state is always
+
+$$
+M_t=\sum_{i\le t} y_i z_i.
+$$
+
+On boundary-heavy deterministic streams, the subgradient-state path can therefore drop informative rounds that the exact linear loss still counts. The result is not true FTL; it is FTL on a chosen sequence of linearized losses. This is why experiment 2 could produce invalid negative FTL regret on `switching_leaders`.
+
+The CVXPY exact path in experiment 2 reinforced the wrong conclusion because it solved the generic absolute-loss prefix problem for every prefix. That was mathematically correct but unnecessarily expensive: in this bounded OLC setting, the same optimizer is available from $M_t$ in closed form.
+
+This closed form does not make SVMs unnecessary. SVMs solve a different objective, typically margin-regularized hinge-loss minimization, where the active constraints depend on the candidate classifier and support vectors determine the solution. The experiment 5 closed form solves only this restricted online surrogate/comparator problem:
+
+$$
+\min_{\|x\|_2\le 1}\sum_{t=1}^T \frac12|\langle z_t,x\rangle-y_t|.
+$$
+
+Under the bounded prediction constraint, that objective collapses to a signed-average direction. It is useful for exact OLC regret accounting and SMART trace computation, but it is not a replacement for max-margin classification, bias terms, kernels, or regularized empirical-risk methods.
+
 ## Design gate
 
 ### SMART behavior claim
@@ -259,6 +287,134 @@ x_t^{\mathrm{FTRL}}
 $$
 
 This is the appropriate robust baseline because the loss is linear over a bounded Euclidean domain, and quadratic FTRL is the standard $O(\sqrt{T})$ no-assumption fallback for this geometry.
+
+#### FTRL definition and consistency note
+
+Experiment 5 uses FTRL on the exact linear losses induced by the restricted-domain surrogate:
+
+$$
+c_t=-\frac12 y_t z_t,\qquad
+\ell_t(x)=\frac12+\langle c_t,x\rangle.
+$$
+
+With the time-varying quadratic regularizer
+
+$$
+\psi_t(x)=\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2+\iota_X(x),
+$$
+
+where $\iota_X$ is the indicator of the unit Euclidean ball, FTRL is
+
+$$
+x_t
+=
+\arg\min_{x\in X}
+\left\langle\sum_{i<t}c_i,x\right\rangle
++\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
+$$
+
+Since $\sum_{i<t}c_i=-\frac12M_{t-1}$, this reduces to
+
+$$
+x_t
+=
+\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right).
+$$
+
+This is consistent with the Follow-the-Regularized-Leader framework in Orabona's Chapter 7: it is FTRL with linear losses and an increasing Euclidean quadratic regularizer. It is also consistent with Orabona's online linear classification setup in Chapter 8, where the randomized-classifier surrogate is $\frac12|\langle z_t,x\rangle-y_t|$ on a domain that enforces $|\langle z_t,x\rangle|\le 1$.
+
+The implementation is not identical to experiment 2's fast path or experiment 4's active `src/eval.py` path. Those paths use chosen subgradients at played predictions:
+
+$$
+g_t\in\partial_q\frac12|q-y_t|,\qquad \theta_t=\sum_{i\le t}g_i z_i.
+$$
+
+They agree with experiment 5 away from boundary ties, because then $g_t=-\frac12y_t$. They differ at exact-fit ties, where the old paths can choose $g_t=0$ while the exact restricted-domain linear loss still contributes $-\frac12y_tz_t$. Experiment 4's `src/exact_linear_olc.py` helper matches the experiment 5 formulation, but the active experiment 4 runner imports `src/eval.py`.
+
+For SMART, experiment 5 also resets both the FTRL cumulative state and the local suffix time after switching. This matches the SMART decomposition into an FTL prefix and robust FTRL suffix. The active experiment 2 and 4 SMART evaluators use a global time index after switching, so their suffix regularization schedule is not the same reset-FTRL policy.
+
+#### Literature consistency derivation
+
+The FTRL baseline in this experiment is consistent with the standard online convex optimization and online linear classification literature.
+
+First, the experiment is an online convex optimization instance in the sense of Zinkevich (2003): the feasible set $X$ is fixed and convex, the learner chooses $x_t\in X$ before observing the current loss, and performance is measured by static regret against the best fixed comparator in hindsight. Zinkevich's original framework covers arbitrary convex losses and projected first-order methods; this experiment specializes that setting to bounded linear losses on the Euclidean unit ball.
+
+Second, it matches Orabona's Chapter 7 FTRL template. Orabona writes FTRL on linearized losses as
+
+$$
+x_t\in\arg\min_{x\in V}\psi_t(x)+\sum_{i<t}\langle g_i,x\rangle.
+$$
+
+Experiment 5 uses
+
+$$
+V=X=\{x:\|x\|_2\le 1\},\qquad
+g_i=c_i=-\frac12 y_i z_i,
+$$
+
+and the increasing quadratic regularizer
+
+$$
+\psi_t(x)=\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
+$$
+
+Substituting these choices gives
+
+$$
+x_t
+=
+\arg\min_{\|x\|_2\le 1}
+\left\langle -\frac12 M_{t-1},x\right\rangle
++\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
+$$
+
+The unconstrained first-order condition is
+
+$$
+-\frac12M_{t-1}+\frac{\sqrt{t}}{\eta_0}x=0,
+$$
+
+so
+
+$$
+\tilde{x}_t=\frac{\eta_0}{2\sqrt{t}}M_{t-1}.
+$$
+
+The feasible set is the Euclidean unit ball, hence the constrained solution is the Euclidean projection
+
+$$
+x_t=\Pi_X(\tilde{x}_t)
+=
+\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right),
+$$
+
+which is exactly the implementation in `src/olc_exact.py`.
+
+Third, it matches Orabona's Chapter 8 online linear classification reduction. Orabona derives the convex surrogate
+
+$$
+\tilde{\ell}_t(x)=\frac12|\langle z_t,x\rangle-y_t|
+$$
+
+for randomized online linear classification, with the requirement that $|\langle z_t,x\rangle|\le 1$. Experiment 5 enforces this condition by using $\|x\|_2\le1$ and $\|z_t\|_2\le\rho\le1$. Under that restriction, the surrogate becomes the exact linear loss
+
+$$
+\tilde{\ell}_t(x)=\frac12(1-y_t\langle z_t,x\rangle)
+=
+\frac12+\left\langle -\frac12y_tz_t,x\right\rangle.
+$$
+
+This explains why experiment 5 can use $c_t=-\frac12y_tz_t$ directly instead of selecting a played-point subgradient. Orabona's Algorithm 8.1 is a linearized-loss implementation that uses $\operatorname{sign}(\langle z_t,x_t\rangle-y_t)$ and sets $\operatorname{sign}(0)=0$. That algorithm is a valid robust online classifier, but for SMART's exact FTL trace we need the full-loss identity above, because boundary tie conventions can change the adapted regret trace.
+
+This is also why the FTRL baseline is related to, but distinct from, other online classification methods. Passive-Aggressive algorithms also use simple constrained optimization updates and compare against fixed hypotheses, but they are margin-driven updates rather than this quadratic-FTRL update. SVM/Pegasos-style methods optimize regularized hinge-loss objectives for max-margin classification, not this bounded absolute-loss comparator. Those methods are appropriate for other classification goals, but they are not the robust baseline used in this SMART regret experiment.
+
+Sources:
+
+- Martin Zinkevich, "Online Convex Programming and Generalized Infinitesimal Gradient Ascent," ICML 2003: <https://martin.zinkevich.org/publications/ICML03.pdf>.
+- Francesco Orabona, *A Modern Introduction to Online Learning*, Chapters 7 and 8, arXiv:1912.13213: <https://arxiv.org/abs/1912.13213>.
+- Brendan McMahan, "Follow-the-Regularized-Leader and Mirror Descent: Equivalence Theorems and L1 Regularization," AISTATS 2011: <https://proceedings.mlr.press/v15/mcmahan11b.html>.
+- Koby Crammer, Ofer Dekel, Joseph Keshet, Shai Shalev-Shwartz, and Yoram Singer, "Online Passive-Aggressive Algorithms," JMLR 2006: <https://www.jmlr.org/papers/v7/crammer06a.html>.
+- Shai Shalev-Shwartz, Yoram Singer, and Nathan Srebro, "Pegasos: Primal Estimated sub-GrAdient SOlver for SVM," ICML 2007: <https://doi.org/10.1145/1273496.1273598>.
 
 ### SMART
 
