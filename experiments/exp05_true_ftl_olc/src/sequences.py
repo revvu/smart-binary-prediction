@@ -100,6 +100,25 @@ def alternating_antileader(T: int, d: int, rho: float, rng: np.random.Generator)
     )
 
 
+def switching_leaders(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    del rng  # deterministic
+    z = np.tile(rho * _basis(d, 0), (T, 1))
+    y = np.empty(T, dtype=np.float64)
+    sign = 1.0
+    idx = 0
+    while idx < T:
+        run = min(20, T - idx)
+        y[idx : idx + run] = sign
+        idx += run
+        sign = -sign
+    return Sequence(
+        z=z,
+        y=y,
+        name="switching_leaders",
+        description="fixed feature with switching label blocks (exp02 negative-regret sequence)",
+    )
+
+
 def benign_to_hard_suffix(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
     split = int(round(0.45 * T))
     u = _unit(rng.normal(size=d))
@@ -189,6 +208,7 @@ def available_generators() -> dict[str, GeneratorFn]:
         "iid_separable_margin": iid_separable_margin,
         "massart_10": massart_10,
         "alternating_antileader": alternating_antileader,
+        "switching_leaders": switching_leaders,
         "benign_to_hard_suffix": benign_to_hard_suffix,
         "separator_drift": separator_drift,
         "random_labels_isotropic": random_labels_isotropic,

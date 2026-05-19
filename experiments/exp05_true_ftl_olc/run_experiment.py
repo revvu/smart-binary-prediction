@@ -58,6 +58,7 @@ def _scenario_title(name: str) -> str:
         "iid_separable_margin": "I.I.D. Separable Margin",
         "massart_10": "Massart Noise (10%)",
         "alternating_antileader": "Alternating Anti-Leader",
+        "switching_leaders": "Switching Leaders (Exp02)",
         "benign_to_hard_suffix": "Benign Prefix to Hard Suffix",
         "separator_drift": "Separator Drift Diagnostic",
         "random_labels_isotropic": "Random Labels",
@@ -201,7 +202,7 @@ def plot_switch_diagnostics(
     g_emp: dict[int, float],
     out_path: Path,
 ) -> None:
-    scenarios = ["iid_separable_margin", "benign_to_hard_suffix", "alternating_antileader"]
+    scenarios = ["iid_separable_margin", "benign_to_hard_suffix", "alternating_antileader", "switching_leaders"]
     generators = available_generators()
     fig, axes = plt.subplots(len(scenarios), 2, figsize=(12.4, 3.6 * len(scenarios)), squeeze=False)
 

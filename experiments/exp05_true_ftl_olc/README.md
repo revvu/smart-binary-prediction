@@ -15,6 +15,35 @@ The paper-facing claim is:
 
 SMART preserves FTL's advantage on benign streams, switches to protect against sustained hard regimes, and gives an interpretable single-switch compromise on streams with an easy prefix followed by a hard suffix.
 
+## What was wrong in experiments 2 and 4
+
+### Experiment 2: subgradient-state FTL produced invalid negative regret
+
+Experiment 2 used a "fast path" FTL implementation (`fast_algorithms.py`) that tracked FTL state via subgradient updates at the played prediction. On stochastic streams this worked adequately, but on deterministic norm-one streams it failed.
+
+The surrogate loss $\ell_t(x)=\frac12|{\langle z_t,x\rangle-y_t}|$ is globally linear on the unit ball whenever $\|z_t\|\le 1$, so its subgradient is unique almost everywhere. But at the boundary, when $\langle z_t,x\rangle = y_t$ exactly, the subgradient is not unique. The fast implementation chose a subgradient at the *played* prediction, and on deterministic sequences like "Switching leaders" (fixed $z_t=e_1$, labels in alternating blocks of 20) this tie convention caused the internal state to diverge from the true linear-loss FTL path. The comparator was then computed from the wrong accumulated state, producing **negative regret**—a mathematical impossibility for FTL that signaled a bug, not a genuine result.
+
+The README for experiment 2 acknowledged this (lines 127–143) and noted that a redesign should replace the subgradient-state tracker with the closed-form $M_t$-based computation. This experiment is that redesign.
+
+### Experiment 4: worked around a bottleneck that did not actually exist
+
+Experiment 4 was built on the premise that computing true FTL and the prefix comparator on arbitrary sequences required solving $T$ optimization problems per run—$O(T^2 d)$ work per trial—making brute-force evaluation impractical at scale (3 regimes $\times$ 48 runs $\times$ 40 horizons).
+
+To avoid this cost, experiment 4 reversed the sequence construction: instead of generating $(z_t,y_t)$ and solving for FTL afterward, it designed a target leader-direction path first, manufactured a realizable cumulative-gradient path with bounded increments, and then converted each increment into a feature-label pair that realized the desired FTL trajectory. This "leader-path synthesis" approach used several engineering tricks: deterministic mismatch schedules (accumulator-based flip masks instead of i.i.d. Bernoulli), latent separator paths for label plausibility, smoothstep phase boundaries, and per-regime hand-tuned parameters.
+
+**The premise was wrong.** Because the loss is globally linear on the unit ball, both true FTL and the comparator are available in closed form from the moment $M_t=\sum_{i\le t}y_i z_i$:
+
+- FTL action: $x_t^{\mathrm{FTL}}=M_{t-1}/\|M_{t-1}\|_2$ (one normalization, $O(d)$)
+- Comparator loss: $\min_{x\in X}\sum_{i\le t}\ell_i(x)=\frac{t}{2}-\frac12\|M_t\|_2$ (one norm, $O(d)$)
+
+A full run is $O(Td)$, not $O(T^2 d)$. There is no prefix optimization bottleneck. The synthesis machinery, the hand-tuned regime parameters, and the reverse-construction approach were all unnecessary. Experiment 4's README acknowledged this partially in its "redesign gate" section, noting that "the next revision should keep the useful part of this experiment—closed-form true FTL—but remove the hand-tuned leader-path narrative as the primary evidence."
+
+### What experiment 5 does differently
+
+This experiment computes true FTL and the prefix comparator directly from $M_t$ using the closed forms above. No convex solver, no subgradient proxy, no synthesis tricks. Each round costs $O(d)$ and a full trial costs $O(Td)$. The $\Sigma_t$ trace is guaranteed monotone by construction, and the `assert_trace_invariants` check verifies non-negative regret on every run.
+
+The `switching_leaders` sequence from experiment 2—the specific sequence that produced invalid negative regret—is included as a scenario in this experiment. Under exact FTL it is benign: FTL handles the block structure correctly and regret stays small and positive throughout.
+
 ## Design gate
 
 ### SMART behavior claim
@@ -32,12 +61,13 @@ The default sequence families are:
 1. `iid_separable_margin`: i.i.d. bounded-margin separable stream.
 2. `massart_10`: the same stream with independent 10% label flips.
 3. `alternating_antileader`: fixed feature direction with alternating labels, used as an illustrative FTL failure mode.
-4. `benign_to_hard_suffix`: separable prefix followed by an adaptive anti-leader suffix, the main SMART single-switch regime.
-5. `separator_drift`: gradual rotation of the latent separator, included as a nonstationary diagnostic rather than the central proof example.
+4. `switching_leaders`: fixed feature direction with labels in alternating blocks of 20, the sequence that produced invalid negative regret in experiment 2. Not included in the horizon-sweep regret grid because its deterministic block structure creates a sawtooth artifact at coarse horizon spacing; instead it appears in the switch diagnostics plot where the per-round trace confirms non-negative regret and no SMART switch.
+5. `benign_to_hard_suffix`: separable prefix followed by an adaptive anti-leader suffix, the main SMART single-switch regime.
+6. `separator_drift`: gradual rotation of the latent separator, included as a nonstationary diagnostic rather than the central proof example.
 
 ### Why these sequences are appropriate
 
-The i.i.d. and Massart streams are natural online classification baselines where optimism should not be punished. The alternating anti-leader stream is deliberately illustrative: it creates repeated FTL cancellation/reversal and checks robust protection. The benign-to-hard suffix stream is the closest match to SMART's one-switch design because the FTL prefix is useful and the adversarial suffix creates sustained trace growth. The separator drift stream links the experiment to practical concept drift, but static regret to the best fixed comparator should not be interpreted as dynamic tracking regret.
+The i.i.d. and Massart streams are natural online classification baselines where optimism should not be punished. The alternating anti-leader stream is deliberately illustrative: it creates repeated FTL cancellation/reversal and checks robust protection. The switching leaders stream is the specific deterministic sequence that exposed the subgradient-state bug in experiment 2; including it here confirms that exact FTL handles block-structured label switches without producing negative regret. The benign-to-hard suffix stream is the closest match to SMART's one-switch design because the FTL prefix is useful and the adversarial suffix creates sustained trace growth. The separator drift stream links the experiment to practical concept drift, but static regret to the best fixed comparator should not be interpreted as dynamic tracking regret.
 
 ### Acceptance criteria
 
@@ -47,7 +77,8 @@ A successful run should show:
 2. In `alternating_antileader`, FTL grows faster than FTRL and SMART switches.
 3. In `benign_to_hard_suffix`, SMART is near or below the lower envelope of the fixed baselines by combining FTL's prefix and FTRL's suffix.
 4. The diagnostic plot shows monotone $\Sigma_t$ and switch timing that is explainable from the threshold crossing.
-5. The threshold sweep shows the cost of switching too early or too late.
+5. In `switching_leaders`, the diagnostic trace confirms FTL regret is strictly positive at all rounds (resolving experiment 2's negative-regret bug) and $\Sigma_t$ stays below threshold (no switch).
+6. The threshold sweep shows the cost of switching too early or too late.
 
 ## Formal setup
 
@@ -237,6 +268,7 @@ The main interpretation is:
 1. In benign and mild-noise regimes, SMART is indistinguishable from true FTL and improves over robust FTRL.
 2. In hard anti-leader regimes, SMART substantially reduces FTL's blow-up; FTRL remains the strongest pure robust baseline.
 3. In the mixed benign-to-hard regime, SMART switches after the hard suffix begins and sharply reduces FTL regret, while FTRL can achieve negative static regret because adaptive policies may beat the best fixed comparator on this synthetic nonstationary stream.
+4. The `switching_leaders` sequence—which produced invalid negative regret in experiment 2—is shown in the switch diagnostics plot rather than the horizon sweep (its deterministic block structure creates sawtooth artifacts at coarse horizon spacing). The per-round diagnostic trace confirms that FTL regret is strictly positive at every round, $\Sigma_t$ is monotone and stays below threshold, and SMART does not switch. The negative regret observed in experiment 2 was entirely an artifact of the subgradient-state divergence, not a property of the sequence.
 
 ## Limits and non-claims
 
