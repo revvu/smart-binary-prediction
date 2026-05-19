@@ -22,6 +22,46 @@ The target empirical story is:
 2. Under sustained shift, SMART should improve over pure FTL.
 3. In mixed regimes, SMART should land between optimistic and robust extremes in a sensible way.
 
+## Redesign gate: true-FTL OLC revision
+
+The next revision should keep the useful part of this experiment--closed-form true FTL--but remove the hand-tuned leader-path narrative as the primary evidence.
+
+### SMART behavior claim
+
+The experiment should demonstrate three paper-facing claims:
+
+1. **Preserve optimism:** on benign predictable streams, SMART should match true FTL and avoid the robust FTRL tax.
+2. **Protect in hard regimes:** on sustained adversarial or high-variation streams, SMART should switch before FTL regret grows linearly and should remain close to FTRL.
+3. **Interpretable switch:** in mixed streams, the switch should be explained by the exact monotone FTL trace $\Sigma_t$ crossing a horizon-calibrated threshold near the onset of sustained deterioration.
+
+### Exact sequence families
+
+Primary families should be generated directly in feature-label space with $\|z_t\|_2\le \rho<1$ to avoid boundary subgradient ambiguity while preserving exact FTL:
+
+1. **I.i.d. separable margin stream:** sample a unit separator $u$, draw normalized covariates, optionally bias samples toward a positive margin, and set $y_t=\operatorname{sign}(\langle z_t,u\rangle)$.
+2. **Massart-noise stream:** use the same separator model, but flip labels with probability bounded by $\eta<1/2$, with both a constant-noise version and a late high-noise suffix.
+3. **Alternating anti-leader stream:** use one or two fixed directions and choose signs that force repeated leader cancellation or reversal. This is illustrative, not representative; it verifies robust protection in a known FTL failure mode.
+4. **Benign-to-hard suffix stream:** start with the separable margin stream, then transition to either high-rate Massart noise or alternating anti-leader blocks. This is the main SMART sequence because it has an easy prefix where FTL is valuable and a sustained hard suffix where switching is valuable.
+5. **Abrupt/gradual separator drift diagnostic:** rotate the separator over a window while keeping bounded features. This is representative of concept drift, but should be interpreted carefully because static regret to the best fixed comparator can reward adaptation in ways that are not purely worst-case-regret behavior.
+
+### Why these sequences are appropriate
+
+The i.i.d. and Massart families test whether SMART avoids unnecessary switching under standard online classification noise models. The anti-leader family is a controlled worst-case construction for FTL instability. The benign-to-hard suffix family is the closest match to SMART's single-switch design: optimism should be useful early, then the robust suffix policy should cap damage. The drift diagnostic links the experiment to practical nonstationarity, but should not be the sole evidence because static comparator regret is not the same as dynamic tracking quality.
+
+### Acceptance criteria
+
+A successful primary figure should show regret versus horizon on fresh sequences of exactly that horizon:
+
+1. Benign: `SMART` and true `FTL` curves are visually indistinguishable or within a small constant gap; `FTRL` is higher.
+2. Hard: true `FTL` grows substantially faster than `FTRL`; `SMART` switches with high probability and remains close to `FTRL`.
+3. Benign-to-hard: `SMART` is below both fixed baselines or near the lower envelope: it keeps the low-loss FTL prefix and avoids most of the FTL hard-suffix blow-up.
+4. Diagnostics: $\Sigma_t$ is monotone, matches final FTL regret at $t=T$, and crosses the threshold near the designed hardening point.
+5. Calibration: a threshold-scale sweep includes the theory scale and shows the cost of switching too early or too late.
+
+### Required implementation corrections
+
+For this loss/domain, true FTL and the comparator should be computed from the linear state $M_t=\sum_{i\le t}y_i z_i$, not from a played-point subgradient convention. SMART should switch causally after observing the round that crosses threshold, and FTRL should reset both its cumulative state and its time index on the suffix.
+
 ## Formal setup
 
 At round $t$, the learner chooses $x_t$ in the unit Euclidean ball:

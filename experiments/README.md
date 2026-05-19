@@ -20,6 +20,7 @@ Recommended per-experiment structure:
 - `exp02_online_linear_classification/`: OCO comparison experiments (FTRL, FTL, SMART variants).
 - `exp03_time_varying_mu_oco/`: SMART for OCO quadratic losses with time-varying $\mu_t$ and figure generation scripts.
 - `exp04_leader_path_synthesis/`: realistic-seeming OLC sequence synthesis via target leader paths and SMART evaluation.
+- `exp05_true_ftl_olc/`: exact true-FTL online linear classification experiment with SMART diagnostics and dashboard figures.
 
 ## Adding a new experiment
 

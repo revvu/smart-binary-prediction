@@ -124,7 +124,23 @@ This experiment supports two paper-relevant claims:
 
 - Sequence families are synthetic stress tests, not dataset-level claims.
 - Results are surrogate-loss and comparator-definition dependent.
-- Exact FTL variants are computationally expensive; fast variants trade exactness for throughput.
+- The current fast path should not be treated as a trusted true-FTL implementation on boundary-heavy deterministic streams. With $\|z_t\|\le 1$ and $y_t\in\{\pm1\}$, the surrogate loss is globally linear on the unit ball:
+
+$$
+\ell_t(x)=\tfrac12(1-y_t\langle z_t,x\rangle).
+$$
+
+True FTL is therefore computable in closed form from $M_t=\sum_{i\le t}y_i z_i$:
+
+$$
+x_t^{\mathrm{FTL}}=
+\begin{cases}
+M_{t-1}/\|M_{t-1}\|_2, & M_{t-1}\ne 0,\\
+0, & M_{t-1}=0.
+\end{cases}
+$$
+
+The older fast implementation updates using a chosen subgradient at the played prediction. On deterministic norm-one streams such as blockwise $z_t=e_1$, this tie convention can diverge from the exact linear-loss FTL path and can even produce invalid negative regret because the comparator is then computed from the wrong state. A redesign should replace subgradient-state FTL with the closed-form linear-loss state above.
 
 ## Outputs and code map
 

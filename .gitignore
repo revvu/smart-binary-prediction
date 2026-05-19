@@ -10,3 +10,5 @@ experiments/*/outputs/
 
 # Local UI prototype files
 option2_botanical_paper.html
+
+.venv
