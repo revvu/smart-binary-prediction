@@ -318,50 +318,74 @@ def plot_threshold_calibration(
 
 def plot_dimension_sweep(
     *,
-    t_max: int,
+    horizon: int,
+    scenarios: list[str],
     dims: list[int],
     rho: float,
     seed: int,
     trials: int,
     g_trials: int,
     out_path: Path,
-) -> None:
-    scenario = "strategic_corruption_suffix"
-    gen = available_generators()[scenario]
-    vals = {key: np.zeros((len(dims), trials), dtype=float) for key in ("ftl", "ftrl", "smart_calibrated")}
+) -> dict[str, dict[str, dict[str, Array]]]:
+    generators = available_generators()
+    stats_by_scenario: dict[str, dict[str, dict[str, Array]]] = {}
 
-    for i, d in enumerate(dims):
-        g_emp = estimate_empirical_g(np.array([t_max], dtype=int), d=d, rho=rho, trials=g_trials, seed=seed + 7000 + d)
-        threshold = g_emp[t_max]
-        for trial in range(trials):
-            rng = _rng(seed, scenario=scenario, horizon=t_max, trial=trial, d=d, stream=41)
-            seq = gen(t_max, d, rho, rng)
-            curves = run_curves(seq.z, seq.y, OLCConfig(horizon=t_max, threshold=threshold))
-            vals["ftl"][i, trial] = float(curves.regret_ftl[-1])
-            vals["ftrl"][i, trial] = float(curves.regret_ftrl[-1])
-            vals["smart_calibrated"][i, trial] = float(curves.regret_smart[-1])
+    for d in dims:
+        if d < 1:
+            raise ValueError("dimension sweep requires dimensions >= 1")
 
-    means = {key: arr.mean(axis=1) for key, arr in vals.items()}
-    cis = {
-        key: 1.96 * arr.std(axis=1, ddof=1) / math.sqrt(arr.shape[1]) if arr.shape[1] > 1 else np.zeros(len(dims))
-        for key, arr in vals.items()
+    raw_by_scenario = {
+        scenario: {key: np.zeros((trials, len(dims)), dtype=float) for key in ("ftl", "ftrl", "smart_calibrated")}
+        for scenario in scenarios
     }
 
-    x = np.arange(len(dims), dtype=float)
-    width = 0.24
-    fig, ax = plt.subplots(figsize=(8.4, 4.8))
-    for offset, key in zip((-width, 0.0, width), ("ftl", "ftrl", "smart_calibrated")):
-        ax.bar(x + offset, means[key], width=width, yerr=cis[key], capsize=3, label=ALGO_LABELS[key])
-    ax.set_title("Dimension Robustness on Corruption-Suffix OLC")
-    ax.set_xlabel("Feature dimension")
-    ax.set_ylabel("Regret at horizon")
-    ax.set_xticks(x, [str(d) for d in dims])
-    min_y = min(float(np.min(means[key] - cis[key])) for key in means)
-    ax.set_ylim(bottom=min(0.0, min_y - 0.5))
-    ax.legend(loc="best")
+    for j, d in enumerate(dims):
+        g_emp = estimate_empirical_g(np.array([horizon], dtype=int), d=d, rho=rho, trials=g_trials, seed=seed + 7000 + d)
+        threshold = g_emp[horizon]
+        for scenario in scenarios:
+            gen = generators[scenario]
+            for trial in range(trials):
+                rng = _rng(seed, scenario=scenario, horizon=horizon, trial=trial, d=d, stream=41)
+                seq = gen(horizon, d, rho, rng)
+                curves = run_curves(seq.z, seq.y, OLCConfig(horizon=horizon, threshold=threshold))
+                raw_by_scenario[scenario]["ftl"][trial, j] = float(curves.regret_ftl[-1])
+                raw_by_scenario[scenario]["ftrl"][trial, j] = float(curves.regret_ftrl[-1])
+                raw_by_scenario[scenario]["smart_calibrated"][trial, j] = float(curves.regret_smart[-1])
+
+    for scenario, vals in raw_by_scenario.items():
+        stats_by_scenario[scenario] = {key: _summary(arr) for key, arr in vals.items()}
+
+    cols = 2
+    rows = int(math.ceil(len(scenarios) / cols))
+    fig, axes = plt.subplots(rows, cols, figsize=(12.4, 4.0 * rows), squeeze=False)
+    axes = axes.flatten()
+
+    x = np.array(dims, dtype=float)
+    algo_keys = ("ftl", "ftrl", "smart_calibrated")
+    for idx, scenario in enumerate(scenarios):
+        ax = axes[idx]
+        stats = stats_by_scenario[scenario]
+        for key in algo_keys:
+            _plot_with_band(ax, x, stats[key], ALGO_LABELS[key])
+        min_lo = min(float(np.min(stats[key]["lo"])) for key in algo_keys)
+        max_hi = max(float(np.max(stats[key]["hi"])) for key in algo_keys)
+        pad = 0.05 * max(1.0, max_hi - min_lo)
+        ax.set_title(_scenario_title(scenario))
+        ax.set_xlabel("Feature Dimension")
+        ax.set_ylabel(f"Regret at T={horizon}")
+        ax.set_xlim(left=min(dims), right=max(dims))
+        ax.set_xticks([1, 20, 40, 60, 80, 100])
+        ax.set_ylim(bottom=min(0.0, min_lo - pad), top=max_hi + pad)
+        ax.legend(loc="best", fontsize=9)
+
+    for idx in range(len(scenarios), len(axes)):
+        axes[idx].axis("off")
+
+    fig.suptitle(f"True-FTL OLC: Dimension Sweep at Horizon {horizon}", fontsize=16)
     fig.tight_layout()
     fig.savefig(out_path, dpi=240, bbox_inches="tight")
     plt.close(fig)
+    return stats_by_scenario
 
 
 def write_summary_csv(out_path: Path, horizons: Array, stats_by_scenario: dict[str, ScenarioStats]) -> None:
@@ -382,6 +406,21 @@ def write_g_csv(out_path: Path, horizons: Array, g_emp: dict[int, float]) -> Non
         for horizon in horizons:
             T = int(horizon)
             writer.writerow([T, g_emp[T], math.sqrt(2.0 * T)])
+
+
+def write_dimension_csv(
+    out_path: Path,
+    dims: list[int],
+    stats_by_scenario: dict[str, dict[str, dict[str, Array]]],
+) -> None:
+    with out_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["scenario", "dimension", "algorithm", "mean_regret", "ci_lo", "ci_hi"])
+        for scenario, stats in stats_by_scenario.items():
+            for j, d in enumerate(dims):
+                for algo in ("ftl", "ftrl", "smart_calibrated"):
+                    s = stats[algo]
+                    writer.writerow([scenario, d, algo, s["mean"][j], s["lo"][j], s["hi"][j]])
 
 
 def curate_figures(exp_dir: Path, generated: dict[str, tuple[Path, str, str]]) -> None:
@@ -435,6 +474,7 @@ def main() -> None:
     parser.add_argument("--threshold-scale", type=float, default=1.0)
     parser.add_argument("--scenario", nargs="*", default=primary_scenarios())
     parser.add_argument("--skip-dimension-sweep", action="store_true")
+    parser.add_argument("--dimension-horizon", type=int, default=1000)
     parser.add_argument("--paper-profile", action="store_true", help="Use the heavier T=2000, 64-trial profile.")
     parser.add_argument("--quick", action="store_true", help="Small run for smoke testing.")
     parser.add_argument("--self-test", action="store_true", help="Run invariant checks and exit.")
@@ -463,6 +503,8 @@ def main() -> None:
 
     if not (0.0 < args.rho <= 1.0):
         raise ValueError("--rho must be in (0, 1]")
+    if args.dimension_horizon < 1:
+        raise ValueError("--dimension-horizon must be positive")
     if args.t_max % args.t_step != 0:
         raise ValueError("--t-max must be divisible by --t-step")
 
@@ -541,18 +583,21 @@ def main() -> None:
     }
 
     if not args.skip_dimension_sweep:
-        plot_dimension_sweep(
-            t_max=args.t_max,
-            dims=[5, 20, 100],
+        dimension_dims = [1] + list(range(5, 101, 5))
+        dimension_stats = plot_dimension_sweep(
+            horizon=args.dimension_horizon,
+            scenarios=scenarios,
+            dims=dimension_dims,
             rho=args.rho,
             seed=args.seed,
             trials=args.dimension_trials,
             g_trials=args.g_trials,
             out_path=dimension_path,
         )
+        write_dimension_csv(output_dir / "dimension_sweep.csv", dimension_dims, dimension_stats)
         generated["fig:exp05_olc_dimension_sweep"] = (
             dimension_path,
-            "Dimension Robustness on Corruption-Suffix OLC",
+            f"True-FTL OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
             "fig_exp05_olc_dimension_sweep.png",
         )
 
