@@ -144,6 +144,55 @@ def mild_label_noise(T: int, d: int, rho: float, rng: np.random.Generator) -> Se
     )
 
 
+def weak_signal_low_margin(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    z, y, _ = _sample_covariate_margin_sequence(
+        T,
+        d,
+        rho,
+        rng,
+        label_noise=0.05,
+        margin=0.18,
+        noise_scale=0.98,
+    )
+    return Sequence(
+        z=z,
+        y=y,
+        name="weak_signal_low_margin",
+        description="low-margin covariate-diverse stream with weak signed-feature drift",
+    )
+
+
+def delayed_signal_emergence(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    split = int(round(0.45 * T))
+    u = _unit(rng.normal(size=d))
+    z = np.zeros((T, d), dtype=np.float64)
+    y = np.zeros(T, dtype=np.float64)
+
+    for t in range(split):
+        z[t] = rho * _orthogonal_unit(rng, u)
+        y[t] = rng.choice(np.array([-1.0, 1.0], dtype=np.float64))
+
+    z_suffix, y_suffix, _ = _sample_covariate_margin_sequence(
+        T - split,
+        d,
+        rho,
+        rng,
+        separator=u,
+        label_noise=0.0,
+        margin=0.72,
+        noise_scale=0.58,
+    )
+    z[split:] = z_suffix
+    y[split:] = y_suffix
+
+    return Sequence(
+        z=z,
+        y=y,
+        name="delayed_signal_emergence",
+        description="uninformative cold-start prefix followed by stable covariate-diverse signal",
+    )
+
+
 def market_shift_change_point(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
     split = int(round(0.45 * T))
     u0 = _unit(rng.normal(size=d))
@@ -366,6 +415,8 @@ def available_generators() -> dict[str, GeneratorFn]:
     return {
         "covariate_diverse_stationary": covariate_diverse_stationary,
         "mild_label_noise": mild_label_noise,
+        "weak_signal_low_margin": weak_signal_low_margin,
+        "delayed_signal_emergence": delayed_signal_emergence,
         "market_shift_change_point": market_shift_change_point,
         "strategic_corruption_suffix": strategic_corruption_suffix,
         "olc_fmg_leader_gap": olc_fmg_leader_gap,
@@ -382,8 +433,8 @@ def available_generators() -> dict[str, GeneratorFn]:
 def primary_scenarios() -> list[str]:
     return [
         "covariate_diverse_stationary",
-        "mild_label_noise",
-        "market_shift_change_point",
+        "weak_signal_low_margin",
+        "delayed_signal_emergence",
         "strategic_corruption_suffix",
         "olc_fmg_leader_gap",
     ]
@@ -394,6 +445,5 @@ def hard_calibration_scenarios() -> list[str]:
         "alternating_antileader",
         "strategic_corruption_suffix",
         "olc_fmg_leader_gap",
-        "market_shift_change_point",
         "random_labels_isotropic",
     ]

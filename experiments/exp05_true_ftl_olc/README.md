@@ -7,7 +7,7 @@ This experiment is the paper-facing replacement for the older online linear clas
 1. FTL is computed exactly, not approximated by played-point subgradients.
 2. The robust baseline is a concrete quadratic-FTRL algorithm with a standard online-convex-optimization interpretation.
 3. The SMART switch statistic is the exact adapted FTL regret trace $\Sigma_t$.
-4. The sequence families are bounded OLC feature-label streams designed to show benign, noisy, shifted, corrupted, and classical leader-instability regimes.
+4. The sequence families are bounded OLC feature-label streams designed to show clean benign, weak-signal, delayed-signal, corrupted, and classical leader-instability regimes.
 
 The paper-facing claim is:
 
@@ -83,6 +83,16 @@ $$
 $$
 
 Adaptive algorithms such as FTRL or SMART can have negative static regret on some nonstationary synthetic streams. That is not a bug; it means the adaptive policy beat the best fixed comparator on that realized sequence.
+
+### Diagnostic note: why FTRL can have negative regret
+
+The dimension-robustness corruption check can show negative regret for FTRL. This is negative **static regret**, not negative loss. The regret is
+
+$$
+\mathrm{Reg}_T(\mathrm{FTRL})=L_T(\mathrm{FTRL})-L_T^*,
+$$
+
+where $L_T^*$ is the loss of the best single fixed vector over the whole horizon. In `strategic_corruption_suffix`, the reliable prefix, erosion phase, and alternating suffix can make the final signed sum $M_T$ small. Then the best fixed comparator is weak and has loss close to $T/2$. FTRL is adaptive: it can use the early signal, become cautious as the signal cancels, and end with cumulative loss slightly below the best fixed comparator. That produces a small negative static regret. This is allowed by the theory because worst-case regret bounds upper-bound how much worse FTRL can be than the comparator; they do not prevent FTRL from outperforming the best fixed action on a nonstationary sequence.
 
 ## Algorithms
 
@@ -262,9 +272,9 @@ The experiment must show three SMART behaviors:
 
 The sequence design uses application stories and individual-sequence examples from the literature.
 
-Contextual pricing and allocation motivate the benign covariate-diverse stream. Bastani, Bayati, and Khosravi show that greedy or mostly-greedy contextual-bandit policies can be effective when contexts have enough diversity, which is the operational analogue of a stable informative feature process.
+Contextual pricing and allocation motivate the clean covariate-diverse stream and the weak-signal variant. Bastani, Bayati, and Khosravi show that greedy or mostly-greedy contextual-bandit policies can be effective when contexts have enough diversity, which is the operational analogue of a stable informative feature process. The weak-signal variant asks what happens when the same application has lower margin, lower effective covariate diversity, or noisier feedback.
 
-Dynamic pricing and revenue-management models motivate the exogenous market-shift stream. Aviv and Pazgal study pricing under partially observed demand dynamics, illustrating why a sequential decision-maker may face regime changes that are not chosen by the algorithm.
+Dynamic pricing and revenue-management models motivate the delayed-signal stream. Aviv and Pazgal study pricing under partially observed demand dynamics, illustrating why a sequential decision-maker may initially see weak or uninformative feedback before a stable response pattern emerges.
 
 Online advertising and platform feedback motivate the strategic-corruption stream. Choi, Mela, Balseiro, and Leary survey online display-advertising markets, where feedback quality and strategic behavior matter; corruption-robust online learning, including Lykouris, Mirrokni, and Paes Leme, motivates stress tests with reliable prefixes and harmful suffixes.
 
@@ -310,27 +320,31 @@ so $M_t$ has persistent positive drift toward $u$ with covariate variation aroun
 
 Why it is appropriate: this is the OLC analogue of stable contextual structure with covariate diversity. FTL should identify the stable direction quickly, and SMART should not switch.
 
-**`mild_label_noise`**
+**`weak_signal_low_margin`**
 
-Purpose: benign but noisy optimism case.
+Purpose: benign but statistically harder optimism case.
 
-Generation: use the same class-conditional margin model as `covariate_diverse_stationary`, then independently flip each label with probability $0.10$.
-
-Why it is appropriate: this tests whether SMART is hypersensitive to ordinary stochastic noise. A good result keeps SMART close to FTL and avoids unnecessary switching.
-
-**`market_shift_change_point`**
-
-Purpose: exogenous nonstationarity diagnostic.
-
-Generation: use a fixed split at $0.45T$. Before the split, sample from a separator $u_0$ with margin $0.74$, noise scale $0.50$, and label noise $0.02$. After the split, rotate to
+Generation: use the same class-conditional margin model as `covariate_diverse_stationary`, but reduce the signal margin and add light label noise:
 
 $$
-u_1=\operatorname{unit}(0.25u_0+0.9682458366v),
+z_t=\rho y_t\operatorname{unit}(0.18u+0.98v_t),
 $$
 
-where $v\perp u_0$, and sample with margin $0.70$, noise scale $0.62$, and label noise $0.08$.
+with each label independently flipped with probability $0.05$.
 
-Why it is appropriate: this models a market, customer, or response-function shift that is not adaptive to the algorithm. It also clarifies an important limitation: under static regret, not every nonstationary story is hard for FTL. In the latest run, this stream remained benign by the static-regret metric.
+Why it is appropriate: this is still a stable applied setting, but the signed drift in $M_t$ is much weaker. It separates "easy benign" from "hard benign": SMART should still avoid switching, but regret should be visibly larger because FTL needs more samples to identify the stable direction.
+
+**`delayed_signal_emergence`**
+
+Purpose: cold-start or delayed-product-market-fit diagnostic.
+
+Generation: sample a latent separator $u$ and use a split at $0.45T$. Before the split, draw bounded covariates orthogonal to $u$ with independent random labels, so the prefix has no stable signed-feature drift toward the eventual separator. After the split, switch to the covariate-diverse margin model:
+
+$$
+z_t=\rho y_t\operatorname{unit}(0.72u+0.58v_t).
+$$
+
+Why it is appropriate: this models a launch or deployment where early feedback is uninformative but later feedback becomes structured. It is application-driven but graphically different from the stationary benign stream: FTL must recover from an unhelpful prefix, while SMART should avoid switching merely because the early data are noisy.
 
 **`strategic_corruption_suffix`**
 
@@ -374,8 +388,8 @@ Why it is appropriate: this is the direct one-dimensional OLC analogue of altern
 A successful run should show:
 
 1. In `covariate_diverse_stationary`, SMART and FTL have nearly identical regret and FTRL is higher.
-2. In `mild_label_noise`, SMART remains close to FTL and does not switch merely because of mild stochastic corruption.
-3. In `market_shift_change_point`, the result is interpreted as static regret; a no-switch result is acceptable if the shifted stream is still easy for a best fixed comparator.
+2. In `weak_signal_low_margin`, SMART remains close to FTL but regret is visibly higher than in the clean benign case.
+3. In `delayed_signal_emergence`, SMART should not switch during the uninformative prefix if FTL regret remains within the calibrated budget; the curve should show a distinct cold-start cost.
 4. In `strategic_corruption_suffix`, SMART switches during the corrupted regime and materially reduces FTL's late-horizon regret.
 5. In `olc_fmg_leader_gap`, SMART improves on FTL by responding to leader instability, matching the classical "follow the leader if you can" lesson.
 6. The switch-diagnostic plot shows monotone $\Sigma_t$, the calibrated threshold, and interpretable switch timing.
@@ -451,22 +465,23 @@ python experiments/dashboard/generate_dashboard.py
 Latest default run produced the following mean final regrets at $T=1000$:
 
 - `covariate_diverse_stationary`: `FTL=1.108`, `FTRL=1.500`, `SMART-theory=1.108`, `SMART-calibrated=1.108`, calibrated switch mean `1001.0` (no switch).
-- `mild_label_noise`: `FTL=1.376`, `FTRL=1.785`, `SMART-theory=1.376`, `SMART-calibrated=1.376`, calibrated switch mean `1001.0` (no switch).
-- `market_shift_change_point`: `FTL=1.106`, `FTRL=1.506`, `SMART-theory=1.106`, `SMART-calibrated=1.106`, calibrated switch mean `1001.0` (no switch).
+- `weak_signal_low_margin`: `FTL=5.572`, `FTRL=6.279`, `SMART-theory=5.572`, `SMART-calibrated=5.572`, calibrated switch mean `1001.0` (no switch).
+- `delayed_signal_emergence`: `FTL=8.780`, `FTRL=10.500`, `SMART-theory=8.780`, `SMART-calibrated=8.780`, calibrated switch mean `1001.0` (no switch).
 - `strategic_corruption_suffix`: `FTL=82.463`, `FTRL=-2.689`, `SMART-theory=48.387`, `SMART-calibrated=18.723`, calibrated switch mean `488.8`.
 - `olc_fmg_leader_gap`: `FTL=80.400`, `FTRL=11.789`, `SMART-theory=52.739`, `SMART-calibrated=24.760`, calibrated switch mean `70.0`.
 
 Interpretation:
 
-1. SMART is indistinguishable from FTL in the stationary, mild-noise, and market-shift regimes, avoiding FTRL's robustness tax.
-2. SMART sharply reduces FTL regret in the strategic-corruption suffix, switching after the reliable prefix has been eroded.
-3. SMART improves substantially on FTL in the OLC-FMG leader-gap sequence, matching the classical individual-sequence intuition.
-4. FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
+1. SMART is indistinguishable from FTL in the clean, weak-signal, and delayed-signal regimes, avoiding FTRL's robustness tax even as the benign cases become progressively harder.
+2. The first three panels now separate different benign mechanisms: immediate stable signal, weak low-margin signal, and cold-start signal emergence.
+3. SMART sharply reduces FTL regret in the strategic-corruption suffix, switching after the reliable prefix has been eroded.
+4. SMART improves substantially on FTL in the OLC-FMG leader-gap sequence, matching the classical individual-sequence intuition.
+5. FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
 
 ## Limits and Non-Claims
 
 - The streams are synthetic and mechanism-oriented.
-- The market-shift sequence is not a dynamic-regret benchmark; all reported regrets are static regret against the best fixed comparator.
+- The delayed-signal sequence is not a dynamic-regret benchmark; all reported regrets are static regret against the best fixed comparator.
 - The strategic-corruption sequence is exogenous and pre-specified, but adversarially structured. It should be presented as a stress test, not as a calibrated empirical data model.
 - The OLC-FMG sequence is illustrative and literature-facing rather than representative of a specific market process.
 - Empirical threshold calibration is a modeling choice and should be reported alongside regret results.

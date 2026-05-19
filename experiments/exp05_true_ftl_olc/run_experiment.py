@@ -57,6 +57,8 @@ def _scenario_title(name: str) -> str:
     mapping = {
         "covariate_diverse_stationary": "Covariate-Diverse Stationary Signal",
         "mild_label_noise": "Mild Label Noise",
+        "weak_signal_low_margin": "Weak-Signal Low-Margin Market",
+        "delayed_signal_emergence": "Delayed Signal Emergence",
         "market_shift_change_point": "Exogenous Market Shift",
         "strategic_corruption_suffix": "Strategic Corruption Suffix",
         "olc_fmg_leader_gap": "OLC FMG Leader Gap",
@@ -209,7 +211,7 @@ def plot_switch_diagnostics(
 ) -> None:
     scenarios = [
         "covariate_diverse_stationary",
-        "market_shift_change_point",
+        "delayed_signal_emergence",
         "strategic_corruption_suffix",
         "olc_fmg_leader_gap",
         "switching_leaders",
@@ -266,7 +268,7 @@ def plot_threshold_calibration(
     trials: int,
     out_path: Path,
 ) -> None:
-    scenarios = ["covariate_diverse_stationary", "market_shift_change_point", "strategic_corruption_suffix"]
+    scenarios = ["covariate_diverse_stationary", "delayed_signal_emergence", "strategic_corruption_suffix"]
     generators = available_generators()
     scales = np.array([0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 2.0, 3.0], dtype=float)
     smart_by_scenario: dict[str, dict[str, Array]] = {}
@@ -301,7 +303,7 @@ def plot_threshold_calibration(
     for scenario in scenarios:
         _plot_with_band(ax, scales, switch_by_scenario[scenario], _scenario_title(scenario))
     ax.axhline(0.20 * t_max, color="black", linestyle=":", linewidth=1.4, label="Corruption begins")
-    ax.axhline(0.45 * t_max, color="gray", linestyle="--", linewidth=1.4, label="Market shift begins")
+    ax.axhline(0.45 * t_max, color="gray", linestyle="--", linewidth=1.4, label="Signal emerges")
     ax.set_title("Switch Timing vs Threshold Scale")
     ax.set_xlabel("Scale times empirical g(T)")
     ax.set_ylabel("Mean switch round")
