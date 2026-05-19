@@ -304,6 +304,8 @@ The main regret-by-horizon figure uses five primary sequence families.
 
 Purpose: benign, representative optimism case.
 
+Real-world analogue: a mature contextual pricing, allocation, triage, or recommendation system where covariates are informative from the start and the relationship between features and outcomes is stable. This is the setting in which a greedy or FTL-like optimistic policy should plausibly work well.
+
 Generation: sample a unit separator $u$, labels $y_t\sim\mathrm{Unif}\{-1,+1\}$, and orthogonal unit noise $v_t\perp u$. Then set
 
 $$
@@ -318,11 +320,13 @@ $$
 
 so $M_t$ has persistent positive drift toward $u$ with covariate variation around that direction.
 
-Why it is appropriate: this is the OLC analogue of stable contextual structure with covariate diversity. FTL should identify the stable direction quickly, and SMART should not switch.
+Why it is appropriate: this is the OLC analogue of stable contextual structure with covariate diversity. It tests the no-unnecessary-tax claim: FTL should identify the stable direction quickly, and SMART should not switch.
 
 **`weak_signal_low_margin`**
 
 Purpose: benign but statistically harder optimism case.
+
+Real-world analogue: the same contextual decision problem as above, but with weaker signal quality. Examples include sparse customer segments, low-margin treatment effects, noisier conversion labels, or feature sets that are only weakly predictive.
 
 Generation: use the same class-conditional margin model as `covariate_diverse_stationary`, but reduce the signal margin and add light label noise:
 
@@ -338,6 +342,8 @@ Why it is appropriate: this is still a stable applied setting, but the signed dr
 
 Purpose: cold-start or delayed-product-market-fit diagnostic.
 
+Real-world analogue: a launch, new market, new advertising campaign, new clinical workflow, or newly instrumented platform where early observations are not yet aligned with the eventual stable response model. After enough deployment time, the signal becomes structured.
+
 Generation: sample a latent separator $u$ and use a split at $0.45T$. Before the split, draw bounded covariates orthogonal to $u$ with independent random labels, so the prefix has no stable signed-feature drift toward the eventual separator. After the split, switch to the covariate-diverse margin model:
 
 $$
@@ -349,6 +355,8 @@ Why it is appropriate: this models a launch or deployment where early feedback i
 **`strategic_corruption_suffix`**
 
 Purpose: paper-facing hardening sequence with an applied corruption story.
+
+Real-world analogue: a deployed model whose early feedback is reliable, followed by a sustained period of low-quality or strategically distorted feedback. Examples include click-fraud bursts in advertising, bot traffic in recommendation systems, sensor degradation, data pipeline failure, or users strategically changing behavior after learning the policy.
 
 Generation: sample a unit direction $u$. For the first $20\%$ of the horizon, set $z_t\approx\rho u$ and $y_t=+1$, so $y_tz_t$ builds a stable leader. For the next $20\%$, keep $z_t\approx\rho u$ but set $y_t=-1$, so $y_tz_t\approx-\rho u$ erodes the trusted signal. For the final $60\%$, keep $z_t\approx\rho u$ and alternate labels, keeping $M_t$ near the decision boundary and making FTL chase unstable leaders.
 
@@ -374,6 +382,8 @@ Why it is appropriate: this is the OLC analogue of a reliable deployment followe
 **`olc_fmg_leader_gap`**
 
 Purpose: literature bridge to individual-sequence examples.
+
+Real-world analogue: none claimed as a calibrated application model. This is a deliberately stylized stress test that translates the classical individual-sequence "follow the leader if you can" construction into OLC feature-label form.
 
 Generation: fix $z_t=\rho e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
 
