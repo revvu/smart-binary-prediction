@@ -44,6 +44,89 @@ This experiment computes true FTL and the prefix comparator directly from $M_t$ 
 
 The `switching_leaders` sequence from experiment 2—the specific sequence that produced invalid negative regret—is included as a scenario in this experiment. Under exact FTL it is benign: FTL handles the block structure correctly and regret stays small and positive throughout.
 
+## Math derivation: why true FTL is computable here
+
+The online linear classification problem in this experiment looks nonlinear because the loss is written with an absolute value:
+
+$$
+\ell_t(x)=\frac12|\langle z_t,x\rangle-y_t|.
+$$
+
+However, the experiment always uses $x\in X=\{x:\|x\|_2\le 1\}$, $\|z_t\|_2\le \rho\le 1$, and $y_t\in\{-1,+1\}$. Therefore $|\langle z_t,x\rangle|\le 1$. If $y_t=+1$, then $|\langle z_t,x\rangle-1|=1-\langle z_t,x\rangle$; if $y_t=-1$, then $|\langle z_t,x\rangle+1|=1+\langle z_t,x\rangle$. In both cases,
+
+$$
+\ell_t(x)=\frac12(1-y_t\langle z_t,x\rangle).
+$$
+
+Thus the loss is exactly a constant plus a linear loss over the whole feasible set, not an approximation. Define the signed feature vector $s_t=y_tz_t$ and cumulative signed feature sum
+
+$$
+M_t=\sum_{i=1}^t s_i=\sum_{i=1}^t y_i z_i.
+$$
+
+The cumulative loss of any fixed action $x$ on a prefix is
+
+$$
+L_t(x)=\sum_{i=1}^t\ell_i(x)
+=\frac{t}{2}-\frac12\langle M_t,x\rangle.
+$$
+
+The best fixed comparator solves
+
+$$
+\min_{\|x\|_2\le 1} L_t(x)
+=
+\frac{t}{2}
+-\frac12
+\max_{\|x\|_2\le 1}\langle M_t,x\rangle.
+$$
+
+By Cauchy-Schwarz, $\max_{\|x\|_2\le 1}\langle M_t,x\rangle=\|M_t\|_2$, so
+
+$$
+\min_{\|x\|_2\le 1} L_t(x)
+=
+\frac{t}{2}-\frac12\|M_t\|_2.
+$$
+
+The prefix leader after observing $t$ rounds is therefore
+
+$$
+x_t^*
+=
+\begin{cases}
+M_t/\|M_t\|_2, & M_t\ne 0,\\
+0, & M_t=0.
+\end{cases}
+$$
+
+FTL plays the previous prefix leader, so at round $t$:
+
+$$
+x_t^{\mathrm{FTL}}
+=
+\begin{cases}
+M_{t-1}/\|M_{t-1}\|_2, & M_{t-1}\ne 0,\\
+0, & M_{t-1}=0.
+\end{cases}
+$$
+
+This is the main distinction from experiments 2 and 4. True FTL and the comparator require only the running vector $M_t$, one norm, and one normalization per round. The evaluation cost is $O(Td)$ per trial. No convex solver, prefix optimization loop, subgradient convention, or synthesized leader path is needed.
+
+SMART's switch statistic is the exact FTL regret trace:
+
+$$
+\Sigma_t
+=
+\sum_{i=1}^t \ell_i(x_i^{\mathrm{FTL}})
+-
+\left(
+\frac{t}{2}-\frac12\|M_t\|_2
+\right).
+$$
+
+This quantity is adapted because it is known after observing round $t$, monotone by the FTL be-the-leader decomposition, and satisfies $\Sigma_T=\mathrm{Reg}_T(\mathrm{FTL})$. That is why experiment 5 is a faithful SMART implementation: the stopping rule uses the true online-computable FTL regret trace, not a proxy.
+
 ## Design gate
 
 ### SMART behavior claim
@@ -56,18 +139,41 @@ The experiment must show:
 
 ### Sequence families
 
-The default sequence families are:
+The main regret-by-horizon graph uses these primary sequence families:
 
 1. `iid_separable_margin`: i.i.d. bounded-margin separable stream.
 2. `massart_10`: the same stream with independent 10% label flips.
 3. `alternating_antileader`: fixed feature direction with alternating labels, used as an illustrative FTL failure mode.
-4. `switching_leaders`: fixed feature direction with labels in alternating blocks of 20, the sequence that produced invalid negative regret in experiment 2. Not included in the horizon-sweep regret grid because its deterministic block structure creates a sawtooth artifact at coarse horizon spacing; instead it appears in the switch diagnostics plot where the per-round trace confirms non-negative regret and no SMART switch.
-5. `benign_to_hard_suffix`: separable prefix followed by an adaptive anti-leader suffix, the main SMART single-switch regime.
-6. `separator_drift`: gradual rotation of the latent separator, included as a nonstationary diagnostic rather than the central proof example.
+4. `benign_to_hard_suffix`: separable prefix followed by an adaptive anti-leader suffix, the main SMART single-switch regime.
+5. `separator_drift`: gradual rotation of the latent separator, included as a nonstationary diagnostic rather than the central proof example.
+
+The `switching_leaders` sequence is reserved for the switch diagnostics plot. It is the fixed-direction, block-label sequence that produced invalid negative regret in experiment 2. It is not included in the horizon-sweep regret grid because its deterministic block structure creates a sawtooth artifact at coarse horizon spacing; the diagnostic plot is the right place to show that exact FTL gives non-negative regret and no spurious SMART switch.
 
 ### Why these sequences are appropriate
 
-The i.i.d. and Massart streams are natural online classification baselines where optimism should not be punished. The alternating anti-leader stream is deliberately illustrative: it creates repeated FTL cancellation/reversal and checks robust protection. The switching leaders stream is the specific deterministic sequence that exposed the subgradient-state bug in experiment 2; including it here confirms that exact FTL handles block-structured label switches without producing negative regret. The benign-to-hard suffix stream is the closest match to SMART's one-switch design because the FTL prefix is useful and the adversarial suffix creates sustained trace growth. The separator drift stream links the experiment to practical concept drift, but static regret to the best fixed comparator should not be interpreted as dynamic tracking regret.
+`iid_separable_margin` samples a unit separator $u$, random labels $y_t\in\{-1,+1\}$, and bounded features whose signed versions $y_tz_t$ align with $u$ up to orthogonal noise:
+
+$$
+z_t=\rho y_t\operatorname{unit}(m u+\xi_t),
+$$
+
+where $\xi_t$ is orthogonal noise and the default margin parameter is positive. This is a representative benign stream: FTL should identify the stable direction quickly, and SMART should not pay a robustness tax.
+
+`massart_10` uses the same margin model but flips each label independently with probability $0.10$. This is a representative mild-noise stream: optimism should still be useful, but the result checks that SMART is not hypersensitive to small stochastic corruption.
+
+`alternating_antileader` fixes $z_t=\rho e_1$ and alternates labels $+1,-1,+1,-1,\ldots$. This is illustrative rather than representative. It forces $M_t$ to repeatedly cancel or reverse, so FTL follows stale leaders and accumulates large regret. Its role is to verify robust protection in a controlled FTL failure mode.
+
+`benign_to_hard_suffix` uses a separable margin prefix for the first $45\%$ of the horizon, then switches to an adaptive anti-leader suffix. In the suffix, the generator points the next feature along the current FTL direction and assigns the opposite label:
+
+$$
+z_t=\rho\,\operatorname{unit}(M_{t-1}),\qquad y_t=-1.
+$$
+
+Equivalently, the signed update $y_tz_t$ pushes against the current leader. This is the central SMART sequence: the prefix rewards optimism, the suffix creates sustained trace growth, and a one-switch policy is structurally appropriate.
+
+`separator_drift` gradually rotates the latent separator from one direction to another over the middle of the horizon. This is a practical nonstationarity diagnostic. It should not be read as a dynamic-regret benchmark because the reported metric is still static regret against the best fixed action.
+
+`switching_leaders` fixes $z_t=\rho e_1$ and uses label blocks of length 20, alternating sign by block. Its basis is diagnostic rather than paper-primary: it is the exact style of deterministic sequence that broke the old subgradient-state implementation. Under exact FTL it confirms that the previous negative-regret behavior was an implementation artifact, not a property of the OLC problem.
 
 ### Acceptance criteria
 
