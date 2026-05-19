@@ -55,6 +55,11 @@ def _summary(vals: Array) -> dict[str, Array]:
 
 def _scenario_title(name: str) -> str:
     mapping = {
+        "covariate_diverse_stationary": "Covariate-Diverse Stationary Signal",
+        "mild_label_noise": "Mild Label Noise",
+        "market_shift_change_point": "Exogenous Market Shift",
+        "strategic_corruption_suffix": "Strategic Corruption Suffix",
+        "olc_fmg_leader_gap": "OLC FMG Leader Gap",
         "iid_separable_margin": "I.I.D. Separable Margin",
         "massart_10": "Massart Noise (10%)",
         "alternating_antileader": "Alternating Anti-Leader",
@@ -202,7 +207,13 @@ def plot_switch_diagnostics(
     g_emp: dict[int, float],
     out_path: Path,
 ) -> None:
-    scenarios = ["iid_separable_margin", "benign_to_hard_suffix", "alternating_antileader", "switching_leaders"]
+    scenarios = [
+        "covariate_diverse_stationary",
+        "market_shift_change_point",
+        "strategic_corruption_suffix",
+        "olc_fmg_leader_gap",
+        "switching_leaders",
+    ]
     generators = available_generators()
     fig, axes = plt.subplots(len(scenarios), 2, figsize=(12.4, 3.6 * len(scenarios)), squeeze=False)
 
@@ -255,7 +266,7 @@ def plot_threshold_calibration(
     trials: int,
     out_path: Path,
 ) -> None:
-    scenarios = ["iid_separable_margin", "benign_to_hard_suffix"]
+    scenarios = ["covariate_diverse_stationary", "market_shift_change_point", "strategic_corruption_suffix"]
     generators = available_generators()
     scales = np.array([0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 2.0, 3.0], dtype=float)
     smart_by_scenario: dict[str, dict[str, Array]] = {}
@@ -289,7 +300,8 @@ def plot_threshold_calibration(
     ax = axes[1]
     for scenario in scenarios:
         _plot_with_band(ax, scales, switch_by_scenario[scenario], _scenario_title(scenario))
-    ax.axhline(0.45 * t_max, color="black", linestyle=":", linewidth=1.6, label="Hard suffix begins")
+    ax.axhline(0.20 * t_max, color="black", linestyle=":", linewidth=1.4, label="Corruption begins")
+    ax.axhline(0.45 * t_max, color="gray", linestyle="--", linewidth=1.4, label="Market shift begins")
     ax.set_title("Switch Timing vs Threshold Scale")
     ax.set_xlabel("Scale times empirical g(T)")
     ax.set_ylabel("Mean switch round")
@@ -312,7 +324,7 @@ def plot_dimension_sweep(
     g_trials: int,
     out_path: Path,
 ) -> None:
-    scenario = "benign_to_hard_suffix"
+    scenario = "strategic_corruption_suffix"
     gen = available_generators()[scenario]
     vals = {key: np.zeros((len(dims), trials), dtype=float) for key in ("ftl", "ftrl", "smart_calibrated")}
 
@@ -338,7 +350,7 @@ def plot_dimension_sweep(
     fig, ax = plt.subplots(figsize=(8.4, 4.8))
     for offset, key in zip((-width, 0.0, width), ("ftl", "ftrl", "smart_calibrated")):
         ax.bar(x + offset, means[key], width=width, yerr=cis[key], capsize=3, label=ALGO_LABELS[key])
-    ax.set_title("Dimension Robustness on Benign-to-Hard OLC")
+    ax.set_title("Dimension Robustness on Corruption-Suffix OLC")
     ax.set_xlabel("Feature dimension")
     ax.set_ylabel("Regret at horizon")
     ax.set_xticks(x, [str(d) for d in dims])
@@ -538,7 +550,7 @@ def main() -> None:
         )
         generated["fig:exp05_olc_dimension_sweep"] = (
             dimension_path,
-            "Dimension Robustness on Benign-to-Hard OLC",
+            "Dimension Robustness on Corruption-Suffix OLC",
             "fig_exp05_olc_dimension_sweep.png",
         )
 

@@ -34,6 +34,21 @@ def _basis(d: int, idx: int = 0) -> Array:
     return e
 
 
+def _orthogonal_unit(rng: np.random.Generator, u: Array) -> Array:
+    if u.shape[0] <= 1:
+        return np.zeros_like(u)
+    v = rng.normal(size=u.shape[0])
+    v = v - float(np.dot(v, u)) * u
+    n = float(np.linalg.norm(v))
+    if n > 1e-12:
+        return v / n
+
+    fallback_idx = 1 if abs(float(u[0])) > 0.9 and u.shape[0] > 1 else 0
+    v = _basis(u.shape[0], fallback_idx)
+    v = v - float(np.dot(v, u)) * u
+    return _unit(v)
+
+
 def _orthogonal_noise(rng: np.random.Generator, u: Array, scale: float) -> Array:
     v = rng.normal(size=u.shape[0])
     v = v - float(np.dot(v, u)) * u
@@ -64,6 +79,150 @@ def _sample_margin_sequence(
         y[flips] *= -1.0
 
     return z, y.astype(np.float64), u
+
+
+def _sample_covariate_margin_sequence(
+    T: int,
+    d: int,
+    rho: float,
+    rng: np.random.Generator,
+    *,
+    separator: Array | None = None,
+    label_noise: float = 0.0,
+    margin: float = 0.70,
+    noise_scale: float = 0.55,
+) -> tuple[Array, Array, Array]:
+    """Exogenous class-conditional margin stream with diverse bounded covariates."""
+    u = _unit(rng.normal(size=d)) if separator is None else _unit(separator)
+    z = np.zeros((T, d), dtype=np.float64)
+    y = rng.choice(np.array([-1.0, 1.0], dtype=np.float64), size=T)
+
+    for t in range(T):
+        signed_feature = margin * u + noise_scale * _orthogonal_unit(rng, u)
+        z[t] = rho * y[t] * _unit(signed_feature)
+
+    if label_noise > 0.0:
+        flips = rng.random(T) < label_noise
+        y[flips] *= -1.0
+
+    return z, y.astype(np.float64), u
+
+
+def covariate_diverse_stationary(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    z, y, _ = _sample_covariate_margin_sequence(
+        T,
+        d,
+        rho,
+        rng,
+        label_noise=0.0,
+        margin=0.72,
+        noise_scale=0.58,
+    )
+    return Sequence(
+        z=z,
+        y=y,
+        name="covariate_diverse_stationary",
+        description="stationary class-conditional margin stream with diverse bounded covariates",
+    )
+
+
+def mild_label_noise(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    z, y, _ = _sample_covariate_margin_sequence(
+        T,
+        d,
+        rho,
+        rng,
+        label_noise=0.10,
+        margin=0.72,
+        noise_scale=0.58,
+    )
+    return Sequence(
+        z=z,
+        y=y,
+        name="mild_label_noise",
+        description="covariate-diverse margin stream with 10% independent label flips",
+    )
+
+
+def market_shift_change_point(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    split = int(round(0.45 * T))
+    u0 = _unit(rng.normal(size=d))
+    turn = _orthogonal_unit(rng, u0)
+    if float(np.linalg.norm(turn)) <= 1e-12:
+        turn = -u0
+    u1 = _unit(0.25 * u0 + 0.9682458365518543 * turn)
+
+    z0, y0, _ = _sample_covariate_margin_sequence(
+        split,
+        d,
+        rho,
+        rng,
+        separator=u0,
+        label_noise=0.02,
+        margin=0.74,
+        noise_scale=0.50,
+    )
+    z1, y1, _ = _sample_covariate_margin_sequence(
+        T - split,
+        d,
+        rho,
+        rng,
+        separator=u1,
+        label_noise=0.08,
+        margin=0.70,
+        noise_scale=0.62,
+    )
+
+    return Sequence(
+        z=np.vstack([z0, z1]),
+        y=np.concatenate([y0, y1]),
+        name="market_shift_change_point",
+        description="exogenous separator change point with a rotated customer-response regime",
+    )
+
+
+def strategic_corruption_suffix(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    prefix_end = int(round(0.20 * T))
+    erosion_end = int(round(0.40 * T))
+    u = _unit(rng.normal(size=d))
+    z = np.zeros((T, d), dtype=np.float64)
+    y = np.zeros(T, dtype=np.float64)
+
+    for t in range(prefix_end):
+        z[t] = rho * _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
+        y[t] = 1.0
+
+    for t in range(prefix_end, erosion_end):
+        z[t] = rho * _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
+        y[t] = -1.0
+
+    for t in range(erosion_end, T):
+        z[t] = rho * _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
+        y[t] = 1.0 if (t - erosion_end) % 2 == 0 else -1.0
+
+    return Sequence(
+        z=z,
+        y=y,
+        name="strategic_corruption_suffix",
+        description="reliable margin prefix followed by sustained corrupted feedback",
+    )
+
+
+def olc_fmg_leader_gap(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+    del rng
+    z = np.tile(rho * _basis(d, 0), (T, 1))
+    y = np.empty(T, dtype=np.float64)
+    alternating_len = int(round(0.40 * T))
+    alternating_len -= alternating_len % 2
+    y[:alternating_len:2] = 1.0
+    y[1:alternating_len:2] = -1.0
+    y[alternating_len:] = 1.0
+    return Sequence(
+        z=z,
+        y=y,
+        name="olc_fmg_leader_gap",
+        description="one-dimensional OLC analogue of alternating-then-stable individual sequences",
+    )
 
 
 def iid_separable_margin(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
@@ -205,6 +364,11 @@ def random_labels_isotropic(T: int, d: int, rho: float, rng: np.random.Generator
 
 def available_generators() -> dict[str, GeneratorFn]:
     return {
+        "covariate_diverse_stationary": covariate_diverse_stationary,
+        "mild_label_noise": mild_label_noise,
+        "market_shift_change_point": market_shift_change_point,
+        "strategic_corruption_suffix": strategic_corruption_suffix,
+        "olc_fmg_leader_gap": olc_fmg_leader_gap,
         "iid_separable_margin": iid_separable_margin,
         "massart_10": massart_10,
         "alternating_antileader": alternating_antileader,
@@ -217,17 +381,19 @@ def available_generators() -> dict[str, GeneratorFn]:
 
 def primary_scenarios() -> list[str]:
     return [
-        "iid_separable_margin",
-        "massart_10",
-        "alternating_antileader",
-        "benign_to_hard_suffix",
-        "separator_drift",
+        "covariate_diverse_stationary",
+        "mild_label_noise",
+        "market_shift_change_point",
+        "strategic_corruption_suffix",
+        "olc_fmg_leader_gap",
     ]
 
 
 def hard_calibration_scenarios() -> list[str]:
     return [
         "alternating_antileader",
+        "strategic_corruption_suffix",
+        "olc_fmg_leader_gap",
+        "market_shift_change_point",
         "random_labels_isotropic",
-        "benign_to_hard_suffix",
     ]

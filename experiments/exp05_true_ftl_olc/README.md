@@ -1,374 +1,143 @@
 # Experiment 05: True-FTL Online Linear Classification
 
-## Why this experiment exists
+## Objective
 
-This experiment is the replacement candidate for the older online linear classification studies in experiments 2 and 4.
+This experiment is the paper-facing replacement for the older online linear classification studies in experiments 2 and 4. It demonstrates SMART in a vector-valued online linear classification setting where:
 
-The purpose is to demonstrate SMART in a vector-valued online linear classification setting where:
-
-1. true FTL is computed exactly,
-2. the robust FTRL baseline is specified concretely,
-3. the sequence families expose benign, hard, and mixed regimes,
-4. SMART's switch is explained by the exact adapted regret trace $\Sigma_t$.
+1. FTL is computed exactly, not approximated by played-point subgradients.
+2. The robust baseline is a concrete quadratic-FTRL algorithm with a standard online-convex-optimization interpretation.
+3. The SMART switch statistic is the exact adapted FTL regret trace $\Sigma_t$.
+4. The sequence families are bounded OLC feature-label streams designed to show benign, noisy, shifted, corrupted, and classical leader-instability regimes.
 
 The paper-facing claim is:
 
-SMART preserves FTL's advantage on benign streams, switches to protect against sustained hard regimes, and gives an interpretable single-switch compromise on streams with an easy prefix followed by a hard suffix.
+SMART preserves FTL's advantage on benign streams, switches when the exact FTL regret trace indicates sustained danger, and gives an interpretable one-switch compromise between optimism and worst-case robustness.
 
-## What was wrong in experiments 2 and 4
+## Formal Setting
 
-### Experiment 2: subgradient-state FTL produced invalid negative regret
+At each round $t$, the learner chooses a vector in the Euclidean unit ball:
 
-Experiment 2 used a "fast path" FTL implementation (`fast_algorithms.py`) that tracked FTL state via subgradient updates at the played prediction. On stochastic streams this worked adequately, but on deterministic norm-one streams it failed.
+$$
+X=\{x\in\mathbb{R}^d:\|x\|_2\le 1\}.
+$$
 
-The surrogate loss $\ell_t(x)=\frac12|{\langle z_t,x\rangle-y_t}|$ is globally linear on the unit ball whenever $\|z_t\|\le 1$, so its subgradient is unique almost everywhere. But at the boundary, when $\langle z_t,x\rangle = y_t$ exactly, the subgradient is not unique. The fast implementation chose a subgradient at the *played* prediction, and on deterministic sequences like "Switching leaders" (fixed $z_t=e_1$, labels in alternating blocks of 20) this tie convention caused the internal state to diverge from the true linear-loss FTL path. The comparator was then computed from the wrong accumulated state, producing **negative regret**—a mathematical impossibility for FTL that signaled a bug, not a genuine result.
+The learner then observes a bounded feature-label pair $(z_t,y_t)$ with
 
-The README for experiment 2 acknowledged this (lines 127–143) and noted that a redesign should replace the subgradient-state tracker with the closed-form $M_t$-based computation. This experiment is that redesign.
+$$
+\|z_t\|_2\le \rho\le 1,\qquad y_t\in\{-1,+1\},
+$$
 
-### Experiment 4: worked around a bottleneck that did not actually exist
-
-Experiment 4 was built on the premise that computing true FTL and the prefix comparator on arbitrary sequences required solving $T$ optimization problems per run—$O(T^2 d)$ work per trial—making brute-force evaluation impractical at scale (3 regimes $\times$ 48 runs $\times$ 40 horizons).
-
-To avoid this cost, experiment 4 reversed the sequence construction: instead of generating $(z_t,y_t)$ and solving for FTL afterward, it designed a target leader-direction path first, manufactured a realizable cumulative-gradient path with bounded increments, and then converted each increment into a feature-label pair that realized the desired FTL trajectory. This "leader-path synthesis" approach used several engineering tricks: deterministic mismatch schedules (accumulator-based flip masks instead of i.i.d. Bernoulli), latent separator paths for label plausibility, smoothstep phase boundaries, and per-regime hand-tuned parameters.
-
-**The premise was wrong.** Because the loss is globally linear on the unit ball, both true FTL and the comparator are available in closed form from the moment $M_t=\sum_{i\le t}y_i z_i$:
-
-- FTL action: $x_t^{\mathrm{FTL}}=M_{t-1}/\|M_{t-1}\|_2$ (one normalization, $O(d)$)
-- Comparator loss: $\min_{x\in X}\sum_{i\le t}\ell_i(x)=\frac{t}{2}-\frac12\|M_t\|_2$ (one norm, $O(d)$)
-
-A full run is $O(Td)$, not $O(T^2 d)$. There is no prefix optimization bottleneck. The synthesis machinery, the hand-tuned regime parameters, and the reverse-construction approach were all unnecessary. Experiment 4's README acknowledged this partially in its "redesign gate" section, noting that "the next revision should keep the useful part of this experiment—closed-form true FTL—but remove the hand-tuned leader-path narrative as the primary evidence."
-
-### What experiment 5 does differently
-
-This experiment computes true FTL and the prefix comparator directly from $M_t$ using the closed forms above. No convex solver, no subgradient proxy, no synthesis tricks. Each round costs $O(d)$ and a full trial costs $O(Td)$. The $\Sigma_t$ trace is guaranteed monotone by construction, and the `assert_trace_invariants` check verifies non-negative regret on every run.
-
-The `switching_leaders` sequence from experiment 2—the specific sequence that produced invalid negative regret—is included as a scenario in this experiment. Under exact FTL it is benign: FTL handles the block structure correctly and regret stays small and positive throughout.
-
-## Math derivation: why true FTL is computable here
-
-The online linear classification problem in this experiment looks nonlinear because the loss is written with an absolute value:
+and incurs the online linear classification surrogate
 
 $$
 \ell_t(x)=\frac12|\langle z_t,x\rangle-y_t|.
 $$
 
-However, the experiment always uses $x\in X=\{x:\|x\|_2\le 1\}$, $\|z_t\|_2\le \rho\le 1$, and $y_t\in\{-1,+1\}$. Therefore $|\langle z_t,x\rangle|\le 1$. If $y_t=+1$, then $|\langle z_t,x\rangle-1|=1-\langle z_t,x\rangle$; if $y_t=-1$, then $|\langle z_t,x\rangle+1|=1+\langle z_t,x\rangle$. In both cases,
+Because $\|x\|_2\le1$ and $\|z_t\|_2\le\rho\le1$, we have $|\langle z_t,x\rangle|\le1$. Therefore the absolute value collapses to a linear loss on the entire feasible set:
 
 $$
 \ell_t(x)=\frac12(1-y_t\langle z_t,x\rangle).
 $$
 
-Thus the loss is exactly a constant plus a linear loss over the whole feasible set, not an approximation. Define the signed feature vector $s_t=y_tz_t$ and cumulative signed feature sum
+Define the signed feature vector and cumulative signed feature sum:
 
 $$
-M_t=\sum_{i=1}^t s_i=\sum_{i=1}^t y_i z_i.
+s_t=y_tz_t,\qquad M_t=\sum_{i=1}^t s_i=\sum_{i=1}^t y_i z_i.
 $$
 
-The cumulative loss of any fixed action $x$ on a prefix is
+For any fixed comparator $x\in X$, cumulative loss on a prefix is
 
 $$
-L_t(x)=\sum_{i=1}^t\ell_i(x)
+L_t(x)=\sum_{i=1}^t \ell_i(x)
 =\frac{t}{2}-\frac12\langle M_t,x\rangle.
 $$
 
-The best fixed comparator solves
+The best fixed comparator loss is therefore
 
 $$
-\min_{\|x\|_2\le 1} L_t(x)
+\min_{\|x\|_2\le1}L_t(x)
 =
 \frac{t}{2}
 -\frac12
-\max_{\|x\|_2\le 1}\langle M_t,x\rangle.
+\max_{\|x\|_2\le1}\langle M_t,x\rangle.
 $$
 
-By Cauchy-Schwarz, $\max_{\|x\|_2\le 1}\langle M_t,x\rangle=\|M_t\|_2$, so
+By Cauchy-Schwarz,
 
 $$
-\min_{\|x\|_2\le 1} L_t(x)
-=
-\frac{t}{2}-\frac12\|M_t\|_2.
+\max_{\|x\|_2\le1}\langle M_t,x\rangle=\|M_t\|_2,
 $$
 
-The prefix leader after observing $t$ rounds is therefore
+so the exact prefix comparator loss is
+
+$$
+L_t^*=\min_{x\in X}L_t(x)=\frac{t}{2}-\frac12\|M_t\|_2.
+$$
+
+This identity is the computational hinge of the experiment. FTL, the comparator, and the SMART trace all reduce to maintaining $M_t$, computing one norm, and normalizing one vector. The cost is $O(Td)$ per trial.
+
+Regret is always static regret against the best fixed action in hindsight:
+
+$$
+\mathrm{Reg}_T(A)=\sum_{t=1}^T\ell_t(x_t^A)-L_T^*.
+$$
+
+Adaptive algorithms such as FTRL or SMART can have negative static regret on some nonstationary synthetic streams. That is not a bug; it means the adaptive policy beat the best fixed comparator on that realized sequence.
+
+## Algorithms
+
+### Exact FTL
+
+The prefix leader after observing $t$ rounds is
 
 $$
 x_t^*
 =
 \begin{cases}
-M_t/\|M_t\|_2, & M_t\ne 0,\\
+M_t/\|M_t\|_2, & M_t\ne0,\\
 0, & M_t=0.
 \end{cases}
 $$
 
-FTL plays the previous prefix leader, so at round $t$:
+FTL plays the previous prefix leader:
 
 $$
 x_t^{\mathrm{FTL}}
 =
 \begin{cases}
-M_{t-1}/\|M_{t-1}\|_2, & M_{t-1}\ne 0,\\
+M_{t-1}/\|M_{t-1}\|_2, & M_{t-1}\ne0,\\
 0, & M_{t-1}=0.
 \end{cases}
 $$
 
-This is the main distinction from experiments 2 and 4. True FTL and the comparator require only the running vector $M_t$, one norm, and one normalization per round. The evaluation cost is $O(Td)$ per trial. No convex solver, prefix optimization loop, subgradient convention, or synthesized leader path is needed.
+This is implemented directly in `src/olc_exact.py`. No convex solver, generic prefix optimizer, or subgradient proxy is used.
 
-SMART's switch statistic is the exact FTL regret trace:
+### Robust FTRL Baseline
 
-$$
-\Sigma_t
-=
-\sum_{i=1}^t \ell_i(x_i^{\mathrm{FTL}})
--
-\left(
-\frac{t}{2}-\frac12\|M_t\|_2
-\right).
-$$
-
-This quantity is adapted because it is known after observing round $t$, monotone by the FTL be-the-leader decomposition, and satisfies $\Sigma_T=\mathrm{Reg}_T(\mathrm{FTL})$. That is why experiment 5 is a faithful SMART implementation: the stopping rule uses the true online-computable FTL regret trace, not a proxy.
-
-### Note: the exact experiment 2 mistake
-
-The specific mistake in experiment 2 was treating the absolute-value objective as a generic prefix ERM problem and then approximating its FTL state with subgradients chosen at the played prediction. That obscured the special identity above.
-
-The fast path accumulated
+The robust baseline is Follow-the-Regularized-Leader on the exact linear losses
 
 $$
-\theta_t=\sum_{i\le t} g_i z_i,
-$$
-
-where $g_i\in\partial_q\frac12|q-y_i|$ was chosen from the prediction actually played on round $i$. At exact-fit boundary points $q=y_i$, the implementation used $g_i=0$. That is a valid subgradient choice for a linearized-loss algorithm, but it is not the true cumulative state of the original restricted-domain loss. The true state is always
-
-$$
-M_t=\sum_{i\le t} y_i z_i.
-$$
-
-On boundary-heavy deterministic streams, the subgradient-state path can therefore drop informative rounds that the exact linear loss still counts. The result is not true FTL; it is FTL on a chosen sequence of linearized losses. This is why experiment 2 could produce invalid negative FTL regret on `switching_leaders`.
-
-The CVXPY exact path in experiment 2 reinforced the wrong conclusion because it solved the generic absolute-loss prefix problem for every prefix. That was mathematically correct but unnecessarily expensive: in this bounded OLC setting, the same optimizer is available from $M_t$ in closed form.
-
-This closed form does not make SVMs unnecessary. SVMs solve a different objective, typically margin-regularized hinge-loss minimization, where the active constraints depend on the candidate classifier and support vectors determine the solution. The experiment 5 closed form solves only this restricted online surrogate/comparator problem:
-
-$$
-\min_{\|x\|_2\le 1}\sum_{t=1}^T \frac12|\langle z_t,x\rangle-y_t|.
-$$
-
-Under the bounded prediction constraint, that objective collapses to a signed-average direction. It is useful for exact OLC regret accounting and SMART trace computation, but it is not a replacement for max-margin classification, bias terms, kernels, or regularized empirical-risk methods.
-
-## Design gate
-
-### SMART behavior claim
-
-The experiment must show:
-
-1. **Preserve optimism:** on benign predictable streams, SMART should remain visually close to true FTL and avoid FTRL's robustness tax.
-2. **Protect in hard regimes:** on high-variation or adversarial streams, SMART should switch and avoid FTL's large regret growth.
-3. **Interpretable switch:** in mixed streams, the switch should occur when $\Sigma_t$ crosses the calibrated threshold near the onset of sustained deterioration.
-
-### Sequence families
-
-The main regret-by-horizon graph uses these primary sequence families:
-
-1. `iid_separable_margin`: i.i.d. bounded-margin separable stream.
-2. `massart_10`: the same stream with independent 10% label flips.
-3. `alternating_antileader`: fixed feature direction with alternating labels, used as an illustrative FTL failure mode.
-4. `benign_to_hard_suffix`: separable prefix followed by an adaptive anti-leader suffix, the main SMART single-switch regime.
-5. `separator_drift`: gradual rotation of the latent separator, included as a nonstationary diagnostic rather than the central proof example.
-
-The `switching_leaders` sequence is reserved for the switch diagnostics plot. It is the fixed-direction, block-label sequence that produced invalid negative regret in experiment 2. It is not included in the horizon-sweep regret grid because its deterministic block structure creates a sawtooth artifact at coarse horizon spacing; the diagnostic plot is the right place to show that exact FTL gives non-negative regret and no spurious SMART switch.
-
-### Why these sequences are appropriate
-
-`iid_separable_margin` samples a unit separator $u$, random labels $y_t\in\{-1,+1\}$, and bounded features whose signed versions $y_tz_t$ align with $u$ up to orthogonal noise:
-
-$$
-z_t=\rho y_t\operatorname{unit}(m u+\xi_t),
-$$
-
-where $\xi_t$ is orthogonal noise and the default margin parameter is positive. This is a representative benign stream: FTL should identify the stable direction quickly, and SMART should not pay a robustness tax.
-
-`massart_10` uses the same margin model but flips each label independently with probability $0.10$. This is a representative mild-noise stream: optimism should still be useful, but the result checks that SMART is not hypersensitive to small stochastic corruption.
-
-`alternating_antileader` fixes $z_t=\rho e_1$ and alternates labels $+1,-1,+1,-1,\ldots$. This is illustrative rather than representative. It forces $M_t$ to repeatedly cancel or reverse, so FTL follows stale leaders and accumulates large regret. Its role is to verify robust protection in a controlled FTL failure mode.
-
-`benign_to_hard_suffix` uses a separable margin prefix for the first $45\%$ of the horizon, then switches to an adaptive anti-leader suffix. In the suffix, the generator points the next feature along the current FTL direction and assigns the opposite label:
-
-$$
-z_t=\rho\,\operatorname{unit}(M_{t-1}),\qquad y_t=-1.
-$$
-
-Equivalently, the signed update $y_tz_t$ pushes against the current leader. This is the central SMART sequence: the prefix rewards optimism, the suffix creates sustained trace growth, and a one-switch policy is structurally appropriate.
-
-`separator_drift` gradually rotates the latent separator from one direction to another over the middle of the horizon. This is a practical nonstationarity diagnostic. It should not be read as a dynamic-regret benchmark because the reported metric is still static regret against the best fixed action.
-
-`switching_leaders` fixes $z_t=\rho e_1$ and uses label blocks of length 20, alternating sign by block. Its basis is diagnostic rather than paper-primary: it is the exact style of deterministic sequence that broke the old subgradient-state implementation. Under exact FTL it confirms that the previous negative-regret behavior was an implementation artifact, not a property of the OLC problem.
-
-### Acceptance criteria
-
-A successful run should show:
-
-1. In `iid_separable_margin`, SMART and FTL have nearly identical regret and FTRL is higher.
-2. In `alternating_antileader`, FTL grows faster than FTRL and SMART switches.
-3. In `benign_to_hard_suffix`, SMART is near or below the lower envelope of the fixed baselines by combining FTL's prefix and FTRL's suffix.
-4. The diagnostic plot shows monotone $\Sigma_t$ and switch timing that is explainable from the threshold crossing.
-5. In `switching_leaders`, the diagnostic trace confirms FTL regret is strictly positive at all rounds (resolving experiment 2's negative-regret bug) and $\Sigma_t$ stays below threshold (no switch).
-6. The threshold sweep shows the cost of switching too early or too late.
-
-## Formal setup
-
-At each round, the learner chooses $x_t$ in the unit Euclidean ball:
-
-$$
-X = \{x\in\mathbb{R}^d:\|x\|_2\le 1\}.
-$$
-
-It observes $(z_t,y_t)$ with $\|z_t\|_2\le \rho\le 1$ and $y_t\in\{-1,+1\}$, and incurs:
-
-$$
-\ell_t(x)=\frac12|\langle z_t,x\rangle-y_t|.
-$$
-
-Because $|\langle z_t,x\rangle|\le 1$, this equals the linear loss:
-
-$$
-\ell_t(x)=\frac12(1-y_t\langle z_t,x\rangle).
-$$
-
-Define the signed feature sum:
-
-$$
-M_t=\sum_{i=1}^t y_i z_i.
-$$
-
-The best fixed comparator loss on a prefix is:
-
-$$
-\min_{x\in X}\sum_{i=1}^t \ell_i(x)=\frac{t}{2}-\frac12\|M_t\|_2.
-$$
-
-Regret is measured against this best fixed comparator at each horizon.
-
-Because the comparator is fixed while the algorithms are adaptive, FTRL or SMART can have negative static regret on some nonstationary synthetic streams. This is not a bug; it means the adaptive policy outperformed the best fixed action on that sequence.
-
-## Algorithms compared
-
-### True FTL
-
-FTL is exact and closed-form:
-
-$$
-x_t^{\mathrm{FTL}}=
-\begin{cases}
-M_{t-1}/\|M_{t-1}\|_2, & M_{t-1}\ne 0,\\
-0, & M_{t-1}=0.
-\end{cases}
-$$
-
-No convex solver or subgradient proxy is used.
-
-### Robust FTRL baseline
-
-The robust baseline is quadratic FTRL on the linear loss vectors $c_t=-\frac12 y_t z_t$:
-
-$$
-x_t^{\mathrm{FTRL}}
-=\arg\min_{\|x\|_2\le 1}
-\left\langle \sum_{i<t} c_i,x\right\rangle
-+\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2,
-\qquad \eta_0=\sqrt{2}.
-$$
-
-Equivalently:
-
-$$
-x_t^{\mathrm{FTRL}}
-=
-\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right).
-$$
-
-This is the appropriate robust baseline because the loss is linear over a bounded Euclidean domain, and quadratic FTRL is the standard $O(\sqrt{T})$ no-assumption fallback for this geometry.
-
-#### FTRL definition and consistency note
-
-Experiment 5 uses FTRL on the exact linear losses induced by the restricted-domain surrogate:
-
-$$
-c_t=-\frac12 y_t z_t,\qquad
-\ell_t(x)=\frac12+\langle c_t,x\rangle.
+c_t=-\frac12 y_tz_t,\qquad \ell_t(x)=\frac12+\langle c_t,x\rangle.
 $$
 
 With the time-varying quadratic regularizer
 
 $$
 \psi_t(x)=\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2+\iota_X(x),
+\qquad \eta_0=\sqrt{2},
 $$
 
-where $\iota_X$ is the indicator of the unit Euclidean ball, FTRL is
+where $\iota_X$ is the indicator of the unit ball, FTRL is
 
 $$
-x_t
+x_t^{\mathrm{FTRL}}
 =
 \arg\min_{x\in X}
 \left\langle\sum_{i<t}c_i,x\right\rangle
 +\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
 $$
 
-Since $\sum_{i<t}c_i=-\frac12M_{t-1}$, this reduces to
-
-$$
-x_t
-=
-\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right).
-$$
-
-This is consistent with the Follow-the-Regularized-Leader framework in Orabona's Chapter 7: it is FTRL with linear losses and an increasing Euclidean quadratic regularizer. It is also consistent with Orabona's online linear classification setup in Chapter 8, where the randomized-classifier surrogate is $\frac12|\langle z_t,x\rangle-y_t|$ on a domain that enforces $|\langle z_t,x\rangle|\le 1$.
-
-The implementation is not identical to experiment 2's fast path or experiment 4's active `src/eval.py` path. Those paths use chosen subgradients at played predictions:
-
-$$
-g_t\in\partial_q\frac12|q-y_t|,\qquad \theta_t=\sum_{i\le t}g_i z_i.
-$$
-
-They agree with experiment 5 away from boundary ties, because then $g_t=-\frac12y_t$. They differ at exact-fit ties, where the old paths can choose $g_t=0$ while the exact restricted-domain linear loss still contributes $-\frac12y_tz_t$. Experiment 4's `src/exact_linear_olc.py` helper matches the experiment 5 formulation, but the active experiment 4 runner imports `src/eval.py`.
-
-For SMART, experiment 5 also resets both the FTRL cumulative state and the local suffix time after switching. This matches the SMART decomposition into an FTL prefix and robust FTRL suffix. The active experiment 2 and 4 SMART evaluators use a global time index after switching, so their suffix regularization schedule is not the same reset-FTRL policy.
-
-#### Literature consistency derivation
-
-The FTRL baseline in this experiment is consistent with the standard online convex optimization and online linear classification literature.
-
-First, the experiment is an online convex optimization instance in the sense of Zinkevich (2003): the feasible set $X$ is fixed and convex, the learner chooses $x_t\in X$ before observing the current loss, and performance is measured by static regret against the best fixed comparator in hindsight. Zinkevich's original framework covers arbitrary convex losses and projected first-order methods; this experiment specializes that setting to bounded linear losses on the Euclidean unit ball.
-
-Second, it matches Orabona's Chapter 7 FTRL template. Orabona writes FTRL on linearized losses as
-
-$$
-x_t\in\arg\min_{x\in V}\psi_t(x)+\sum_{i<t}\langle g_i,x\rangle.
-$$
-
-Experiment 5 uses
-
-$$
-V=X=\{x:\|x\|_2\le 1\},\qquad
-g_i=c_i=-\frac12 y_i z_i,
-$$
-
-and the increasing quadratic regularizer
-
-$$
-\psi_t(x)=\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
-$$
-
-Substituting these choices gives
-
-$$
-x_t
-=
-\arg\min_{\|x\|_2\le 1}
-\left\langle -\frac12 M_{t-1},x\right\rangle
-+\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
-$$
-
-The unconstrained first-order condition is
+Since $\sum_{i<t}c_i=-\frac12M_{t-1}$, the unconstrained optimum solves
 
 $$
 -\frac12M_{t-1}+\frac{\sqrt{t}}{\eta_0}x=0,
@@ -380,66 +149,239 @@ $$
 \tilde{x}_t=\frac{\eta_0}{2\sqrt{t}}M_{t-1}.
 $$
 
-The feasible set is the Euclidean unit ball, hence the constrained solution is the Euclidean projection
+The feasible set is the Euclidean unit ball, hence the implemented update is
 
 $$
-x_t=\Pi_X(\tilde{x}_t)
+x_t^{\mathrm{FTRL}}
 =
-\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right),
+\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right).
 $$
 
-which is exactly the implementation in `src/olc_exact.py`.
+This is the correct robust baseline for this experiment because the losses are bounded linear losses on a bounded Euclidean domain, where quadratic FTRL is the standard $O(\sqrt{T})$ no-assumption fallback.
 
-Third, it matches Orabona's Chapter 8 online linear classification reduction. Orabona derives the convex surrogate
-
-$$
-\tilde{\ell}_t(x)=\frac12|\langle z_t,x\rangle-y_t|
-$$
-
-for randomized online linear classification, with the requirement that $|\langle z_t,x\rangle|\le 1$. Experiment 5 enforces this condition by using $\|x\|_2\le1$ and $\|z_t\|_2\le\rho\le1$. Under that restriction, the surrogate becomes the exact linear loss
+This matches the FTRL template in Orabona's Chapter 7:
 
 $$
-\tilde{\ell}_t(x)=\frac12(1-y_t\langle z_t,x\rangle)
-=
-\frac12+\left\langle -\frac12y_tz_t,x\right\rangle.
+x_t\in\arg\min_{x\in V}\psi_t(x)+\sum_{i<t}\langle g_i,x\rangle,
 $$
 
-This explains why experiment 5 can use $c_t=-\frac12y_tz_t$ directly instead of selecting a played-point subgradient. Orabona's Algorithm 8.1 is a linearized-loss implementation that uses $\operatorname{sign}(\langle z_t,x_t\rangle-y_t)$ and sets $\operatorname{sign}(0)=0$. That algorithm is a valid robust online classifier, but for SMART's exact FTL trace we need the full-loss identity above, because boundary tie conventions can change the adapted regret trace.
-
-This is also why the FTRL baseline is related to, but distinct from, other online classification methods. Passive-Aggressive algorithms also use simple constrained optimization updates and compare against fixed hypotheses, but they are margin-driven updates rather than this quadratic-FTRL update. SVM/Pegasos-style methods optimize regularized hinge-loss objectives for max-margin classification, not this bounded absolute-loss comparator. Those methods are appropriate for other classification goals, but they are not the robust baseline used in this SMART regret experiment.
-
-Sources:
-
-- Martin Zinkevich, "Online Convex Programming and Generalized Infinitesimal Gradient Ascent," ICML 2003: <https://martin.zinkevich.org/publications/ICML03.pdf>.
-- Francesco Orabona, *A Modern Introduction to Online Learning*, Chapters 7 and 8, arXiv:1912.13213: <https://arxiv.org/abs/1912.13213>.
-- Brendan McMahan, "Follow-the-Regularized-Leader and Mirror Descent: Equivalence Theorems and L1 Regularization," AISTATS 2011: <https://proceedings.mlr.press/v15/mcmahan11b.html>.
-- Koby Crammer, Ofer Dekel, Joseph Keshet, Shai Shalev-Shwartz, and Yoram Singer, "Online Passive-Aggressive Algorithms," JMLR 2006: <https://www.jmlr.org/papers/v7/crammer06a.html>.
-- Shai Shalev-Shwartz, Yoram Singer, and Nathan Srebro, "Pegasos: Primal Estimated sub-GrAdient SOlver for SVM," ICML 2007: <https://doi.org/10.1145/1273496.1273598>.
+with $V=X$, $g_i=c_i$, and the increasing Euclidean quadratic regularizer above. It also matches Orabona's Chapter 8 online-linear-classification surrogate once the bounded-domain condition $|\langle z_t,x\rangle|\le1$ is enforced. The broader online-convex-optimization framing follows Zinkevich's static-regret setting, and the FTRL interpretation is standard in the McMahan FTRL/mirror-descent literature.
 
 ### SMART
 
-SMART starts with true FTL and computes:
+SMART starts as exact FTL and computes the exact adapted FTL regret trace:
 
 $$
 \Sigma_t
 =
-\sum_{i=1}^t \ell_i(x_i^{\mathrm{FTL}})
--\min_{x\in X}\sum_{i=1}^t\ell_i(x).
+\sum_{i=1}^t\ell_i(x_i^{\mathrm{FTL}})
+-L_t^*
+=
+\sum_{i=1}^t\ell_i(x_i^{\mathrm{FTL}})
+-\left(\frac{t}{2}-\frac12\|M_t\|_2\right).
 $$
 
-For this exact setting, $\Sigma_t$ is monotone and $\Sigma_T=\mathrm{Reg}_T(\mathrm{FTL})$.
+In this setting, $\Sigma_t$ is online-computable after round $t$, monotone nondecreasing by the FTL be-the-leader decomposition, and satisfies
 
-SMART switches after observing the first round where:
+$$
+\Sigma_T=\mathrm{Reg}_T(\mathrm{FTL}).
+$$
+
+SMART switches after observing the first round where
 
 $$
 \Sigma_t\ge \theta.
 $$
 
-The default theory threshold is $\theta=\sqrt{2T}$. The calibrated SMART variant uses $\theta=g_{\mathrm{emp}}(T)$, where $g_{\mathrm{emp}}(T)$ is the largest observed FTRL regret across designated hard calibration streams.
+The theory threshold is $\theta=\sqrt{2T}$. The calibrated variant uses
 
-After switching, FTRL is reset and run on the suffix only.
+$$
+\theta=g_{\mathrm{emp}}(T),
+$$
 
-## Evaluation protocol
+where $g_{\mathrm{emp}}(T)$ is the largest observed FTRL regret across designated hard calibration streams. After switching, FTRL is reset and run only on the suffix. The reset is intentional: it matches the SMART proof decomposition into an FTL prefix and a robust-policy suffix.
+
+## What Experiments 2 and 4 Got Wrong
+
+### Experiment 2: Wrong State for FTL
+
+Experiment 2 treated the absolute-value objective as a generic prefix ERM problem and tracked a fast FTL state using played-point subgradients:
+
+$$
+\theta_t=\sum_{i\le t}g_i z_i,\qquad
+g_i\in\partial_q \frac12|q-y_i|.
+$$
+
+At exact-fit boundary points $q=y_i$, the implementation used $g_i=0$. That is a valid subgradient choice for a linearized algorithm, but it is not the cumulative state of the restricted-domain OLC loss. The true state is always
+
+$$
+M_t=\sum_{i\le t}y_i z_i.
+$$
+
+On deterministic boundary-heavy streams such as `switching_leaders`, the old subgradient-state path dropped informative rounds. The resulting path was not true FTL on the original loss. It could even report negative FTL regret, which is mathematically impossible for exact FTL and was therefore a bug.
+
+Experiment 2's CVXPY path reinforced the wrong conclusion that true FTL was computationally expensive. CVXPY was solving the generic absolute-loss problem for every prefix, but in this bounded OLC setting the same optimizer is available in closed form from $M_t$.
+
+### Experiment 4: Solving a Nonexistent Bottleneck
+
+Experiment 4 assumed that computing true FTL and the prefix comparator required solving $T$ optimization problems per run, roughly $O(T^2d)$. To avoid that cost, it reversed the construction: it designed a target leader path first, manufactured bounded increments that realized that path, and then converted those increments into feature-label pairs.
+
+That machinery was unnecessary. The exact comparator and exact FTL action are available from
+
+$$
+M_t=\sum_{i\le t}y_i z_i,
+\qquad
+x_t^{\mathrm{FTL}}=\frac{M_{t-1}}{\|M_{t-1}\|_2},
+\qquad
+L_t^*=\frac{t}{2}-\frac12\|M_t\|_2.
+$$
+
+The correct complexity is $O(Td)$ per trial. Experiment 5 keeps the useful insight from experiment 4, namely closed-form true FTL, but removes the reverse-engineered leader-path synthesis as primary evidence.
+
+### Why This Does Not Replace SVMs
+
+The closed form applies only to this restricted regret-accounting objective:
+
+$$
+\min_{\|x\|_2\le1}\sum_{t=1}^T\frac12|\langle z_t,x\rangle-y_t|.
+$$
+
+Under $\|z_t\|\le1$ and $\|x\|\le1$, that objective collapses to a signed-average direction. SVMs and Pegasos-style methods solve different margin-regularized hinge-loss objectives, often with bias terms, kernels, and support-vector structure. Passive-Aggressive algorithms are also different: they are margin-driven online updates, not the quadratic-FTRL robust baseline used here.
+
+## Sequence Design
+
+### Behavior Claim
+
+The experiment must show three SMART behaviors:
+
+1. **Preserve optimism:** on benign predictable streams, SMART should remain close to FTL and avoid FTRL's robustness tax.
+2. **Protect in hard regimes:** on high-variation or corrupted streams, SMART should switch and avoid FTL's large regret growth.
+3. **Explain the switch:** in mixed streams, the switch should be readable from $\Sigma_t$ crossing the calibrated threshold after sustained deterioration begins.
+
+### Literature Motivation
+
+The sequence design uses application stories and individual-sequence examples from the literature.
+
+Contextual pricing and allocation motivate the benign covariate-diverse stream. Bastani, Bayati, and Khosravi show that greedy or mostly-greedy contextual-bandit policies can be effective when contexts have enough diversity, which is the operational analogue of a stable informative feature process.
+
+Dynamic pricing and revenue-management models motivate the exogenous market-shift stream. Aviv and Pazgal study pricing under partially observed demand dynamics, illustrating why a sequential decision-maker may face regime changes that are not chosen by the algorithm.
+
+Online advertising and platform feedback motivate the strategic-corruption stream. Choi, Mela, Balseiro, and Leary survey online display-advertising markets, where feedback quality and strategic behavior matter; corruption-robust online learning, including Lykouris, Mirrokni, and Paes Leme, motivates stress tests with reliable prefixes and harmful suffixes.
+
+Feder, Merhav, and Gutman, and later de Rooij, van Erven, Grunwald, and Koolen, motivate the OLC-FMG sequence. Their individual-sequence examples are designed to expose when it is safe to follow the leader and when a robust policy is needed. Here we build the vector-valued OLC analogue by controlling the signed feature sum $M_t$ through bounded feature-label pairs.
+
+### OLC Construction Rule
+
+All sequences must be valid OLC streams:
+
+$$
+\|z_t\|_2\le\rho,\qquad y_t\in\{-1,+1\}.
+$$
+
+The generator cannot directly specify arbitrary losses or arbitrary leader paths. It must specify feature-label pairs. The only lever that affects FTL and the comparator is the signed update
+
+$$
+y_tz_t.
+$$
+
+This is why every sequence below is described through how it shapes $M_t=\sum_{i\le t}y_i z_i$.
+
+### Primary Sequence Families
+
+The main regret-by-horizon figure uses five primary sequence families.
+
+**`covariate_diverse_stationary`**
+
+Purpose: benign, representative optimism case.
+
+Generation: sample a unit separator $u$, labels $y_t\sim\mathrm{Unif}\{-1,+1\}$, and orthogonal unit noise $v_t\perp u$. Then set
+
+$$
+z_t=\rho y_t\operatorname{unit}(0.72u+0.58v_t).
+$$
+
+The signed update is
+
+$$
+y_tz_t=\rho\operatorname{unit}(0.72u+0.58v_t),
+$$
+
+so $M_t$ has persistent positive drift toward $u$ with covariate variation around that direction.
+
+Why it is appropriate: this is the OLC analogue of stable contextual structure with covariate diversity. FTL should identify the stable direction quickly, and SMART should not switch.
+
+**`mild_label_noise`**
+
+Purpose: benign but noisy optimism case.
+
+Generation: use the same class-conditional margin model as `covariate_diverse_stationary`, then independently flip each label with probability $0.10$.
+
+Why it is appropriate: this tests whether SMART is hypersensitive to ordinary stochastic noise. A good result keeps SMART close to FTL and avoids unnecessary switching.
+
+**`market_shift_change_point`**
+
+Purpose: exogenous nonstationarity diagnostic.
+
+Generation: use a fixed split at $0.45T$. Before the split, sample from a separator $u_0$ with margin $0.74$, noise scale $0.50$, and label noise $0.02$. After the split, rotate to
+
+$$
+u_1=\operatorname{unit}(0.25u_0+0.9682458366v),
+$$
+
+where $v\perp u_0$, and sample with margin $0.70$, noise scale $0.62$, and label noise $0.08$.
+
+Why it is appropriate: this models a market, customer, or response-function shift that is not adaptive to the algorithm. It also clarifies an important limitation: under static regret, not every nonstationary story is hard for FTL. In the latest run, this stream remained benign by the static-regret metric.
+
+**`strategic_corruption_suffix`**
+
+Purpose: paper-facing hardening sequence with an applied corruption story.
+
+Generation: sample a unit direction $u$. For the first $20\%$ of the horizon, set $z_t\approx\rho u$ and $y_t=+1$, so $y_tz_t$ builds a stable leader. For the next $20\%$, keep $z_t\approx\rho u$ but set $y_t=-1$, so $y_tz_t\approx-\rho u$ erodes the trusted signal. For the final $60\%$, keep $z_t\approx\rho u$ and alternate labels, keeping $M_t$ near the decision boundary and making FTL chase unstable leaders.
+
+Concretely, the implementation uses
+
+$$
+z_t=\rho\operatorname{unit}(0.96u+0.04v_t),
+$$
+
+with $v_t\perp u$, and labels by phase:
+
+$$
+y_t=
+\begin{cases}
++1, & t<0.20T,\\
+-1, & 0.20T\le t<0.40T,\\
+(-1)^{t-\lfloor0.40T\rfloor}, & t\ge0.40T.
+\end{cases}
+$$
+
+Why it is appropriate: this is the OLC analogue of a reliable deployment followed by manipulation, click fraud, sensor failure, or strategic response. It is exogenous and pre-specified, but adversarially structured. It should make FTL unsafe and trigger SMART after the trusted prefix has been eroded.
+
+**`olc_fmg_leader_gap`**
+
+Purpose: literature bridge to individual-sequence examples.
+
+Generation: fix $z_t=\rho e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
+
+Why it is appropriate: this is the direct one-dimensional OLC analogue of alternating-then-stable individual sequences used to show why one should follow the leader only when the leader is stable. The alternating prefix repeatedly cancels $M_t$; the stable suffix eventually creates a reliable leader. It is illustrative and literature-facing rather than a calibrated market data model.
+
+### Diagnostic Sequence
+
+`switching_leaders` fixes $z_t=\rho e_1$ and uses label blocks of length 20 with alternating signs. This is included because the same style of deterministic boundary-heavy stream produced invalid negative regret in experiment 2. Under exact $M_t$-based FTL, the diagnostic trace verifies non-negative FTL regret and monotone $\Sigma_t$.
+
+### Acceptance Criteria
+
+A successful run should show:
+
+1. In `covariate_diverse_stationary`, SMART and FTL have nearly identical regret and FTRL is higher.
+2. In `mild_label_noise`, SMART remains close to FTL and does not switch merely because of mild stochastic corruption.
+3. In `market_shift_change_point`, the result is interpreted as static regret; a no-switch result is acceptable if the shifted stream is still easy for a best fixed comparator.
+4. In `strategic_corruption_suffix`, SMART switches during the corrupted regime and materially reduces FTL's late-horizon regret.
+5. In `olc_fmg_leader_gap`, SMART improves on FTL by responding to leader instability, matching the classical "follow the leader if you can" lesson.
+6. The switch-diagnostic plot shows monotone $\Sigma_t$, the calibrated threshold, and interpretable switch timing.
+7. `switching_leaders` confirms that experiment 2's negative regret was an implementation artifact.
+
+## Evaluation Protocol
 
 Default run:
 
@@ -459,7 +401,7 @@ Invariant checks:
 python experiments/exp05_true_ftl_olc/run_experiment.py --self-test
 ```
 
-Default dashboard configuration:
+Default configuration:
 
 - primary dimension: $d=20$
 - feature radius: $\rho=0.8$
@@ -475,11 +417,9 @@ Heavier paper-profile run:
 python experiments/exp05_true_ftl_olc/run_experiment.py --paper-profile
 ```
 
-The paper profile uses horizons through $T=2000$ with 64 trials per horizon. It is intentionally not the default because dashboard regeneration should stay practical during iteration.
-
 Each horizon uses fresh sequences of exactly that length. Plots report mean regret with 95% confidence bands where applicable.
 
-## Outputs and figure provenance
+## Outputs and Figure Provenance
 
 Generated outputs:
 
@@ -500,47 +440,53 @@ Curated dashboard figures:
 - `figures/fig_exp05_olc_dimension_sweep.png`
 - `figures/INDEX.md`
 
-The dashboard can be regenerated from the repository root with:
+Regenerate the dashboard UI with:
 
 ```bash
 python experiments/dashboard/generate_dashboard.py
 ```
 
-## Interpretation
-
-This experiment is designed to support a mechanism claim, not a dataset benchmark claim. The strongest paper-facing evidence is the joint behavior of:
-
-1. regret-by-horizon curves,
-2. switch diagnostics from $\Sigma_t$,
-3. threshold calibration sensitivity,
-4. dimension robustness.
-
-The expected result is not universal dominance by SMART. The intended story is that SMART tracks FTL when FTL is safe, switches when the exact trace indicates FTL has become risky, and provides a clean compromise between optimism and robustness in mixed regimes.
+## Latest Default Results
 
 Latest default run produced the following mean final regrets at $T=1000$:
 
-- `iid_separable_margin`: `FTL=5.861`, `FTRL=6.603`, `SMART-theory=5.861`, `SMART-calibrated=5.861`.
-- `massart_10`: `FTL=6.618`, `FTRL=7.527`, `SMART-theory=6.618`, `SMART-calibrated=6.618`.
-- `alternating_antileader`: `FTL=200.000`, `FTRL=6.925`, `SMART-theory=50.474`, `SMART-calibrated=20.270`.
-- `benign_to_hard_suffix`: `FTL=178.119`, `FTRL=-1.878`, `SMART-theory=48.900`, `SMART-calibrated=18.256`.
-- `separator_drift`: `FTL=5.459`, `FTRL=6.123`, `SMART-theory=5.459`, `SMART-calibrated=5.459`.
+- `covariate_diverse_stationary`: `FTL=1.108`, `FTRL=1.500`, `SMART-theory=1.108`, `SMART-calibrated=1.108`, calibrated switch mean `1001.0` (no switch).
+- `mild_label_noise`: `FTL=1.376`, `FTRL=1.785`, `SMART-theory=1.376`, `SMART-calibrated=1.376`, calibrated switch mean `1001.0` (no switch).
+- `market_shift_change_point`: `FTL=1.106`, `FTRL=1.506`, `SMART-theory=1.106`, `SMART-calibrated=1.106`, calibrated switch mean `1001.0` (no switch).
+- `strategic_corruption_suffix`: `FTL=82.463`, `FTRL=-2.689`, `SMART-theory=48.387`, `SMART-calibrated=18.723`, calibrated switch mean `488.8`.
+- `olc_fmg_leader_gap`: `FTL=80.400`, `FTRL=11.789`, `SMART-theory=52.739`, `SMART-calibrated=24.760`, calibrated switch mean `70.0`.
 
-The main interpretation is:
+Interpretation:
 
-1. In benign and mild-noise regimes, SMART is indistinguishable from true FTL and improves over robust FTRL.
-2. In hard anti-leader regimes, SMART substantially reduces FTL's blow-up; FTRL remains the strongest pure robust baseline.
-3. In the mixed benign-to-hard regime, SMART switches after the hard suffix begins and sharply reduces FTL regret, while FTRL can achieve negative static regret because adaptive policies may beat the best fixed comparator on this synthetic nonstationary stream.
-4. The `switching_leaders` sequence—which produced invalid negative regret in experiment 2—is shown in the switch diagnostics plot rather than the horizon sweep (its deterministic block structure creates sawtooth artifacts at coarse horizon spacing). The per-round diagnostic trace confirms that FTL regret is strictly positive at every round, $\Sigma_t$ is monotone and stays below threshold, and SMART does not switch. The negative regret observed in experiment 2 was entirely an artifact of the subgradient-state divergence, not a property of the sequence.
+1. SMART is indistinguishable from FTL in the stationary, mild-noise, and market-shift regimes, avoiding FTRL's robustness tax.
+2. SMART sharply reduces FTL regret in the strategic-corruption suffix, switching after the reliable prefix has been eroded.
+3. SMART improves substantially on FTL in the OLC-FMG leader-gap sequence, matching the classical individual-sequence intuition.
+4. FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
 
-## Limits and non-claims
+## Limits and Non-Claims
 
 - The streams are synthetic and mechanism-oriented.
-- The anti-leader stream is illustrative rather than representative.
-- The separator drift diagnostic is not a dynamic-regret benchmark.
-- Empirical threshold calibration is itself a modeling choice and should be reported alongside the regret results.
+- The market-shift sequence is not a dynamic-regret benchmark; all reported regrets are static regret against the best fixed comparator.
+- The strategic-corruption sequence is exogenous and pre-specified, but adversarially structured. It should be presented as a stress test, not as a calibrated empirical data model.
+- The OLC-FMG sequence is illustrative and literature-facing rather than representative of a specific market process.
+- Empirical threshold calibration is a modeling choice and should be reported alongside regret results.
 
-## Code map
+## Code Map
 
 - Exact algorithms and invariants: `src/olc_exact.py`
 - Sequence families: `src/sequences.py`
 - Figure generation and dashboard curation: `run_experiment.py`
+
+## References
+
+- Aviv, Y. and Pazgal, A. (2005). "A Partially Observed Markov Decision Process for Dynamic Pricing." *Management Science*. <https://doi.org/10.1287/mnsc.1050.0393>
+- Bastani, H., Bayati, M., and Khosravi, K. (2021). "Mostly Exploration-Free Algorithms for Contextual Bandits." *Management Science*. <https://doi.org/10.1287/mnsc.2020.3605>
+- Choi, H., Mela, C. F., Balseiro, S. R., and Leary, A. (2020). "Online Display Advertising Markets: A Literature Review and Future Directions." *Information Systems Research*. <https://doi.org/10.1287/isre.2019.0901>
+- Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S., and Singer, Y. (2006). "Online Passive-Aggressive Algorithms." *JMLR*. <https://www.jmlr.org/papers/v7/crammer06a.html>
+- de Rooij, S., van Erven, T., Grunwald, P. D., and Koolen, W. M. (2014). "Follow the Leader If You Can, Hedge If You Must." *JMLR*. <https://jmlr.org/papers/v15/rooij14a.html>
+- Feder, M., Merhav, N., and Gutman, M. (1992). "Universal Prediction of Individual Sequences." *IEEE Transactions on Information Theory*. <https://doi.org/10.1109/18.144705>
+- Lykouris, T., Mirrokni, V., and Paes Leme, R. (2018). "Stochastic Bandits Robust to Adversarial Corruptions." *STOC*. <https://doi.org/10.1145/3188745.3188758>
+- McMahan, B. (2011). "Follow-the-Regularized-Leader and Mirror Descent: Equivalence Theorems and L1 Regularization." *AISTATS*. <https://proceedings.mlr.press/v15/mcmahan11b.html>
+- Orabona, F. (2019). *A Modern Introduction to Online Learning*. <https://arxiv.org/abs/1912.13213>
+- Shalev-Shwartz, S., Singer, Y., and Srebro, N. (2007). "Pegasos: Primal Estimated sub-GrAdient SOlver for SVM." *ICML*. <https://doi.org/10.1145/1273496.1273598>
+- Zinkevich, M. (2003). "Online Convex Programming and Generalized Infinitesimal Gradient Ascent." *ICML*. <https://martin.zinkevich.org/publications/ICML03.pdf>
