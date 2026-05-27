@@ -1,102 +1,98 @@
-# Experiment 01: Best-of-All-Worlds Binary Prediction (Legacy)
+# Experiment 01: Best-of-All-Worlds Binary Prediction
 
-## Why this experiment exists
+## Objective
 
-This is the original binary-prediction sandbox where the SMART idea was first stress-tested against both optimistic and robust alternatives.
+This experiment is the binary-prediction companion to the OLC experiment. It studies the same SMART question in the simplest two-expert setting:
 
-Core question:
+Can SMART stay close to an optimistic FTL-style policy on easy binary sequences while protecting against FTL's failures on adversarially structured sequences?
 
-In two-expert binary prediction, can SMART track optimistic performance on easy sequences while avoiding the worst optimistic failures on adversarially structured sequences?
+The experiment is useful for mechanism intuition. The OLC experiment is the cleaner paper-facing vector setting with the standardized regret-by-horizon protocol.
 
-This folder is intentionally kept as a legacy experiment environment. It is useful for conceptual evidence and historical baselines, but it is less standardized than later experiments.
-
-## Problem setup
+## Problem Setup
 
 - Outcomes are binary: $x_t \in \{0,1\}$.
 - Algorithms output probability-like actions $w_t \in [0,1]$ for predicting 1.
 - Instant loss is Bernoulli linear loss:
-  $$
-  (1-x_t)w_t + x_t(1-w_t)
-  $$
-- Regret is measured against the best fixed binary expert (always-0 vs always-1) unless a deeper context comparator is explicitly used.
 
-## Algorithms emphasized for SMART comparison
+$$
+(1-x_t)w_t + x_t(1-w_t).
+$$
 
-- `FTL_binary` (optimistic)
-- `Cover_binary` (robust fallback used by deterministic SMART in this experiment code)
-- `SMART_det_binary` and `SMART_random_binary`
+- Regret is measured against the best fixed binary expert unless a specific script states a different comparator.
 
-Additional baselines in this legacy stack (AdaHedge, FlipFlop, ABProd, Blackwell variants) remain available for broader comparisons.
+## Algorithms
 
-## SMART definitions used in this legacy code
+The main SMART comparison uses:
 
-### Deterministic SMART (`SMART_det_binary`)
+- `FTL_binary` as the optimistic policy.
+- `Cover_binary` as the robust fallback for deterministic SMART.
+- `SMART_det_binary` and `SMART_random_binary` as the switching policies.
 
-- FTL-regret proxy in this implementation:
-  $$
-  \mathrm{reg}_{\mathrm{ftl}}(t) = 0.5\cdot \text{cumulative\_count}\{S_t=0\},
-  $$
-  where $S_t$ is signed cumulative imbalance.
-- threshold:
-  $$
-  \theta = \sqrt{\frac{n}{2\pi}}
-  $$
-- policy:
-  - play FTL until threshold crossing, then switch to Cover for the suffix
+Other baselines in the folder, including AdaHedge, FlipFlop, ABProd, and Blackwell variants, are useful for exploratory comparison but are not the primary dashboard story.
 
-### Randomized SMART (`SMART_random_binary`)
+## SMART Definitions
 
-- mixes FTL and Cover with time-varying weight based on the same regret proxy and global scale
-  $$
-  g_n = \sqrt{\frac{n}{2\pi}}
-  $$
-- intended to emulate the randomized-threshold spirit in a binary-expert setting
+### Deterministic SMART
 
-## Sequence families (exact constructions)
+The implementation uses the binary FTL-regret proxy
 
-### 1) i.i.d. Bernoulli (`generate_iid_sequence(n,p)`)
+$$
+\mathrm{reg}_{\mathrm{ftl}}(t)=0.5\cdot\text{cumulative\_count}\{S_t=0\},
+$$
 
-- sample each bit independently from $\mathrm{Bernoulli}(p)$.
+where $S_t$ is the signed cumulative imbalance. The threshold is
 
-Purpose:
+$$
+\theta=\sqrt{\frac{n}{2\pi}}.
+$$
 
-- benign/stochastic baseline where optimism should not be heavily penalized.
+The policy plays FTL until the threshold is crossed, then switches to `Cover_binary` for the suffix.
 
-### 2) FMG sequence (`generate_FMG_sequence(n,c)`)
+### Randomized SMART
 
-- create $c$ randomly oriented alternating pairs ($01$ or $10$)
-- fill the remainder with ones
-- constraint: $2c \le n$
+The randomized variant mixes FTL and Cover with a time-varying weight based on the same regret proxy and global scale
 
-Purpose:
+$$
+g_n=\sqrt{\frac{n}{2\pi}}.
+$$
 
-- control number of crossings/ties and stress optimistic tie behavior.
+It is intended to mirror the randomized-threshold SMART idea in a binary-expert setting.
 
-### 3) High-loss FMG (`generate_highlossFMG_ftl(n,c,p)`)
+## Sequence Families
 
-- first $2c$ bits are alternating pairs
-- then append $[1,1]$
-- fill remainder with Bernoulli tail (default $p=0.3$)
+### I.I.D. Bernoulli
 
-Purpose:
+`generate_iid_sequence(n,p)` samples each bit independently from $\mathrm{Bernoulli}(p)$.
 
-- produce FMG-style structure with heavier optimistic stress.
+Purpose: benign stochastic baseline where optimism should not be heavily penalized.
 
-### 4) Loss-shaped sequences (`loss_based_sequence_generation`)
+### FMG Sequence
 
-- greedily choose next bit to keep cumulative expert-loss difference close to a target function (for example $n^{0.4}$)
+`generate_FMG_sequence(n,c)` creates $c$ randomly oriented alternating pairs, then fills the remainder with ones. It requires $2c\le n$.
 
-Purpose:
+Purpose: control crossings and ties, exposing when following the leader is fragile.
 
-- construct trajectories that reproduce specific regret-growth patterns and expose weaknesses of some adaptive-hedging baselines.
+### High-Loss FMG
 
-## What this experiment is intended to demonstrate
+`generate_highlossFMG_ftl(n,c,p)` starts with alternating pairs, appends `[1,1]`, then fills the rest with a Bernoulli tail.
 
-1. On i.i.d.-style sequences, SMART should stay close to optimistic behavior.
-2. On FMG / high-loss / loss-shaped sequences, SMART should reduce downside relative to pure FTL.
-3. Across easy and hard families, SMART should behave like a practical compromise between optimism and robustness.
+Purpose: produce FMG-style structure with heavier optimistic stress.
 
-## Evaluation and outputs in this legacy stack
+### Loss-Shaped Sequences
+
+`loss_based_sequence_generation` greedily chooses the next bit to keep cumulative expert-loss difference near a target function such as $n^{0.4}$.
+
+Purpose: construct trajectories with specific regret-growth patterns and reveal differences among adaptive methods.
+
+## Interpretation
+
+This experiment supports the same qualitative SMART story as the OLC tab:
+
+1. On benign binary streams, SMART should stay close to FTL.
+2. On FMG, high-loss, and loss-shaped streams, SMART should reduce downside relative to pure FTL.
+3. Across easy and hard families, SMART should act as a transparent compromise between optimism and robustness.
+
+## Evaluation and Outputs
 
 Main entry points:
 
@@ -112,16 +108,8 @@ Core analysis code:
 
 Historical plots are stored under `Graphs/` and experiment root PNGs.
 
-## Current empirical interpretation
+## Limits and Non-Claims
 
-Historically, this experiment established the qualitative SMART narrative:
-
-- SMART behaves close to FTL on benign binary streams.
-- SMART avoids some of FTL's worst binary adversarial constructions by switching to a safer policy.
-- Carefully designed loss-shaped sequences are important for revealing differences among adaptive methods.
-
-## Limits and non-claims
-
-- This is a legacy, non-unified pipeline (multiple drivers, historical outputs mixed together).
-- Comparator definitions vary across some scripts (binary expert vs context-tree expert), so claims must be tied to the exact script used.
-- This folder is strongest as historical mechanism evidence, not as the final standardized paper pipeline.
+- This folder predates the current standardized experiment template.
+- Comparator definitions vary across some scripts, so claims should be tied to the exact script used.
+- Use this tab for binary mechanism intuition; use the OLC tab for the current paper-facing empirical story.

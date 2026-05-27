@@ -1,22 +1,17 @@
 # Figure Index (exp05)
 
-- Label: `fig:exp05_olc_regret_horizon_benign`
-  Title: `True-FTL OLC: Benign Regret by Horizon`
-  File: `fig_exp05_olc_regret_by_horizon_benign.png`
-  Source: `outputs/figures/exp05_olc_regret_by_horizon_benign.png`
-
-- Label: `fig:exp05_olc_regret_horizon_hard`
-  Title: `True-FTL OLC: Hard-Regime Regret by Horizon`
-  File: `fig_exp05_olc_regret_by_horizon_hard.png`
-  Source: `outputs/figures/exp05_olc_regret_by_horizon_hard.png`
+- Label: `fig:exp05_olc_regret_horizon`
+  Title: `OLC: Regret by Horizon Across Regimes`
+  File: `fig_exp05_olc_regret_by_horizon.png`
+  Source: `outputs/figures/exp05_olc_regret_by_horizon.png`
 
 - Label: `fig:exp05_olc_empirical_threshold`
-  Title: `Empirical Robust Threshold for True-FTL OLC`
+  Title: `Empirical Robust Threshold for OLC`
   File: `fig_exp05_olc_empirical_threshold.png`
   Source: `outputs/figures/exp05_olc_empirical_threshold.png`
 
 - Label: `fig:exp05_olc_switch_diagnostics`
-  Title: `SMART Switch Diagnostics in True-FTL OLC`
+  Title: `SMART Switch Diagnostics in OLC`
   File: `fig_exp05_olc_switch_diagnostics.png`
   Source: `outputs/figures/exp05_olc_switch_diagnostics.png`
 

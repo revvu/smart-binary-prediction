@@ -321,7 +321,7 @@ def plot_empirical_g(horizons: Array, g_emp: dict[int, float], out_path: Path) -
     fig, ax = plt.subplots(figsize=(7.8, 4.8))
     ax.plot(horizons, g_vals, marker="o", linewidth=2, label="Empirical FTRL g(T)")
     ax.plot(horizons, np.sqrt(2.0 * horizons), linestyle="--", linewidth=2, label=r"$\sqrt{2T}$")
-    ax.set_title("Empirical Robust Threshold for True-FTL OLC")
+    ax.set_title("Empirical Robust Threshold for OLC")
     ax.set_xlabel("Horizon")
     ax.set_ylabel("Threshold")
     ax.legend(loc="best")
@@ -381,7 +381,7 @@ def plot_switch_diagnostics(
         ax_reg.set_ylim(bottom=min(0.0, min_reg - 0.5))
         ax_reg.legend(loc="best", fontsize=9)
 
-    fig.suptitle("SMART Switch Diagnostics in True-FTL OLC", fontsize=16)
+    fig.suptitle("SMART Switch Diagnostics in OLC", fontsize=16)
     fig.tight_layout()
     fig.savefig(out_path, dpi=240, bbox_inches="tight")
     plt.close(fig)
@@ -508,7 +508,7 @@ def plot_dimension_sweep(
     for idx in range(len(scenarios), len(axes)):
         axes[idx].axis("off")
 
-    fig.suptitle(f"True-FTL OLC: Dimension Sweep at Horizon {horizon}", fontsize=16)
+    fig.suptitle(f"OLC: Dimension Sweep at Horizon {horizon}", fontsize=16)
     fig.tight_layout()
     fig.savefig(out_path, dpi=240, bbox_inches="tight")
     plt.close(fig)
@@ -664,8 +664,7 @@ def main() -> None:
 
     write_summary_csv(output_dir / "summary_regret.csv", horizons, stats_by_scenario)
 
-    regret_benign_path = figures_out / "exp05_olc_regret_by_horizon_benign.png"
-    regret_hard_path = figures_out / "exp05_olc_regret_by_horizon_hard.png"
+    regret_path = figures_out / "exp05_olc_regret_by_horizon.png"
     g_path = figures_out / "exp05_olc_empirical_threshold.png"
     switch_path = figures_out / "exp05_olc_switch_diagnostics.png"
     calibration_path = figures_out / "exp05_olc_threshold_calibration.png"
@@ -674,16 +673,9 @@ def main() -> None:
     plot_regret_grid(
         horizons,
         stats_by_scenario,
-        BENIGN_REGRET_SCENARIOS,
-        title="True-FTL OLC: Benign Regret by Horizon",
-        out_path=regret_benign_path,
-    )
-    plot_regret_grid(
-        horizons,
-        stats_by_scenario,
-        HARD_REGRET_SCENARIOS,
-        title="True-FTL OLC: Hard-Regime Regret by Horizon",
-        out_path=regret_hard_path,
+        BENIGN_REGRET_SCENARIOS + HARD_REGRET_SCENARIOS,
+        title="OLC: Regret by Horizon Across Regimes",
+        out_path=regret_path,
     )
     plot_empirical_g(horizons, g_emp, g_path)
     plot_switch_diagnostics(t_max=args.t_max, d=args.d, seed=args.seed, g_emp=g_emp, out_path=switch_path)
@@ -696,24 +688,19 @@ def main() -> None:
         out_path=calibration_path,
     )
     generated = {
-        "fig:exp05_olc_regret_horizon_benign": (
-            regret_benign_path,
-            "True-FTL OLC: Benign Regret by Horizon",
-            "fig_exp05_olc_regret_by_horizon_benign.png",
-        ),
-        "fig:exp05_olc_regret_horizon_hard": (
-            regret_hard_path,
-            "True-FTL OLC: Hard-Regime Regret by Horizon",
-            "fig_exp05_olc_regret_by_horizon_hard.png",
+        "fig:exp05_olc_regret_horizon": (
+            regret_path,
+            "OLC: Regret by Horizon Across Regimes",
+            "fig_exp05_olc_regret_by_horizon.png",
         ),
         "fig:exp05_olc_empirical_threshold": (
             g_path,
-            "Empirical Robust Threshold for True-FTL OLC",
+            "Empirical Robust Threshold for OLC",
             "fig_exp05_olc_empirical_threshold.png",
         ),
         "fig:exp05_olc_switch_diagnostics": (
             switch_path,
-            "SMART Switch Diagnostics in True-FTL OLC",
+            "SMART Switch Diagnostics in OLC",
             "fig_exp05_olc_switch_diagnostics.png",
         ),
         "fig:exp05_olc_threshold_calibration": (
@@ -737,7 +724,7 @@ def main() -> None:
         write_dimension_csv(output_dir / "dimension_sweep.csv", dimension_dims, dimension_stats)
         generated["fig:exp05_olc_dimension_sweep"] = (
             dimension_path,
-            f"True-FTL OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
+            f"OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
             "fig_exp05_olc_dimension_sweep.png",
         )
     curate_figures(exp_dir, generated)

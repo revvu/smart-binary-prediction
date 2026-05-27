@@ -14,8 +14,14 @@ OUTPUT_HTML = ROOT / "experiments" / "dashboard" / "index.html"
 ASSETS_DIR = OUTPUT_HTML.parent / "assets"
 SMART_ALGO_MD = ROOT / "smart_algorithm.md"
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"}
-LEGACY_OLC_SLUGS = ("exp02_online_linear_classification", "exp04_leader_path_synthesis")
-LEGACY_OLC_ASSET_SLUG = "legacy_olc"
+DASHBOARD_EXPERIMENT_SLUGS = (
+    "exp01_best_of_all_worlds",
+    "exp05_true_ftl_olc",
+)
+DASHBOARD_LABELS = {
+    "exp01_best_of_all_worlds": "Best-of-All-Worlds",
+    "exp05_true_ftl_olc": "OLC",
+}
 
 
 @dataclass
@@ -28,6 +34,7 @@ class FigureItem:
 @dataclass
 class ExperimentItem:
     slug: str
+    display_label: str
     display_name: str
     readme: str
     figures: list[FigureItem]
@@ -75,18 +82,19 @@ def _parse_figure_titles_from_index(index_md: str) -> dict[str, str]:
     return title_by_file
 
 
-def _strip_first_heading(markdown_text: str) -> str:
-    lines = markdown_text.splitlines()
-    for idx, line in enumerate(lines):
-        if re.match(r"^#\s+", line.strip()):
-            start = idx + 1
-            while start < len(lines) and not lines[start].strip():
-                start += 1
-            return "\n".join(lines[start:]).strip()
-    return markdown_text.strip()
+def _dashboard_label(slug: str) -> str:
+    return DASHBOARD_LABELS.get(slug, _nice_name_from_slug(slug))
 
 
-def _collect_figures(exp_dir: Path, *, asset_slug: str | None = None, title_prefix: str | None = None) -> list[FigureItem]:
+def _overview_markdown() -> str:
+    text = _read_text(SMART_ALGO_MD)
+    cutoff = re.search(r"^##\s+6\)", text, flags=re.MULTILINE)
+    if cutoff:
+        return text[: cutoff.start()].rstrip() + "\n"
+    return text
+
+
+def _collect_figures(exp_dir: Path) -> list[FigureItem]:
     figures_dir = exp_dir / "figures"
     title_map: dict[str, str] = {}
     if (figures_dir / "INDEX.md").exists():
@@ -96,18 +104,16 @@ def _collect_figures(exp_dir: Path, *, asset_slug: str | None = None, title_pref
     if not figures_dir.exists():
         return figures
 
-    exp_assets_dir = ASSETS_DIR / (asset_slug or exp_dir.name)
+    exp_assets_dir = ASSETS_DIR / exp_dir.name
     exp_assets_dir.mkdir(parents=True, exist_ok=True)
     for f in sorted(figures_dir.iterdir(), key=lambda p: p.name):
         if not (f.is_file() and f.suffix.lower() in IMAGE_EXTS):
             continue
-        copied_name = f.name if asset_slug is None else f"{exp_dir.name}__{f.name}"
+        copied_name = f.name
         copied = exp_assets_dir / copied_name
         shutil.copy2(f, copied)
         rel_src = copied.relative_to(OUTPUT_HTML.parent).as_posix()
         title = title_map.get(f.name, f.name)
-        if title_prefix:
-            title = f"{title_prefix}: {title}"
         figures.append(
             FigureItem(
                 filename=copied_name,
@@ -125,40 +131,10 @@ def _load_experiment(exp_dir: Path) -> ExperimentItem:
     display_name = heading or _nice_name_from_slug(exp_dir.name)
     return ExperimentItem(
         slug=exp_dir.name,
+        display_label=_dashboard_label(exp_dir.name),
         display_name=display_name,
         readme=readme,
         figures=_collect_figures(exp_dir),
-    )
-
-
-def _build_legacy_olc_experiment(exp_dirs: list[Path]) -> ExperimentItem:
-    readme_parts = [
-        "## Scope",
-        "",
-        "This tab groups the older online-linear-classification experiments that are now superseded by Experiment 05.",
-        "Experiment 02 contains the original OLC SMART study and its calibration results. Experiment 04 contains the leader-path synthesis attempt that clarified why exact true-FTL OLC should be computed directly from the signed-feature state.",
-        "",
-    ]
-    figures: list[FigureItem] = []
-
-    for exp_dir in exp_dirs:
-        readme = _read_text(exp_dir / "README.md")
-        heading = _first_heading(readme) or _nice_name_from_slug(exp_dir.name)
-        short = exp_dir.name.split("_", 1)[0].upper()
-        readme_parts.extend([f"## {heading}", "", _strip_first_heading(readme), ""])
-        figures.extend(
-            _collect_figures(
-                exp_dir,
-                asset_slug=LEGACY_OLC_ASSET_SLUG,
-                title_prefix=short,
-            )
-        )
-
-    return ExperimentItem(
-        slug=LEGACY_OLC_ASSET_SLUG,
-        display_name="Legacy OLC (Experiments 02 and 04)",
-        readme="\n".join(readme_parts).strip() + "\n",
-        figures=figures,
     )
 
 
@@ -167,21 +143,11 @@ def _discover_experiments() -> list[ExperimentItem]:
         shutil.rmtree(ASSETS_DIR)
     ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 
-    exp_dirs = sorted(
-        [p for p in EXPERIMENTS_DIR.iterdir() if p.is_dir() and re.match(r"^exp\d+_", p.name)],
-        key=lambda p: p.name,
-    )
-
     experiments: list[ExperimentItem] = []
-    by_slug = {p.name: p for p in exp_dirs}
-    for exp_dir in exp_dirs:
-        if exp_dir.name == LEGACY_OLC_SLUGS[0]:
-            legacy_olc_dirs = [by_slug[slug] for slug in LEGACY_OLC_SLUGS if slug in by_slug]
-            experiments.append(_build_legacy_olc_experiment(legacy_olc_dirs))
+    for slug in DASHBOARD_EXPERIMENT_SLUGS:
+        exp_dir = EXPERIMENTS_DIR / slug
+        if not exp_dir.exists():
             continue
-        if exp_dir.name in LEGACY_OLC_SLUGS:
-            continue
-
         experiments.append(_load_experiment(exp_dir))
 
     return experiments
@@ -191,6 +157,7 @@ def _to_dict(experiments: list[ExperimentItem]) -> list[dict[str, Any]]:
     return [
         {
             "slug": e.slug,
+            "displayLabel": e.display_label,
             "displayName": e.display_name,
             "readme": e.readme,
             "figures": [
@@ -518,7 +485,7 @@ def _build_html(payload_json: str) -> str:
     <header class="masthead">
       <div class="masthead-overline">Experiment Reports · SMART Algorithm</div>
       <h1>SMART Experiment<br>Reports</h1>
-      <p class="masthead-sub">Overview renders <code>smart_algorithm.md</code> — each experiment tab renders its README as a report with appended figures.</p>
+      <p class="masthead-sub">Overview summarizes the SMART algorithm — each experiment tab renders its README as a report with appended figures.</p>
     </header>
     <nav id="tabs" class="nav-bar"></nav>
     <div id="panels"></div>
@@ -642,12 +609,10 @@ def _build_html(payload_json: str) -> str:
     }
 
     function titleFromSlug(slug) {
-      if (slug === "legacy_olc") return "Legacy OLC";
       return slug.replace(/^exp\\d+_/, "").replaceAll("_", " ").replace(/\\b\\w/g, (c) => c.toUpperCase());
     }
 
     function expKicker(slug) {
-      if (slug === "legacy_olc") return "Legacy";
       const m = slug.match(/^exp(\\d+)_/);
       return m ? "Experiment " + m[1] : "Report";
     }
@@ -668,7 +633,7 @@ def _build_html(payload_json: str) -> str:
       return '<article class="report">' +
         '<header class="title-block">' +
         '<div class="exp-number">' + expKicker(exp.slug) + '</div>' +
-        '<h2>' + escHtml(titleFromSlug(exp.slug)) + '</h2>' +
+        '<h2>' + escHtml(exp.displayLabel || titleFromSlug(exp.slug)) + '</h2>' +
         '<p class="origin">' + escHtml(exp.displayName || exp.slug) + '</p>' +
         '</header>' +
         '<section class="md">' + renderMarkdown(exp.readme || "") + '</section>' +
@@ -682,7 +647,7 @@ def _build_html(payload_json: str) -> str:
 
     const tabs = [{ key: "overview", label: "Overview" }];
     for (const exp of payload.experiments) {
-      tabs.push({ key: exp.slug, label: exp.slug });
+      tabs.push({ key: exp.slug, label: exp.displayLabel || exp.slug });
     }
 
     const tabsRoot = document.getElementById("tabs");
@@ -700,7 +665,7 @@ def _build_html(payload_json: str) -> str:
       const b = document.createElement("button");
       b.className = "nav-item";
       b.dataset.tab = tab.key;
-      b.textContent = tab.key === "overview" ? "Overview" : titleFromSlug(tab.label);
+      b.textContent = tab.label;
       tabsRoot.appendChild(b);
     }
 
@@ -736,7 +701,7 @@ def _build_html(payload_json: str) -> str:
 def main() -> None:
     experiments = _discover_experiments()
     payload = {
-        "smartAlgorithm": _read_text(SMART_ALGO_MD),
+        "smartAlgorithm": _overview_markdown(),
         "experiments": _to_dict(experiments),
     }
 

@@ -4,13 +4,12 @@ Static dashboard for browsing SMART theory and experiment reports.
 
 ## What it shows
 
-- `Overview` tab: rendered `smart_algorithm.md`
-- One tab per active `experiments/expNN_*` directory
-- A combined `Legacy OLC` tab for `exp02_online_linear_classification` and `exp04_leader_path_synthesis`
+- `Overview` tab: sections 1-5 from `smart_algorithm.md`
+- `Best-of-All-Worlds` tab: binary prediction report from `exp01_best_of_all_worlds`
+- `OLC` tab: online linear classification report from `exp05_true_ftl_olc`
 - Per-experiment report:
   - rendered `README.md`
   - figure gallery from `figures/`
-  - rendered `figures/INDEX.md` (if present)
 
 ## Regeneration
 

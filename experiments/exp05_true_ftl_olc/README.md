@@ -1,8 +1,8 @@
-# Experiment 05: True-FTL Online Linear Classification
+# Experiment 05: Online Linear Classification
 
 ## Objective
 
-This experiment is the paper-facing replacement for the older online linear classification studies in experiments 2 and 4. It demonstrates SMART in a vector-valued online linear classification setting where:
+This experiment demonstrates SMART in a vector-valued online linear classification setting where:
 
 1. FTL is computed exactly, not approximated by played-point subgradients.
 2. The robust baseline is a concrete quadratic-FTRL algorithm with a standard online-convex-optimization interpretation.
@@ -211,44 +211,7 @@ $$
 
 where $g_{\mathrm{emp}}(T)$ is the largest observed FTRL regret across designated hard calibration streams. After switching, FTRL is reset and run only on the suffix. The reset is intentional: it matches the SMART proof decomposition into an FTL prefix and a robust-policy suffix.
 
-## What Experiments 2 and 4 Got Wrong
-
-### Experiment 2: Wrong State for FTL
-
-Experiment 2 treated the absolute-value objective as a generic prefix ERM problem and tracked a fast FTL state using played-point subgradients:
-
-$$
-\theta_t=\sum_{i\le t}g_i x_i,\qquad
-g_i\in\partial_q \frac12|q-y_i|.
-$$
-
-At exact-fit boundary points $q=y_i$, the implementation used $g_i=0$. That is a valid subgradient choice for a linearized algorithm, but it is not the cumulative state of the restricted-domain OLC loss. The true state is always
-
-$$
-M_t=\sum_{i\le t}y_i x_i.
-$$
-
-On deterministic boundary-heavy streams such as `switching_leaders`, the old subgradient-state path dropped informative rounds. The resulting path was not true FTL on the original loss. It could even report negative FTL regret, which is mathematically impossible for exact FTL and was therefore a bug.
-
-Experiment 2's CVXPY path reinforced the wrong conclusion that true FTL was computationally expensive. CVXPY was solving the generic absolute-loss problem for every prefix, but in this bounded OLC setting the same optimizer is available in closed form from $M_t$.
-
-### Experiment 4: Solving a Nonexistent Bottleneck
-
-Experiment 4 assumed that computing true FTL and the prefix comparator required solving $T$ optimization problems per run, roughly $O(T^2d)$. To avoid that cost, it reversed the construction: it designed a target leader path first, manufactured bounded increments that realized that path, and then converted those increments into feature-label pairs.
-
-That machinery was unnecessary. The exact comparator and exact FTL action are available from
-
-$$
-M_t=\sum_{i\le t}y_i x_i,
-\qquad
-w_t^{\mathrm{FTL}}=\frac{M_{t-1}}{\|M_{t-1}\|_2},
-\qquad
-L_t^*=\frac{t}{2}-\frac12\|M_t\|_2.
-$$
-
-The correct complexity is $O(Td)$ per trial. Experiment 5 keeps the useful insight from experiment 4, namely closed-form true FTL, but removes the reverse-engineered leader-path synthesis as primary evidence.
-
-### Why This Does Not Replace SVMs
+## Why This Does Not Replace SVMs
 
 The closed form applies only to this restricted regret-accounting objective:
 
@@ -430,7 +393,7 @@ python experiments/exp05_true_ftl_olc/run_experiment.py --dimension-sweep
 
 Each horizon uses fresh sequences of exactly that length. Plots report mean regret with 95% confidence bands where applicable.
 
-In the regret-by-horizon figures, line paths and uncertainty bands are drawn at the exact regret values. Marker glyphs are slightly offset in display-space points only where FTL and SMART mean-regret markers overlap in benign regimes.
+In the regret-by-horizon figure, line paths and uncertainty bands are drawn at the exact regret values. Marker glyphs are slightly offset in display-space points only where FTL and SMART mean-regret markers overlap in benign regimes.
 
 The optional dimension-sweep figure fixes the horizon at $T=10000$ and evaluates each primary sequence family at $d=1,2,\ldots,50$. It is a slow one-time diagnostic for whether the qualitative ordering of FTL, FTRL, and calibrated SMART is stable as feature dimension changes; it is not part of the default run.
 
@@ -438,8 +401,7 @@ The optional dimension-sweep figure fixes the horizon at $T=10000$ and evaluates
 
 Generated outputs:
 
-- `outputs/figures/exp05_olc_regret_by_horizon_benign.png`
-- `outputs/figures/exp05_olc_regret_by_horizon_hard.png`
+- `outputs/figures/exp05_olc_regret_by_horizon.png`
 - `outputs/figures/exp05_olc_empirical_threshold.png`
 - `outputs/figures/exp05_olc_switch_diagnostics.png`
 - `outputs/figures/exp05_olc_threshold_calibration.png`
@@ -453,8 +415,7 @@ Optional dimension diagnostic outputs:
 
 Curated dashboard figures:
 
-- `figures/fig_exp05_olc_regret_by_horizon_benign.png`
-- `figures/fig_exp05_olc_regret_by_horizon_hard.png`
+- `figures/fig_exp05_olc_regret_by_horizon.png`
 - `figures/fig_exp05_olc_empirical_threshold.png`
 - `figures/fig_exp05_olc_switch_diagnostics.png`
 - `figures/fig_exp05_olc_threshold_calibration.png`
@@ -468,9 +429,9 @@ python experiments/dashboard/generate_dashboard.py
 
 ## Result Interpretation
 
-The benign regret-by-horizon figure now has two panels: immediate stable signal and cold-start signal emergence. In both, success means SMART remains visually close to FTL and avoids FTRL's robustness tax.
+The combined regret-by-horizon figure has four panels. The two benign panels cover immediate stable signal and cold-start signal emergence; in both, success means SMART remains visually close to FTL and avoids FTRL's robustness tax.
 
-The hard-regime figure tests the two failure modes for FTL. In `strategic_corruption_suffix`, success means SMART switches after the reliable prefix has been eroded and reduces late-horizon regret. In `olc_fmg_leader_gap`, success means SMART improves on FTL by responding to leader instability, matching the classical individual-sequence intuition.
+The two hard-regime panels test the failure modes for FTL. In `strategic_corruption_suffix`, success means SMART switches after the reliable prefix has been eroded and reduces late-horizon regret. In `olc_fmg_leader_gap`, success means SMART improves on FTL by responding to leader instability, matching the classical individual-sequence intuition.
 
 FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
 
