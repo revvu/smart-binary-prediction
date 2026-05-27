@@ -7,7 +7,7 @@ This experiment is the paper-facing replacement for the older online linear clas
 1. FTL is computed exactly, not approximated by played-point subgradients.
 2. The robust baseline is a concrete quadratic-FTRL algorithm with a standard online-convex-optimization interpretation.
 3. The SMART switch statistic is the exact adapted FTL regret trace $\Sigma_t$.
-4. The sequence families are bounded OLC feature-label streams designed to show clean benign, weak-signal, delayed-signal, corrupted, and classical leader-instability regimes.
+4. The sequence families are bounded OLC feature-label streams designed to show clean benign, delayed-signal, corrupted, and classical leader-instability regimes.
 
 The paper-facing claim is:
 
@@ -24,7 +24,7 @@ $$
 The learner then observes a bounded feature-label pair $(z_t,y_t)$ with
 
 $$
-\|z_t\|_2\le \rho\le 1,\qquad y_t\in\{-1,+1\},
+\|z_t\|_2\le 1,\qquad y_t\in\{-1,+1\},
 $$
 
 and incurs the online linear classification surrogate
@@ -33,7 +33,7 @@ $$
 \ell_t(x)=\frac12|\langle z_t,x\rangle-y_t|.
 $$
 
-Because $\|x\|_2\le1$ and $\|z_t\|_2\le\rho\le1$, we have $|\langle z_t,x\rangle|\le1$. Therefore the absolute value collapses to a linear loss on the entire feasible set:
+Because $\|x\|_2\le1$ and $\|z_t\|_2\le1$, we have $|\langle z_t,x\rangle|\le1$. Therefore the absolute value collapses to a linear loss on the entire feasible set:
 
 $$
 \ell_t(x)=\frac12(1-y_t\langle z_t,x\rangle).
@@ -272,7 +272,7 @@ The experiment must show three SMART behaviors:
 
 The sequence design uses application stories and individual-sequence examples from the literature.
 
-Contextual pricing and allocation motivate the clean covariate-diverse stream and the weak-signal variant. Bastani, Bayati, and Khosravi show that greedy or mostly-greedy contextual-bandit policies can be effective when contexts have enough diversity, which is the operational analogue of a stable informative feature process. The weak-signal variant asks what happens when the same application has lower margin, lower effective covariate diversity, or noisier feedback.
+Contextual pricing and allocation motivate the clean covariate-diverse stream. Bastani, Bayati, and Khosravi show that greedy or mostly-greedy contextual-bandit policies can be effective when contexts have enough diversity, which is the operational analogue of a stable informative feature process.
 
 Dynamic pricing and revenue-management models motivate the delayed-signal stream. Aviv and Pazgal study pricing under partially observed demand dynamics, illustrating why a sequential decision-maker may initially see weak or uninformative feedback before a stable response pattern emerges.
 
@@ -285,7 +285,7 @@ Feder, Merhav, and Gutman, and later de Rooij, van Erven, Grunwald, and Koolen, 
 All sequences must be valid OLC streams:
 
 $$
-\|z_t\|_2\le\rho,\qquad y_t\in\{-1,+1\}.
+\|z_t\|_2\le1,\qquad y_t\in\{-1,+1\}.
 $$
 
 The generator cannot directly specify arbitrary losses or arbitrary leader paths. It must specify feature-label pairs. The only lever that affects FTL and the comparator is the signed update
@@ -298,7 +298,7 @@ This is why every sequence below is described through how it shapes $M_t=\sum_{i
 
 ### Primary Sequence Families
 
-The main regret-by-horizon figure uses five primary sequence families.
+The main regret-by-horizon figures use four primary sequence families.
 
 **`covariate_diverse_stationary`**
 
@@ -309,34 +309,18 @@ Real-world analogue: a mature contextual pricing, allocation, triage, or recomme
 Generation: sample a unit separator $u$, labels $y_t\sim\mathrm{Unif}\{-1,+1\}$, and orthogonal unit noise $v_t\perp u$. Then set
 
 $$
-z_t=\rho y_t\operatorname{unit}(0.72u+0.58v_t).
+z_t=y_t\operatorname{unit}(0.72u+0.58v_t).
 $$
 
 The signed update is
 
 $$
-y_tz_t=\rho\operatorname{unit}(0.72u+0.58v_t),
+y_tz_t=\operatorname{unit}(0.72u+0.58v_t),
 $$
 
 so $M_t$ has persistent positive drift toward $u$ with covariate variation around that direction.
 
 Why it is appropriate: this is the OLC analogue of stable contextual structure with covariate diversity. It tests the no-unnecessary-tax claim: FTL should identify the stable direction quickly, and SMART should not switch.
-
-**`weak_signal_low_margin`**
-
-Purpose: benign but statistically harder optimism case.
-
-Real-world analogue: the same contextual decision problem as above, but with weaker signal quality. Examples include sparse customer segments, low-margin treatment effects, noisier conversion labels, or feature sets that are only weakly predictive.
-
-Generation: use the same class-conditional margin model as `covariate_diverse_stationary`, but reduce the signal margin and add light label noise:
-
-$$
-z_t=\rho y_t\operatorname{unit}(0.18u+0.98v_t),
-$$
-
-with each label independently flipped with probability $0.05$.
-
-Why it is appropriate: this is still a stable applied setting, but the signed drift in $M_t$ is much weaker. It separates "easy benign" from "hard benign": SMART should still avoid switching, but regret should be visibly larger because FTL needs more samples to identify the stable direction.
 
 **`delayed_signal_emergence`**
 
@@ -347,7 +331,7 @@ Real-world analogue: a launch, new market, new advertising campaign, new clinica
 Generation: sample a latent separator $u$ and use a split at $0.45T$. Before the split, draw bounded covariates orthogonal to $u$ with independent random labels, so the prefix has no stable signed-feature drift toward the eventual separator. After the split, switch to the covariate-diverse margin model:
 
 $$
-z_t=\rho y_t\operatorname{unit}(0.72u+0.58v_t).
+z_t=y_t\operatorname{unit}(0.72u+0.58v_t).
 $$
 
 Why it is appropriate: this models a launch or deployment where early feedback is uninformative but later feedback becomes structured. It is application-driven but graphically different from the stationary benign stream: FTL must recover from an unhelpful prefix, while SMART should avoid switching merely because the early data are noisy.
@@ -358,12 +342,12 @@ Purpose: paper-facing hardening sequence with an applied corruption story.
 
 Real-world analogue: a deployed model whose early feedback is reliable, followed by a sustained period of low-quality or strategically distorted feedback. Examples include click-fraud bursts in advertising, bot traffic in recommendation systems, sensor degradation, data pipeline failure, or users strategically changing behavior after learning the policy.
 
-Generation: sample a unit direction $u$. For the first $20\%$ of the horizon, set $z_t\approx\rho u$ and $y_t=+1$, so $y_tz_t$ builds a stable leader. For the next $20\%$, keep $z_t\approx\rho u$ but set $y_t=-1$, so $y_tz_t\approx-\rho u$ erodes the trusted signal. For the final $60\%$, keep $z_t\approx\rho u$ and alternate labels, keeping $M_t$ near the decision boundary and making FTL chase unstable leaders.
+Generation: sample a unit direction $u$. For the first $20\%$ of the horizon, set $z_t\approx u$ and $y_t=+1$, so $y_tz_t$ builds a stable leader. For the next $20\%$, keep $z_t\approx u$ but set $y_t=-1$, so $y_tz_t\approx-u$ erodes the trusted signal. For the final $60\%$, keep $z_t\approx u$ and alternate labels, keeping $M_t$ near the decision boundary and making FTL chase unstable leaders.
 
 Concretely, the implementation uses
 
 $$
-z_t=\rho\operatorname{unit}(0.96u+0.04v_t),
+z_t=\operatorname{unit}(0.96u+0.04v_t),
 $$
 
 with $v_t\perp u$, and labels by phase:
@@ -385,25 +369,24 @@ Purpose: literature bridge to individual-sequence examples.
 
 Real-world analogue: none claimed as a calibrated application model. This is a deliberately stylized stress test that translates the classical individual-sequence "follow the leader if you can" construction into OLC feature-label form.
 
-Generation: fix $z_t=\rho e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
+Generation: fix $z_t=e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
 
 Why it is appropriate: this is the direct one-dimensional OLC analogue of alternating-then-stable individual sequences used to show why one should follow the leader only when the leader is stable. The alternating prefix repeatedly cancels $M_t$; the stable suffix eventually creates a reliable leader. It is illustrative and literature-facing rather than a calibrated market data model.
 
 ### Diagnostic Sequence
 
-`switching_leaders` fixes $z_t=\rho e_1$ and uses label blocks of length 20 with alternating signs. This is included because the same style of deterministic boundary-heavy stream produced invalid negative regret in experiment 2. Under exact $M_t$-based FTL, the diagnostic trace verifies non-negative FTL regret and monotone $\Sigma_t$.
+`switching_leaders` fixes $z_t=e_1$ and uses label blocks of length 20 with alternating signs. This is included because the same style of deterministic boundary-heavy stream produced invalid negative regret in experiment 2. Under exact $M_t$-based FTL, the diagnostic trace verifies non-negative FTL regret and monotone $\Sigma_t$.
 
 ### Acceptance Criteria
 
 A successful run should show:
 
 1. In `covariate_diverse_stationary`, SMART and FTL have nearly identical regret and FTRL is higher.
-2. In `weak_signal_low_margin`, SMART remains close to FTL but regret is visibly higher than in the clean benign case.
-3. In `delayed_signal_emergence`, SMART should not switch during the uninformative prefix if FTL regret remains within the calibrated budget; the curve should show a distinct cold-start cost.
-4. In `strategic_corruption_suffix`, SMART switches during the corrupted regime and materially reduces FTL's late-horizon regret.
-5. In `olc_fmg_leader_gap`, SMART improves on FTL by responding to leader instability, matching the classical "follow the leader if you can" lesson.
-6. The switch-diagnostic plot shows monotone $\Sigma_t$, the calibrated threshold, and interpretable switch timing.
-7. `switching_leaders` confirms that experiment 2's negative regret was an implementation artifact.
+2. In `delayed_signal_emergence`, SMART should not switch during the uninformative prefix if FTL regret remains within the calibrated budget; the curve should show a distinct cold-start cost.
+3. In `strategic_corruption_suffix`, SMART switches during the corrupted regime and materially reduces FTL's late-horizon regret.
+4. In `olc_fmg_leader_gap`, SMART improves on FTL by responding to leader instability, matching the classical "follow the leader if you can" lesson.
+5. The switch-diagnostic plot shows monotone $\Sigma_t$, the calibrated threshold, and interpretable switch timing.
+6. `switching_leaders` confirms that experiment 2's negative regret was an implementation artifact.
 
 ## Evaluation Protocol
 
@@ -428,12 +411,10 @@ python experiments/exp05_true_ftl_olc/run_experiment.py --self-test
 Default configuration:
 
 - primary dimension: $d=20$
-- feature radius: $\rho=0.8$
 - horizons: $T=100,200,\ldots,1000$
 - trials per horizon: 24
 - empirical-threshold calibration trials: 8
 - deterministic seed: 7
-- dimension diagnostic: fixed horizon $T=10000$ and $d=1,2,\ldots,50$
 
 Heavier paper-profile run:
 
@@ -441,34 +422,44 @@ Heavier paper-profile run:
 python experiments/exp05_true_ftl_olc/run_experiment.py --paper-profile
 ```
 
+Optional one-time dimension diagnostic:
+
+```bash
+python experiments/exp05_true_ftl_olc/run_experiment.py --dimension-sweep
+```
+
 Each horizon uses fresh sequences of exactly that length. Plots report mean regret with 95% confidence bands where applicable.
 
 In the regret-by-horizon figures, line paths and uncertainty bands are drawn at the exact regret values. Marker glyphs are slightly offset in display-space points only where FTL and SMART mean-regret markers overlap in benign regimes.
 
-The dimension-sweep figure fixes the horizon at $T=10000$ and evaluates each primary sequence family at $d=1,2,\ldots,50$. It is a diagnostic for whether the qualitative ordering of FTL, FTRL, and calibrated SMART is stable as feature dimension changes.
+The optional dimension-sweep figure fixes the horizon at $T=10000$ and evaluates each primary sequence family at $d=1,2,\ldots,50$. It is a slow one-time diagnostic for whether the qualitative ordering of FTL, FTRL, and calibrated SMART is stable as feature dimension changes; it is not part of the default run.
 
 ## Outputs and Figure Provenance
 
 Generated outputs:
 
 - `outputs/figures/exp05_olc_regret_by_horizon_benign.png`
+- `outputs/figures/exp05_olc_regret_by_horizon_benign.pdf`
 - `outputs/figures/exp05_olc_regret_by_horizon_hard.png`
 - `outputs/figures/exp05_olc_empirical_threshold.png`
 - `outputs/figures/exp05_olc_switch_diagnostics.png`
 - `outputs/figures/exp05_olc_threshold_calibration.png`
-- `outputs/figures/exp05_olc_dimension_sweep.png`
 - `outputs/summary_regret.csv`
 - `outputs/empirical_g.csv`
+
+Optional dimension diagnostic outputs:
+
+- `outputs/figures/exp05_olc_dimension_sweep.png`
 - `outputs/dimension_sweep.csv`
 
 Curated dashboard figures:
 
 - `figures/fig_exp05_olc_regret_by_horizon_benign.png`
+- `figures/fig_exp05_olc_regret_by_horizon_benign.pdf`
 - `figures/fig_exp05_olc_regret_by_horizon_hard.png`
 - `figures/fig_exp05_olc_empirical_threshold.png`
 - `figures/fig_exp05_olc_switch_diagnostics.png`
 - `figures/fig_exp05_olc_threshold_calibration.png`
-- `figures/fig_exp05_olc_dimension_sweep.png`
 - `figures/INDEX.md`
 
 Regenerate the dashboard UI with:
@@ -477,23 +468,13 @@ Regenerate the dashboard UI with:
 python experiments/dashboard/generate_dashboard.py
 ```
 
-## Latest Default Results
+## Result Interpretation
 
-Latest default run produced the following mean final regrets at $T=1000$:
+The benign regret-by-horizon figure now has two panels: immediate stable signal and cold-start signal emergence. In both, success means SMART remains visually close to FTL and avoids FTRL's robustness tax.
 
-- `covariate_diverse_stationary`: `FTL=1.108`, `FTRL=1.500`, `SMART-theory=1.108`, `SMART-calibrated=1.108`, calibrated switch mean `1001.0` (no switch).
-- `weak_signal_low_margin`: `FTL=5.572`, `FTRL=6.279`, `SMART-theory=5.572`, `SMART-calibrated=5.572`, calibrated switch mean `1001.0` (no switch).
-- `delayed_signal_emergence`: `FTL=8.780`, `FTRL=10.500`, `SMART-theory=8.780`, `SMART-calibrated=8.780`, calibrated switch mean `1001.0` (no switch).
-- `strategic_corruption_suffix`: `FTL=82.463`, `FTRL=-2.689`, `SMART-theory=48.387`, `SMART-calibrated=18.723`, calibrated switch mean `488.8`.
-- `olc_fmg_leader_gap`: `FTL=80.400`, `FTRL=11.789`, `SMART-theory=52.739`, `SMART-calibrated=24.760`, calibrated switch mean `70.0`.
+The hard-regime figure tests the two failure modes for FTL. In `strategic_corruption_suffix`, success means SMART switches after the reliable prefix has been eroded and reduces late-horizon regret. In `olc_fmg_leader_gap`, success means SMART improves on FTL by responding to leader instability, matching the classical individual-sequence intuition.
 
-Interpretation:
-
-1. SMART is indistinguishable from FTL in the clean, weak-signal, and delayed-signal regimes, avoiding FTRL's robustness tax even as the benign cases become progressively harder.
-2. The first three panels now separate different benign mechanisms: immediate stable signal, weak low-margin signal, and cold-start signal emergence.
-3. SMART sharply reduces FTL regret in the strategic-corruption suffix, switching after the reliable prefix has been eroded.
-4. SMART improves substantially on FTL in the OLC-FMG leader-gap sequence, matching the classical individual-sequence intuition.
-5. FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
+FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
 
 ## Limits and Non-Claims
 

@@ -18,7 +18,7 @@ class Sequence:
     description: str
 
 
-GeneratorFn = Callable[[int, int, float, np.random.Generator], Sequence]
+GeneratorFn = Callable[[int, int, np.random.Generator], Sequence]
 
 
 def _unit(v: Array, eps: float = 1e-12) -> Array:
@@ -58,7 +58,6 @@ def _orthogonal_noise(rng: np.random.Generator, u: Array, scale: float) -> Array
 def _sample_margin_sequence(
     T: int,
     d: int,
-    rho: float,
     rng: np.random.Generator,
     *,
     separator: Array | None = None,
@@ -72,7 +71,7 @@ def _sample_margin_sequence(
 
     for t in range(T):
         signed_feature = margin * u + _orthogonal_noise(rng, u, noise_scale)
-        z[t] = rho * y[t] * _unit(signed_feature)
+        z[t] = y[t] * _unit(signed_feature)
 
     if label_noise > 0.0:
         flips = rng.random(T) < label_noise
@@ -84,7 +83,6 @@ def _sample_margin_sequence(
 def _sample_covariate_margin_sequence(
     T: int,
     d: int,
-    rho: float,
     rng: np.random.Generator,
     *,
     separator: Array | None = None,
@@ -99,7 +97,7 @@ def _sample_covariate_margin_sequence(
 
     for t in range(T):
         signed_feature = margin * u + noise_scale * _orthogonal_unit(rng, u)
-        z[t] = rho * y[t] * _unit(signed_feature)
+        z[t] = y[t] * _unit(signed_feature)
 
     if label_noise > 0.0:
         flips = rng.random(T) < label_noise
@@ -108,11 +106,10 @@ def _sample_covariate_margin_sequence(
     return z, y.astype(np.float64), u
 
 
-def covariate_diverse_stationary(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def covariate_diverse_stationary(T: int, d: int, rng: np.random.Generator) -> Sequence:
     z, y, _ = _sample_covariate_margin_sequence(
         T,
         d,
-        rho,
         rng,
         label_noise=0.0,
         margin=0.72,
@@ -126,11 +123,10 @@ def covariate_diverse_stationary(T: int, d: int, rho: float, rng: np.random.Gene
     )
 
 
-def mild_label_noise(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def mild_label_noise(T: int, d: int, rng: np.random.Generator) -> Sequence:
     z, y, _ = _sample_covariate_margin_sequence(
         T,
         d,
-        rho,
         rng,
         label_noise=0.10,
         margin=0.72,
@@ -144,38 +140,19 @@ def mild_label_noise(T: int, d: int, rho: float, rng: np.random.Generator) -> Se
     )
 
 
-def weak_signal_low_margin(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
-    z, y, _ = _sample_covariate_margin_sequence(
-        T,
-        d,
-        rho,
-        rng,
-        label_noise=0.05,
-        margin=0.18,
-        noise_scale=0.98,
-    )
-    return Sequence(
-        z=z,
-        y=y,
-        name="weak_signal_low_margin",
-        description="low-margin covariate-diverse stream with weak signed-feature drift",
-    )
-
-
-def delayed_signal_emergence(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def delayed_signal_emergence(T: int, d: int, rng: np.random.Generator) -> Sequence:
     split = int(round(0.45 * T))
     u = _unit(rng.normal(size=d))
     z = np.zeros((T, d), dtype=np.float64)
     y = np.zeros(T, dtype=np.float64)
 
     for t in range(split):
-        z[t] = rho * _orthogonal_unit(rng, u)
+        z[t] = _orthogonal_unit(rng, u)
         y[t] = rng.choice(np.array([-1.0, 1.0], dtype=np.float64))
 
     z_suffix, y_suffix, _ = _sample_covariate_margin_sequence(
         T - split,
         d,
-        rho,
         rng,
         separator=u,
         label_noise=0.0,
@@ -193,7 +170,7 @@ def delayed_signal_emergence(T: int, d: int, rho: float, rng: np.random.Generato
     )
 
 
-def market_shift_change_point(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def market_shift_change_point(T: int, d: int, rng: np.random.Generator) -> Sequence:
     split = int(round(0.45 * T))
     u0 = _unit(rng.normal(size=d))
     turn = _orthogonal_unit(rng, u0)
@@ -204,7 +181,6 @@ def market_shift_change_point(T: int, d: int, rho: float, rng: np.random.Generat
     z0, y0, _ = _sample_covariate_margin_sequence(
         split,
         d,
-        rho,
         rng,
         separator=u0,
         label_noise=0.02,
@@ -214,7 +190,6 @@ def market_shift_change_point(T: int, d: int, rho: float, rng: np.random.Generat
     z1, y1, _ = _sample_covariate_margin_sequence(
         T - split,
         d,
-        rho,
         rng,
         separator=u1,
         label_noise=0.08,
@@ -230,7 +205,7 @@ def market_shift_change_point(T: int, d: int, rho: float, rng: np.random.Generat
     )
 
 
-def strategic_corruption_suffix(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def strategic_corruption_suffix(T: int, d: int, rng: np.random.Generator) -> Sequence:
     prefix_end = int(round(0.20 * T))
     erosion_end = int(round(0.40 * T))
     u = _unit(rng.normal(size=d))
@@ -238,15 +213,15 @@ def strategic_corruption_suffix(T: int, d: int, rho: float, rng: np.random.Gener
     y = np.zeros(T, dtype=np.float64)
 
     for t in range(prefix_end):
-        z[t] = rho * _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
+        z[t] = _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
         y[t] = 1.0
 
     for t in range(prefix_end, erosion_end):
-        z[t] = rho * _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
+        z[t] = _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
         y[t] = -1.0
 
     for t in range(erosion_end, T):
-        z[t] = rho * _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
+        z[t] = _unit(0.96 * u + 0.04 * _orthogonal_unit(rng, u))
         y[t] = 1.0 if (t - erosion_end) % 2 == 0 else -1.0
 
     return Sequence(
@@ -257,9 +232,9 @@ def strategic_corruption_suffix(T: int, d: int, rho: float, rng: np.random.Gener
     )
 
 
-def olc_fmg_leader_gap(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def olc_fmg_leader_gap(T: int, d: int, rng: np.random.Generator) -> Sequence:
     del rng
-    z = np.tile(rho * _basis(d, 0), (T, 1))
+    z = np.tile(_basis(d, 0), (T, 1))
     y = np.empty(T, dtype=np.float64)
     alternating_len = int(round(0.40 * T))
     alternating_len -= alternating_len % 2
@@ -274,8 +249,8 @@ def olc_fmg_leader_gap(T: int, d: int, rho: float, rng: np.random.Generator) -> 
     )
 
 
-def iid_separable_margin(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
-    z, y, _ = _sample_margin_sequence(T, d, rho, rng, label_noise=0.0)
+def iid_separable_margin(T: int, d: int, rng: np.random.Generator) -> Sequence:
+    z, y, _ = _sample_margin_sequence(T, d, rng, label_noise=0.0)
     return Sequence(
         z=z,
         y=y,
@@ -284,8 +259,8 @@ def iid_separable_margin(T: int, d: int, rho: float, rng: np.random.Generator) -
     )
 
 
-def massart_10(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
-    z, y, _ = _sample_margin_sequence(T, d, rho, rng, label_noise=0.10)
+def massart_10(T: int, d: int, rng: np.random.Generator) -> Sequence:
+    z, y, _ = _sample_margin_sequence(T, d, rng, label_noise=0.10)
     return Sequence(
         z=z,
         y=y,
@@ -294,9 +269,9 @@ def massart_10(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence
     )
 
 
-def alternating_antileader(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def alternating_antileader(T: int, d: int, rng: np.random.Generator) -> Sequence:
     del rng
-    z = np.tile(rho * _basis(d, 0), (T, 1))
+    z = np.tile(_basis(d, 0), (T, 1))
     y = np.empty(T, dtype=np.float64)
     y[0::2] = 1.0
     y[1::2] = -1.0
@@ -308,9 +283,9 @@ def alternating_antileader(T: int, d: int, rho: float, rng: np.random.Generator)
     )
 
 
-def switching_leaders(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def switching_leaders(T: int, d: int, rng: np.random.Generator) -> Sequence:
     del rng  # deterministic
-    z = np.tile(rho * _basis(d, 0), (T, 1))
+    z = np.tile(_basis(d, 0), (T, 1))
     y = np.empty(T, dtype=np.float64)
     sign = 1.0
     idx = 0
@@ -327,7 +302,7 @@ def switching_leaders(T: int, d: int, rho: float, rng: np.random.Generator) -> S
     )
 
 
-def benign_to_hard_suffix(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def benign_to_hard_suffix(T: int, d: int, rng: np.random.Generator) -> Sequence:
     split = int(round(0.45 * T))
     u = _unit(rng.normal(size=d))
     z = np.zeros((T, d), dtype=np.float64)
@@ -337,7 +312,6 @@ def benign_to_hard_suffix(T: int, d: int, rho: float, rng: np.random.Generator) 
     z_prefix, y_prefix, _ = _sample_margin_sequence(
         split,
         d,
-        rho,
         rng,
         separator=u,
         label_noise=0.0,
@@ -357,7 +331,7 @@ def benign_to_hard_suffix(T: int, d: int, rho: float, rng: np.random.Generator) 
         leader = _unit(moment)
         if float(np.linalg.norm(leader)) < 1e-12:
             leader = fallback
-        z[t] = rho * leader
+        z[t] = leader
         y[t] = -1.0
         moment += y[t] * z[t]
         fallback = leader
@@ -370,7 +344,7 @@ def benign_to_hard_suffix(T: int, d: int, rho: float, rng: np.random.Generator) 
     )
 
 
-def separator_drift(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def separator_drift(T: int, d: int, rng: np.random.Generator) -> Sequence:
     u0 = _unit(rng.normal(size=d))
     raw = rng.normal(size=d)
     u1 = _unit(raw - float(np.dot(raw, u0)) * u0)
@@ -388,7 +362,7 @@ def separator_drift(T: int, d: int, rho: float, rng: np.random.Generator) -> Seq
         smooth = alpha * alpha * (3.0 - 2.0 * alpha)
         u_t = _unit((1.0 - smooth) * u0 + smooth * u1)
         signed_feature = 0.55 * u_t + _orthogonal_noise(rng, u_t, 0.75)
-        z[t] = rho * y[t] * _unit(signed_feature)
+        z[t] = y[t] * _unit(signed_feature)
 
     return Sequence(
         z=z,
@@ -398,10 +372,10 @@ def separator_drift(T: int, d: int, rho: float, rng: np.random.Generator) -> Seq
     )
 
 
-def random_labels_isotropic(T: int, d: int, rho: float, rng: np.random.Generator) -> Sequence:
+def random_labels_isotropic(T: int, d: int, rng: np.random.Generator) -> Sequence:
     z = rng.normal(size=(T, d))
     norms = np.linalg.norm(z, axis=1, keepdims=True)
-    z = rho * z / np.maximum(norms, 1e-12)
+    z = z / np.maximum(norms, 1e-12)
     y = rng.choice(np.array([-1.0, 1.0], dtype=np.float64), size=T)
     return Sequence(
         z=z,
@@ -415,7 +389,6 @@ def available_generators() -> dict[str, GeneratorFn]:
     return {
         "covariate_diverse_stationary": covariate_diverse_stationary,
         "mild_label_noise": mild_label_noise,
-        "weak_signal_low_margin": weak_signal_low_margin,
         "delayed_signal_emergence": delayed_signal_emergence,
         "market_shift_change_point": market_shift_change_point,
         "strategic_corruption_suffix": strategic_corruption_suffix,
@@ -433,7 +406,6 @@ def available_generators() -> dict[str, GeneratorFn]:
 def primary_scenarios() -> list[str]:
     return [
         "covariate_diverse_stationary",
-        "weak_signal_low_margin",
         "delayed_signal_emergence",
         "strategic_corruption_suffix",
         "olc_fmg_leader_gap",

@@ -4,6 +4,7 @@ import argparse
 import csv
 import math
 import shutil
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,6 +36,12 @@ ALGO_MARKERS = {
     "smart_theory": "^",
     "smart_calibrated": "D",
 }
+ALGO_COLORS = {
+    "ftl": "#0072B2",
+    "ftrl": "#D55E00",
+    "smart_theory": "#009E73",
+    "smart_calibrated": "#CC79A7",
+}
 ALGO_MARKER_SIZES = {
     "ftl": 7.2,
     "ftrl": 5.4,
@@ -50,7 +57,6 @@ ALGO_MARKER_OFFSETS = {
 BENIGN_OVERLAP_ALGOS = ("ftl", "smart_theory", "smart_calibrated")
 BENIGN_REGRET_SCENARIOS = [
     "covariate_diverse_stationary",
-    "weak_signal_low_margin",
     "delayed_signal_emergence",
 ]
 HARD_REGRET_SCENARIOS = [
@@ -87,7 +93,6 @@ def _scenario_title(name: str) -> str:
     mapping = {
         "covariate_diverse_stationary": "Covariate-Diverse Stationary Signal",
         "mild_label_noise": "Mild Label Noise",
-        "weak_signal_low_margin": "Weak-Signal Low-Margin Market",
         "delayed_signal_emergence": "Delayed Signal Emergence",
         "market_shift_change_point": "Exogenous Market Shift",
         "strategic_corruption_suffix": "Strategic Corruption Suffix",
@@ -107,7 +112,6 @@ def estimate_empirical_g(
     horizons: Array,
     *,
     d: int,
-    rho: float,
     trials: int,
     seed: int,
 ) -> dict[int, float]:
@@ -122,7 +126,7 @@ def estimate_empirical_g(
             gen = generators[scenario]
             for trial in range(trials):
                 rng = _rng(seed, scenario=scenario, horizon=T, trial=trial, d=d, stream=11)
-                seq = gen(T, d, rho, rng)
+                seq = gen(T, d, rng)
                 curves = run_curves(seq.z, seq.y, OLCConfig(horizon=T, threshold=math.inf))
                 max_regret = max(max_regret, float(curves.regret_ftrl[-1]))
         g_emp[T] = max(max_regret, 1e-12)
@@ -136,7 +140,6 @@ def evaluate_scenario(
     g_emp: dict[int, float],
     *,
     d: int,
-    rho: float,
     trials: int,
     seed: int,
     threshold_scale: float,
@@ -152,7 +155,7 @@ def evaluate_scenario(
         for j, horizon in enumerate(horizons):
             T = int(horizon)
             rng = _rng(seed, scenario=scenario, horizon=T, trial=trial, d=d)
-            seq = gen(T, d, rho, rng)
+            seq = gen(T, d, rng)
 
             theory = run_curves(
                 seq.z,
@@ -190,11 +193,13 @@ def _plot_with_band(
     markersize: float = 4.8,
     marker_offset: tuple[float, float] = (0.0, 0.0),
     marker_offset_mask: NDArray[np.bool_] | None = None,
+    color: str | None = None,
 ) -> None:
     line = ax.plot(
         x,
         stats["mean"],
         linewidth=2.0,
+        color=color,
         label=label,
     )[0]
     if marker:
@@ -254,43 +259,94 @@ def plot_regret_grid(
     *,
     title: str,
     out_path: Path,
+    paper_style: bool = False,
 ) -> None:
     scenarios = [scenario for scenario in scenarios if scenario in stats_by_scenario]
     if not scenarios:
         return
     cols = 2
     rows = int(math.ceil(len(scenarios) / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(12.4, 4.1 * rows), squeeze=False)
-    axes = axes.flatten()
+    figsize = (7.2, 2.75) if paper_style and len(scenarios) == 2 else (12.4, 4.1 * rows)
+    rc_settings = {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    }
+    with plt.rc_context(rc_settings) if paper_style else nullcontext():
+        fig, axes = plt.subplots(
+            rows,
+            cols,
+            figsize=figsize,
+            squeeze=False,
+            constrained_layout=paper_style,
+        )
+        axes = axes.flatten()
 
-    for idx, scenario in enumerate(scenarios):
-        ax = axes[idx]
-        stats = stats_by_scenario[scenario]
-        is_benign_panel = scenario in BENIGN_REGRET_SCENARIOS
-        for key in ALGO_ORDER:
-            marker_offset_mask = _benign_overlap_mask(stats, key) if is_benign_panel else None
-            _plot_with_band(
-                ax,
-                horizons,
-                stats.regret[key],
-                ALGO_LABELS[key],
-                marker=ALGO_MARKERS[key],
-                markersize=ALGO_MARKER_SIZES[key],
-                marker_offset=ALGO_MARKER_OFFSETS[key],
-                marker_offset_mask=marker_offset_mask,
-            )
-        min_lo = min(float(np.min(stats.regret[key]["lo"])) for key in ALGO_ORDER)
-        max_hi = max(float(np.max(stats.regret[key]["hi"])) for key in ALGO_ORDER)
-        pad = 0.05 * max(1.0, max_hi - min_lo)
-        ax.set_title(_scenario_title(scenario))
-        ax.set_xlabel("Horizon")
-        ax.set_ylabel("Regret")
-        ax.set_ylim(bottom=min(0.0, min_lo - pad))
+        for idx, scenario in enumerate(scenarios):
+            ax = axes[idx]
+            stats = stats_by_scenario[scenario]
+            is_benign_panel = scenario in BENIGN_REGRET_SCENARIOS
+            for key in ALGO_ORDER:
+                marker_offset_mask = _benign_overlap_mask(stats, key) if is_benign_panel else None
+                _plot_with_band(
+                    ax,
+                    horizons,
+                    stats.regret[key],
+                    ALGO_LABELS[key],
+                    marker=ALGO_MARKERS[key],
+                    markersize=ALGO_MARKER_SIZES[key],
+                    marker_offset=ALGO_MARKER_OFFSETS[key],
+                    marker_offset_mask=marker_offset_mask,
+                    color=ALGO_COLORS[key],
+                )
+            min_lo = min(float(np.min(stats.regret[key]["lo"])) for key in ALGO_ORDER)
+            max_hi = max(float(np.max(stats.regret[key]["hi"])) for key in ALGO_ORDER)
+            pad = 0.05 * max(1.0, max_hi - min_lo)
+            ax.set_title(_scenario_title(scenario), fontsize=9 if paper_style else None)
+            ax.set_xlabel("Horizon", fontsize=8 if paper_style else None)
+            ax.set_ylabel("Regret", fontsize=8 if paper_style else None)
+            ax.set_ylim(bottom=min(0.0, min_lo - pad))
+            if paper_style:
+                ax.tick_params(axis="both", labelsize=7)
+                ax.grid(True, axis="y", color="#E5E5E5", linewidth=0.6)
+                ax.text(
+                    -0.13,
+                    1.06,
+                    chr(ord("a") + idx),
+                    transform=ax.transAxes,
+                    fontsize=8,
+                    fontweight="bold",
+                    va="bottom",
+                    ha="left",
+                )
+            else:
+                handles = [
+                    Line2D(
+                        [0],
+                        [0],
+                        color=ALGO_COLORS[key],
+                        linewidth=2.0,
+                        marker=ALGO_MARKERS[key],
+                        markersize=ALGO_MARKER_SIZES[key],
+                        markerfacecolor="white",
+                        markeredgewidth=1.2,
+                        label=ALGO_LABELS[key],
+                    )
+                    for key in ALGO_ORDER
+                ]
+                ax.legend(handles=handles, loc="best", fontsize=9)
+
+        for idx in range(len(scenarios), len(axes)):
+            axes[idx].axis("off")
+
         handles = [
             Line2D(
                 [0],
                 [0],
-                color=f"C{i}",
+                color=ALGO_COLORS[key],
                 linewidth=2.0,
                 marker=ALGO_MARKERS[key],
                 markersize=ALGO_MARKER_SIZES[key],
@@ -298,17 +354,26 @@ def plot_regret_grid(
                 markeredgewidth=1.2,
                 label=ALGO_LABELS[key],
             )
-            for i, key in enumerate(ALGO_ORDER)
+            for key in ALGO_ORDER
         ]
-        ax.legend(handles=handles, loc="best", fontsize=9)
-
-    for idx in range(len(scenarios), len(axes)):
-        axes[idx].axis("off")
-
-    fig.suptitle(title, fontsize=16)
-    fig.tight_layout()
-    fig.savefig(out_path, dpi=240, bbox_inches="tight")
-    plt.close(fig)
+        if paper_style:
+            fig.legend(
+                handles=handles,
+                loc="upper center",
+                ncol=len(ALGO_ORDER),
+                frameon=False,
+                fontsize=7,
+                bbox_to_anchor=(0.5, 1.08),
+                handlelength=1.8,
+                columnspacing=1.2,
+            )
+            fig.savefig(out_path, dpi=450, bbox_inches="tight")
+            fig.savefig(out_path.with_suffix(".pdf"), bbox_inches="tight")
+        else:
+            fig.suptitle(title, fontsize=16)
+            fig.tight_layout()
+            fig.savefig(out_path, dpi=240, bbox_inches="tight")
+        plt.close(fig)
 
 
 def plot_empirical_g(horizons: Array, g_emp: dict[int, float], out_path: Path) -> None:
@@ -329,7 +394,6 @@ def plot_switch_diagnostics(
     *,
     t_max: int,
     d: int,
-    rho: float,
     seed: int,
     g_emp: dict[int, float],
     out_path: Path,
@@ -346,7 +410,7 @@ def plot_switch_diagnostics(
 
     for row, scenario in enumerate(scenarios):
         rng = _rng(seed, scenario=scenario, horizon=t_max, trial=0, d=d, stream=23)
-        seq = generators[scenario](t_max, d, rho, rng)
+        seq = generators[scenario](t_max, d, rng)
         curves = run_curves(seq.z, seq.y, OLCConfig(horizon=t_max, threshold=g_emp[t_max]))
         rounds = np.arange(t_max + 1)
 
@@ -387,7 +451,6 @@ def plot_threshold_calibration(
     *,
     t_max: int,
     d: int,
-    rho: float,
     seed: int,
     base_threshold: float,
     trials: int,
@@ -405,7 +468,7 @@ def plot_threshold_calibration(
         switch_vals = np.zeros((trials, scales.size), dtype=float)
         for trial in range(trials):
             rng = _rng(seed, scenario=scenario, horizon=t_max, trial=trial, d=d, stream=31)
-            seq = gen(t_max, d, rho, rng)
+            seq = gen(t_max, d, rng)
             for idx, scale in enumerate(scales):
                 curves = run_curves(seq.z, seq.y, OLCConfig(horizon=t_max, threshold=scale * base_threshold))
                 smart_vals[trial, idx] = float(curves.regret_smart[-1])
@@ -446,7 +509,6 @@ def plot_dimension_sweep(
     horizon: int,
     scenarios: list[str],
     dims: list[int],
-    rho: float,
     seed: int,
     trials: int,
     g_trials: int,
@@ -465,13 +527,13 @@ def plot_dimension_sweep(
     }
 
     for j, d in enumerate(dims):
-        g_emp = estimate_empirical_g(np.array([horizon], dtype=int), d=d, rho=rho, trials=g_trials, seed=seed + 7000 + d)
+        g_emp = estimate_empirical_g(np.array([horizon], dtype=int), d=d, trials=g_trials, seed=seed + 7000 + d)
         threshold = g_emp[horizon]
         for scenario in scenarios:
             gen = generators[scenario]
             for trial in range(trials):
                 rng = _rng(seed, scenario=scenario, horizon=horizon, trial=trial, d=d, stream=41)
-                seq = gen(horizon, d, rho, rng)
+                seq = gen(horizon, d, rng)
                 curves = run_curves(seq.z, seq.y, OLCConfig(horizon=horizon, threshold=threshold))
                 raw_by_scenario[scenario]["ftl"][trial, j] = float(curves.regret_ftl[-1])
                 raw_by_scenario[scenario]["ftrl"][trial, j] = float(curves.regret_ftrl[-1])
@@ -556,11 +618,18 @@ def curate_figures(exp_dir: Path, generated: dict[str, tuple[Path, str, str]]) -
     for label, (source, title, curated_name) in generated.items():
         target = figures_dir / curated_name
         shutil.copy2(source, target)
+        pdf_source = source.with_suffix(".pdf")
+        pdf_line = ""
+        if pdf_source.exists():
+            pdf_name = Path(curated_name).with_suffix(".pdf").name
+            shutil.copy2(pdf_source, figures_dir / pdf_name)
+            pdf_line = f"  PDF: `{pdf_name}`"
         index_lines.extend(
             [
                 f"- Label: `{label}`",
                 f"  Title: `{title}`",
                 f"  File: `{curated_name}`",
+                *([pdf_line] if pdf_line else []),
                 f"  Source: `outputs/figures/{source.name}`",
                 "",
             ]
@@ -572,7 +641,7 @@ def curate_figures(exp_dir: Path, generated: dict[str, tuple[Path, str, str]]) -
 def run_self_test() -> None:
     rng = np.random.default_rng(0)
     gen = available_generators()["alternating_antileader"]
-    seq = gen(80, 5, 0.8, rng)
+    seq = gen(80, 5, rng)
     curves = run_curves(seq.z, seq.y, OLCConfig(horizon=80, threshold=math.inf))
     assert_trace_invariants(curves, tol=1e-8)
 
@@ -594,11 +663,10 @@ def main() -> None:
     parser.add_argument("--calibration-trials", type=int, default=16)
     parser.add_argument("--dimension-trials", type=int, default=12)
     parser.add_argument("--d", type=int, default=20)
-    parser.add_argument("--rho", type=float, default=0.8)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--threshold-scale", type=float, default=1.0)
     parser.add_argument("--scenario", nargs="*", default=primary_scenarios())
-    parser.add_argument("--skip-dimension-sweep", action="store_true")
+    parser.add_argument("--dimension-sweep", action="store_true", help="Run the slow one-time dimension diagnostic.")
     parser.add_argument("--dimension-horizon", type=int, default=10000)
     parser.add_argument("--paper-profile", action="store_true", help="Use the heavier T=2000, 64-trial profile.")
     parser.add_argument("--quick", action="store_true", help="Small run for smoke testing.")
@@ -626,8 +694,6 @@ def main() -> None:
         args.calibration_trials = min(args.calibration_trials, 8)
         args.dimension_trials = min(args.dimension_trials, 6)
 
-    if not (0.0 < args.rho <= 1.0):
-        raise ValueError("--rho must be in (0, 1]")
     if args.dimension_horizon < 1:
         raise ValueError("--dimension-horizon must be positive")
     if args.t_max % args.t_step != 0:
@@ -646,7 +712,7 @@ def main() -> None:
             raise ValueError(f"Unknown scenario '{scenario}'. Valid: {sorted(generators)}")
 
     print("Estimating empirical robust threshold g(T)...")
-    g_emp = estimate_empirical_g(horizons, d=args.d, rho=args.rho, trials=args.g_trials, seed=args.seed)
+    g_emp = estimate_empirical_g(horizons, d=args.d, trials=args.g_trials, seed=args.seed)
     write_g_csv(output_dir / "empirical_g.csv", horizons, g_emp)
 
     stats_by_scenario: dict[str, ScenarioStats] = {}
@@ -658,7 +724,6 @@ def main() -> None:
             horizons,
             g_emp,
             d=args.d,
-            rho=args.rho,
             trials=args.trials,
             seed=args.seed,
             threshold_scale=args.threshold_scale,
@@ -679,6 +744,7 @@ def main() -> None:
         BENIGN_REGRET_SCENARIOS,
         title="True-FTL OLC: Benign Regret by Horizon",
         out_path=regret_benign_path,
+        paper_style=True,
     )
     plot_regret_grid(
         horizons,
@@ -688,11 +754,10 @@ def main() -> None:
         out_path=regret_hard_path,
     )
     plot_empirical_g(horizons, g_emp, g_path)
-    plot_switch_diagnostics(t_max=args.t_max, d=args.d, rho=args.rho, seed=args.seed, g_emp=g_emp, out_path=switch_path)
+    plot_switch_diagnostics(t_max=args.t_max, d=args.d, seed=args.seed, g_emp=g_emp, out_path=switch_path)
     plot_threshold_calibration(
         t_max=args.t_max,
         d=args.d,
-        rho=args.rho,
         seed=args.seed,
         base_threshold=g_emp[args.t_max],
         trials=args.calibration_trials,
@@ -726,13 +791,12 @@ def main() -> None:
         ),
     }
 
-    if not args.skip_dimension_sweep:
+    if args.dimension_sweep:
         dimension_dims = list(range(1, 51))
         dimension_stats = plot_dimension_sweep(
             horizon=args.dimension_horizon,
             scenarios=scenarios,
             dims=dimension_dims,
-            rho=args.rho,
             seed=args.seed,
             trials=args.dimension_trials,
             g_trials=args.g_trials,
@@ -744,13 +808,6 @@ def main() -> None:
             f"True-FTL OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
             "fig_exp05_olc_dimension_sweep.png",
         )
-    elif dimension_path.exists():
-        generated["fig:exp05_olc_dimension_sweep"] = (
-            dimension_path,
-            f"True-FTL OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
-            "fig_exp05_olc_dimension_sweep.png",
-        )
-
     curate_figures(exp_dir, generated)
 
     print("\nFinal-regret summary at max horizon")
