@@ -443,13 +443,16 @@ python experiments/exp05_true_ftl_olc/run_experiment.py --paper-profile
 
 Each horizon uses fresh sequences of exactly that length. Plots report mean regret with 95% confidence bands where applicable.
 
+In the regret-by-horizon figures, line paths and uncertainty bands are drawn at the exact regret values. Marker glyphs are slightly offset in display-space points only where FTL and SMART mean-regret markers overlap in benign regimes.
+
 The dimension-sweep figure fixes the horizon at $T=10000$ and evaluates each primary sequence family at $d=1,2,\ldots,50$. It is a diagnostic for whether the qualitative ordering of FTL, FTRL, and calibrated SMART is stable as feature dimension changes.
 
 ## Outputs and Figure Provenance
 
 Generated outputs:
 
-- `outputs/figures/exp05_olc_regret_by_horizon.png`
+- `outputs/figures/exp05_olc_regret_by_horizon_benign.png`
+- `outputs/figures/exp05_olc_regret_by_horizon_hard.png`
 - `outputs/figures/exp05_olc_empirical_threshold.png`
 - `outputs/figures/exp05_olc_switch_diagnostics.png`
 - `outputs/figures/exp05_olc_threshold_calibration.png`
@@ -460,7 +463,8 @@ Generated outputs:
 
 Curated dashboard figures:
 
-- `figures/fig_exp05_olc_regret_by_horizon.png`
+- `figures/fig_exp05_olc_regret_by_horizon_benign.png`
+- `figures/fig_exp05_olc_regret_by_horizon_hard.png`
 - `figures/fig_exp05_olc_empirical_threshold.png`
 - `figures/fig_exp05_olc_switch_diagnostics.png`
 - `figures/fig_exp05_olc_threshold_calibration.png`

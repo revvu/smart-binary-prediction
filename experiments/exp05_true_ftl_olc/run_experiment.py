@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.transforms as mtransforms
 import numpy as np
+from matplotlib.lines import Line2D
 from numpy.typing import NDArray
 
 from src.olc_exact import OLCConfig, assert_trace_invariants, run_curves
@@ -27,6 +29,34 @@ ALGO_LABELS = {
     "smart_theory": "SMART (theory)",
     "smart_calibrated": "SMART (calibrated)",
 }
+ALGO_MARKERS = {
+    "ftl": "o",
+    "ftrl": "s",
+    "smart_theory": "^",
+    "smart_calibrated": "D",
+}
+ALGO_MARKER_SIZES = {
+    "ftl": 7.2,
+    "ftrl": 5.4,
+    "smart_theory": 6.2,
+    "smart_calibrated": 4.8,
+}
+ALGO_MARKER_OFFSETS = {
+    "ftl": (0.0, 5.5),
+    "ftrl": (0.0, 0.0),
+    "smart_theory": (-5.0, 0.0),
+    "smart_calibrated": (5.0, 0.0),
+}
+BENIGN_OVERLAP_ALGOS = ("ftl", "smart_theory", "smart_calibrated")
+BENIGN_REGRET_SCENARIOS = [
+    "covariate_diverse_stationary",
+    "weak_signal_low_margin",
+    "delayed_signal_emergence",
+]
+HARD_REGRET_SCENARIOS = [
+    "strategic_corruption_suffix",
+    "olc_fmg_leader_gap",
+]
 
 
 @dataclass(frozen=True)
@@ -150,14 +180,84 @@ def evaluate_scenario(
     )
 
 
-def _plot_with_band(ax: plt.Axes, x: Array, stats: dict[str, Array], label: str) -> None:
-    line = ax.plot(x, stats["mean"], linewidth=2.0, label=label)[0]
+def _plot_with_band(
+    ax: plt.Axes,
+    x: Array,
+    stats: dict[str, Array],
+    label: str,
+    *,
+    marker: str | None = None,
+    markersize: float = 4.8,
+    marker_offset: tuple[float, float] = (0.0, 0.0),
+    marker_offset_mask: NDArray[np.bool_] | None = None,
+) -> None:
+    line = ax.plot(
+        x,
+        stats["mean"],
+        linewidth=2.0,
+        label=label,
+    )[0]
+    if marker:
+        y = stats["mean"]
+        offset_mask = np.zeros_like(x, dtype=bool) if marker_offset_mask is None else marker_offset_mask
+        base_mask = ~offset_mask
+
+        def draw_markers(mask: NDArray[np.bool_], offset: tuple[float, float]) -> None:
+            if not np.any(mask):
+                return
+            transform = ax.transData
+            if offset != (0.0, 0.0):
+                transform = mtransforms.offset_copy(
+                    ax.transData,
+                    fig=ax.figure,
+                    x=offset[0],
+                    y=offset[1],
+                    units="points",
+                )
+            ax.plot(
+                x[mask],
+                y[mask],
+                linestyle="None",
+                marker=marker,
+                markersize=markersize,
+                markerfacecolor="white",
+                markeredgewidth=1.2,
+                color=line.get_color(),
+                transform=transform,
+                label="_nolegend_",
+                zorder=line.get_zorder() + 0.5,
+            )
+
+        draw_markers(base_mask, (0.0, 0.0))
+        draw_markers(offset_mask, marker_offset)
     if np.any(stats["hi"] > stats["lo"]):
         ax.fill_between(x, stats["lo"], stats["hi"], color=line.get_color(), alpha=0.18, linewidth=0)
 
 
-def plot_regret_grid(horizons: Array, stats_by_scenario: dict[str, ScenarioStats], out_path: Path) -> None:
-    scenarios = list(stats_by_scenario)
+def _benign_overlap_mask(stats: ScenarioStats, key: str, *, tol: float = 1e-9) -> NDArray[np.bool_]:
+    if key not in BENIGN_OVERLAP_ALGOS:
+        return np.zeros_like(stats.regret[key]["mean"], dtype=bool)
+
+    y = stats.regret[key]["mean"]
+    mask = np.zeros_like(y, dtype=bool)
+    for other_key in BENIGN_OVERLAP_ALGOS:
+        if other_key == key:
+            continue
+        mask |= np.isclose(y, stats.regret[other_key]["mean"], rtol=0.0, atol=tol)
+    return mask
+
+
+def plot_regret_grid(
+    horizons: Array,
+    stats_by_scenario: dict[str, ScenarioStats],
+    scenarios: list[str],
+    *,
+    title: str,
+    out_path: Path,
+) -> None:
+    scenarios = [scenario for scenario in scenarios if scenario in stats_by_scenario]
+    if not scenarios:
+        return
     cols = 2
     rows = int(math.ceil(len(scenarios) / cols))
     fig, axes = plt.subplots(rows, cols, figsize=(12.4, 4.1 * rows), squeeze=False)
@@ -166,8 +266,19 @@ def plot_regret_grid(horizons: Array, stats_by_scenario: dict[str, ScenarioStats
     for idx, scenario in enumerate(scenarios):
         ax = axes[idx]
         stats = stats_by_scenario[scenario]
+        is_benign_panel = scenario in BENIGN_REGRET_SCENARIOS
         for key in ALGO_ORDER:
-            _plot_with_band(ax, horizons, stats.regret[key], ALGO_LABELS[key])
+            marker_offset_mask = _benign_overlap_mask(stats, key) if is_benign_panel else None
+            _plot_with_band(
+                ax,
+                horizons,
+                stats.regret[key],
+                ALGO_LABELS[key],
+                marker=ALGO_MARKERS[key],
+                markersize=ALGO_MARKER_SIZES[key],
+                marker_offset=ALGO_MARKER_OFFSETS[key],
+                marker_offset_mask=marker_offset_mask,
+            )
         min_lo = min(float(np.min(stats.regret[key]["lo"])) for key in ALGO_ORDER)
         max_hi = max(float(np.max(stats.regret[key]["hi"])) for key in ALGO_ORDER)
         pad = 0.05 * max(1.0, max_hi - min_lo)
@@ -175,12 +286,26 @@ def plot_regret_grid(horizons: Array, stats_by_scenario: dict[str, ScenarioStats
         ax.set_xlabel("Horizon")
         ax.set_ylabel("Regret")
         ax.set_ylim(bottom=min(0.0, min_lo - pad))
-        ax.legend(loc="best", fontsize=9)
+        handles = [
+            Line2D(
+                [0],
+                [0],
+                color=f"C{i}",
+                linewidth=2.0,
+                marker=ALGO_MARKERS[key],
+                markersize=ALGO_MARKER_SIZES[key],
+                markerfacecolor="white",
+                markeredgewidth=1.2,
+                label=ALGO_LABELS[key],
+            )
+            for i, key in enumerate(ALGO_ORDER)
+        ]
+        ax.legend(handles=handles, loc="best", fontsize=9)
 
     for idx in range(len(scenarios), len(axes)):
         axes[idx].axis("off")
 
-    fig.suptitle("True-FTL Online Linear Classification: Regret by Horizon", fontsize=16)
+    fig.suptitle(title, fontsize=16)
     fig.tight_layout()
     fig.savefig(out_path, dpi=240, bbox_inches="tight")
     plt.close(fig)
@@ -541,13 +666,27 @@ def main() -> None:
 
     write_summary_csv(output_dir / "summary_regret.csv", horizons, stats_by_scenario)
 
-    regret_path = figures_out / "exp05_olc_regret_by_horizon.png"
+    regret_benign_path = figures_out / "exp05_olc_regret_by_horizon_benign.png"
+    regret_hard_path = figures_out / "exp05_olc_regret_by_horizon_hard.png"
     g_path = figures_out / "exp05_olc_empirical_threshold.png"
     switch_path = figures_out / "exp05_olc_switch_diagnostics.png"
     calibration_path = figures_out / "exp05_olc_threshold_calibration.png"
     dimension_path = figures_out / "exp05_olc_dimension_sweep.png"
 
-    plot_regret_grid(horizons, stats_by_scenario, regret_path)
+    plot_regret_grid(
+        horizons,
+        stats_by_scenario,
+        BENIGN_REGRET_SCENARIOS,
+        title="True-FTL OLC: Benign Regret by Horizon",
+        out_path=regret_benign_path,
+    )
+    plot_regret_grid(
+        horizons,
+        stats_by_scenario,
+        HARD_REGRET_SCENARIOS,
+        title="True-FTL OLC: Hard-Regime Regret by Horizon",
+        out_path=regret_hard_path,
+    )
     plot_empirical_g(horizons, g_emp, g_path)
     plot_switch_diagnostics(t_max=args.t_max, d=args.d, rho=args.rho, seed=args.seed, g_emp=g_emp, out_path=switch_path)
     plot_threshold_calibration(
@@ -560,10 +699,15 @@ def main() -> None:
         out_path=calibration_path,
     )
     generated = {
-        "fig:exp05_olc_regret_horizon": (
-            regret_path,
-            "True-FTL Online Linear Classification: Regret by Horizon",
-            "fig_exp05_olc_regret_by_horizon.png",
+        "fig:exp05_olc_regret_horizon_benign": (
+            regret_benign_path,
+            "True-FTL OLC: Benign Regret by Horizon",
+            "fig_exp05_olc_regret_by_horizon_benign.png",
+        ),
+        "fig:exp05_olc_regret_horizon_hard": (
+            regret_hard_path,
+            "True-FTL OLC: Hard-Regime Regret by Horizon",
+            "fig_exp05_olc_regret_by_horizon_hard.png",
         ),
         "fig:exp05_olc_empirical_threshold": (
             g_path,
@@ -595,6 +739,12 @@ def main() -> None:
             out_path=dimension_path,
         )
         write_dimension_csv(output_dir / "dimension_sweep.csv", dimension_dims, dimension_stats)
+        generated["fig:exp05_olc_dimension_sweep"] = (
+            dimension_path,
+            f"True-FTL OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
+            "fig_exp05_olc_dimension_sweep.png",
+        )
+    elif dimension_path.exists():
         generated["fig:exp05_olc_dimension_sweep"] = (
             dimension_path,
             f"True-FTL OLC: Dimension Sweep at Horizon {args.dimension_horizon}",
