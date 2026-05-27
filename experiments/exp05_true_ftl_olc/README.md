@@ -433,7 +433,7 @@ Default configuration:
 - trials per horizon: 24
 - empirical-threshold calibration trials: 8
 - deterministic seed: 7
-- dimension diagnostic: fixed horizon $T=1000$ and $d\in\{1,5,10,\ldots,100\}$
+- dimension diagnostic: fixed horizon $T=10000$ and $d=1,2,\ldots,50$
 
 Heavier paper-profile run:
 
@@ -443,7 +443,7 @@ python experiments/exp05_true_ftl_olc/run_experiment.py --paper-profile
 
 Each horizon uses fresh sequences of exactly that length. Plots report mean regret with 95% confidence bands where applicable.
 
-The dimension-sweep figure fixes the horizon at $T=1000$ and evaluates each primary sequence family at $d=1,5,10,\ldots,100$. It is a diagnostic for whether the qualitative ordering of FTL, FTRL, and calibrated SMART is stable as feature dimension changes.
+The dimension-sweep figure fixes the horizon at $T=10000$ and evaluates each primary sequence family at $d=1,2,\ldots,50$. It is a diagnostic for whether the qualitative ordering of FTL, FTRL, and calibrated SMART is stable as feature dimension changes.
 
 ## Outputs and Figure Provenance
 

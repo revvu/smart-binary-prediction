@@ -374,7 +374,7 @@ def plot_dimension_sweep(
         ax.set_xlabel("Feature Dimension")
         ax.set_ylabel(f"Regret at T={horizon}")
         ax.set_xlim(left=min(dims), right=max(dims))
-        ax.set_xticks([1, 20, 40, 60, 80, 100])
+        ax.set_xticks([1, 10, 20, 30, 40, 50])
         ax.set_ylim(bottom=min(0.0, min_lo - pad), top=max_hi + pad)
         ax.legend(loc="best", fontsize=9)
 
@@ -474,7 +474,7 @@ def main() -> None:
     parser.add_argument("--threshold-scale", type=float, default=1.0)
     parser.add_argument("--scenario", nargs="*", default=primary_scenarios())
     parser.add_argument("--skip-dimension-sweep", action="store_true")
-    parser.add_argument("--dimension-horizon", type=int, default=1000)
+    parser.add_argument("--dimension-horizon", type=int, default=10000)
     parser.add_argument("--paper-profile", action="store_true", help="Use the heavier T=2000, 64-trial profile.")
     parser.add_argument("--quick", action="store_true", help="Small run for smoke testing.")
     parser.add_argument("--self-test", action="store_true", help="Run invariant checks and exit.")
@@ -583,7 +583,7 @@ def main() -> None:
     }
 
     if not args.skip_dimension_sweep:
-        dimension_dims = [1] + list(range(5, 101, 5))
+        dimension_dims = list(range(1, 51))
         dimension_stats = plot_dimension_sweep(
             horizon=args.dimension_horizon,
             scenarios=scenarios,

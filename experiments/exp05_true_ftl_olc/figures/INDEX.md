@@ -21,6 +21,6 @@
   Source: `outputs/figures/exp05_olc_threshold_calibration.png`
 
 - Label: `fig:exp05_olc_dimension_sweep`
-  Title: `True-FTL OLC: Dimension Sweep at Horizon 1000`
+  Title: `True-FTL OLC: Dimension Sweep at Horizon 10000`
   File: `fig_exp05_olc_dimension_sweep.png`
   Source: `outputs/figures/exp05_olc_dimension_sweep.png`
