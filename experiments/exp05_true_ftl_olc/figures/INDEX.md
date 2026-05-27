@@ -3,7 +3,6 @@
 - Label: `fig:exp05_olc_regret_horizon_benign`
   Title: `True-FTL OLC: Benign Regret by Horizon`
   File: `fig_exp05_olc_regret_by_horizon_benign.png`
-  PDF: `fig_exp05_olc_regret_by_horizon_benign.pdf`
   Source: `outputs/figures/exp05_olc_regret_by_horizon_benign.png`
 
 - Label: `fig:exp05_olc_regret_horizon_hard`

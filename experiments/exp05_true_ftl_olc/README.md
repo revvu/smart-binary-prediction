@@ -15,63 +15,63 @@ SMART preserves FTL's advantage on benign streams, switches when the exact FTL r
 
 ## Formal Setting
 
-At each round $t$, the learner chooses a vector in the Euclidean unit ball:
+At each round $t$, the learner chooses a classifier vector in the Euclidean unit ball:
 
 $$
-X=\{x\in\mathbb{R}^d:\|x\|_2\le 1\}.
+\mathcal{W}=\{w\in\mathbb{R}^d:\|w\|_2\le 1\}.
 $$
 
-The learner then observes a bounded feature-label pair $(z_t,y_t)$ with
+The learner then observes a bounded feature-label pair $(x_t,y_t)$ with
 
 $$
-\|z_t\|_2\le 1,\qquad y_t\in\{-1,+1\},
+\|x_t\|_2\le 1,\qquad y_t\in\{-1,+1\},
 $$
 
 and incurs the online linear classification surrogate
 
 $$
-\ell_t(x)=\frac12|\langle z_t,x\rangle-y_t|.
+\ell_t(w)=\frac12|\langle w,x_t\rangle-y_t|.
 $$
 
-Because $\|x\|_2\le1$ and $\|z_t\|_2\le1$, we have $|\langle z_t,x\rangle|\le1$. Therefore the absolute value collapses to a linear loss on the entire feasible set:
+Because $\|w\|_2\le1$ and $\|x_t\|_2\le1$, we have $|\langle w,x_t\rangle|\le1$. Therefore the absolute value collapses to a linear loss on the entire feasible set:
 
 $$
-\ell_t(x)=\frac12(1-y_t\langle z_t,x\rangle).
+\ell_t(w)=\frac12(1-y_t\langle w,x_t\rangle).
 $$
 
 Define the signed feature vector and cumulative signed feature sum:
 
 $$
-s_t=y_tz_t,\qquad M_t=\sum_{i=1}^t s_i=\sum_{i=1}^t y_i z_i.
+s_t=y_t x_t,\qquad M_t=\sum_{i=1}^t s_i=\sum_{i=1}^t y_i x_i.
 $$
 
-For any fixed comparator $x\in X$, cumulative loss on a prefix is
+For any fixed comparator $u\in\mathcal{W}$, cumulative loss on a prefix is
 
 $$
-L_t(x)=\sum_{i=1}^t \ell_i(x)
-=\frac{t}{2}-\frac12\langle M_t,x\rangle.
+L_t(u)=\sum_{i=1}^t \ell_i(u)
+=\frac{t}{2}-\frac12\langle M_t,u\rangle.
 $$
 
 The best fixed comparator loss is therefore
 
 $$
-\min_{\|x\|_2\le1}L_t(x)
+\min_{\|u\|_2\le1}L_t(u)
 =
 \frac{t}{2}
 -\frac12
-\max_{\|x\|_2\le1}\langle M_t,x\rangle.
+\max_{\|u\|_2\le1}\langle M_t,u\rangle.
 $$
 
 By Cauchy-Schwarz,
 
 $$
-\max_{\|x\|_2\le1}\langle M_t,x\rangle=\|M_t\|_2,
+\max_{\|u\|_2\le1}\langle M_t,u\rangle=\|M_t\|_2,
 $$
 
 so the exact prefix comparator loss is
 
 $$
-L_t^*=\min_{x\in X}L_t(x)=\frac{t}{2}-\frac12\|M_t\|_2.
+L_t^*=\min_{u\in\mathcal{W}}L_t(u)=\frac{t}{2}-\frac12\|M_t\|_2.
 $$
 
 This identity is the computational hinge of the experiment. FTL, the comparator, and the SMART trace all reduce to maintaining $M_t$, computing one norm, and normalizing one vector. The cost is $O(Td)$ per trial.
@@ -79,7 +79,7 @@ This identity is the computational hinge of the experiment. FTL, the comparator,
 Regret is always static regret against the best fixed action in hindsight:
 
 $$
-\mathrm{Reg}_T(A)=\sum_{t=1}^T\ell_t(x_t^A)-L_T^*.
+\mathrm{Reg}_T(A)=\sum_{t=1}^T\ell_t(w_t^A)-L_T^*.
 $$
 
 Adaptive algorithms such as FTRL or SMART can have negative static regret on some nonstationary synthetic streams. That is not a bug; it means the adaptive policy beat the best fixed comparator on that realized sequence.
@@ -101,7 +101,7 @@ where $L_T^*$ is the loss of the best single fixed vector over the whole horizon
 The prefix leader after observing $t$ rounds is
 
 $$
-x_t^*
+w_t^*
 =
 \begin{cases}
 M_t/\|M_t\|_2, & M_t\ne0,\\
@@ -112,7 +112,7 @@ $$
 FTL plays the previous prefix leader:
 
 $$
-x_t^{\mathrm{FTL}}
+w_t^{\mathrm{FTL}}
 =
 \begin{cases}
 M_{t-1}/\|M_{t-1}\|_2, & M_{t-1}\ne0,\\
@@ -127,44 +127,44 @@ This is implemented directly in `src/olc_exact.py`. No convex solver, generic pr
 The robust baseline is Follow-the-Regularized-Leader on the exact linear losses
 
 $$
-c_t=-\frac12 y_tz_t,\qquad \ell_t(x)=\frac12+\langle c_t,x\rangle.
+c_t=-\frac12 y_t x_t,\qquad \ell_t(w)=\frac12+\langle c_t,w\rangle.
 $$
 
 With the time-varying quadratic regularizer
 
 $$
-\psi_t(x)=\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2+\iota_X(x),
+\psi_t(w)=\frac{\sqrt{t}}{2\eta_0}\|w\|_2^2+\iota_{\mathcal{W}}(w),
 \qquad \eta_0=\sqrt{2},
 $$
 
-where $\iota_X$ is the indicator of the unit ball, FTRL is
+where $\iota_{\mathcal{W}}$ is the indicator of the unit ball, FTRL is
 
 $$
-x_t^{\mathrm{FTRL}}
+w_t^{\mathrm{FTRL}}
 =
-\arg\min_{x\in X}
-\left\langle\sum_{i<t}c_i,x\right\rangle
-+\frac{\sqrt{t}}{2\eta_0}\|x\|_2^2.
+\arg\min_{w\in \mathcal{W}}
+\left\langle\sum_{i<t}c_i,w\right\rangle
++\frac{\sqrt{t}}{2\eta_0}\|w\|_2^2.
 $$
 
 Since $\sum_{i<t}c_i=-\frac12M_{t-1}$, the unconstrained optimum solves
 
 $$
--\frac12M_{t-1}+\frac{\sqrt{t}}{\eta_0}x=0,
+-\frac12M_{t-1}+\frac{\sqrt{t}}{\eta_0}w=0,
 $$
 
 so
 
 $$
-\tilde{x}_t=\frac{\eta_0}{2\sqrt{t}}M_{t-1}.
+\tilde{w}_t=\frac{\eta_0}{2\sqrt{t}}M_{t-1}.
 $$
 
 The feasible set is the Euclidean unit ball, hence the implemented update is
 
 $$
-x_t^{\mathrm{FTRL}}
+w_t^{\mathrm{FTRL}}
 =
-\Pi_X\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right).
+\Pi_{\mathcal{W}}\left(\frac{\eta_0}{2\sqrt{t}}M_{t-1}\right).
 $$
 
 This is the correct robust baseline for this experiment because the losses are bounded linear losses on a bounded Euclidean domain, where quadratic FTRL is the standard $O(\sqrt{T})$ no-assumption fallback.
@@ -172,10 +172,10 @@ This is the correct robust baseline for this experiment because the losses are b
 This matches the FTRL template in Orabona's Chapter 7:
 
 $$
-x_t\in\arg\min_{x\in V}\psi_t(x)+\sum_{i<t}\langle g_i,x\rangle,
+w_t\in\arg\min_{w\in V}\psi_t(w)+\sum_{i<t}\langle g_i,w\rangle,
 $$
 
-with $V=X$, $g_i=c_i$, and the increasing Euclidean quadratic regularizer above. It also matches Orabona's Chapter 8 online-linear-classification surrogate once the bounded-domain condition $|\langle z_t,x\rangle|\le1$ is enforced. The broader online-convex-optimization framing follows Zinkevich's static-regret setting, and the FTRL interpretation is standard in the McMahan FTRL/mirror-descent literature.
+with $V=\mathcal{W}$, $g_i=c_i$, and the increasing Euclidean quadratic regularizer above. It also matches Orabona's Chapter 8 online-linear-classification surrogate once the bounded-domain condition $|\langle w,x_t\rangle|\le1$ is enforced. The broader online-convex-optimization framing follows Zinkevich's static-regret setting, and the FTRL interpretation is standard in the McMahan FTRL/mirror-descent literature.
 
 ### SMART
 
@@ -184,10 +184,10 @@ SMART starts as exact FTL and computes the exact adapted FTL regret trace:
 $$
 \Sigma_t
 =
-\sum_{i=1}^t\ell_i(x_i^{\mathrm{FTL}})
+\sum_{i=1}^t\ell_i(w_i^{\mathrm{FTL}})
 -L_t^*
 =
-\sum_{i=1}^t\ell_i(x_i^{\mathrm{FTL}})
+\sum_{i=1}^t\ell_i(w_i^{\mathrm{FTL}})
 -\left(\frac{t}{2}-\frac12\|M_t\|_2\right).
 $$
 
@@ -218,14 +218,14 @@ where $g_{\mathrm{emp}}(T)$ is the largest observed FTRL regret across designate
 Experiment 2 treated the absolute-value objective as a generic prefix ERM problem and tracked a fast FTL state using played-point subgradients:
 
 $$
-\theta_t=\sum_{i\le t}g_i z_i,\qquad
+\theta_t=\sum_{i\le t}g_i x_i,\qquad
 g_i\in\partial_q \frac12|q-y_i|.
 $$
 
 At exact-fit boundary points $q=y_i$, the implementation used $g_i=0$. That is a valid subgradient choice for a linearized algorithm, but it is not the cumulative state of the restricted-domain OLC loss. The true state is always
 
 $$
-M_t=\sum_{i\le t}y_i z_i.
+M_t=\sum_{i\le t}y_i x_i.
 $$
 
 On deterministic boundary-heavy streams such as `switching_leaders`, the old subgradient-state path dropped informative rounds. The resulting path was not true FTL on the original loss. It could even report negative FTL regret, which is mathematically impossible for exact FTL and was therefore a bug.
@@ -239,9 +239,9 @@ Experiment 4 assumed that computing true FTL and the prefix comparator required 
 That machinery was unnecessary. The exact comparator and exact FTL action are available from
 
 $$
-M_t=\sum_{i\le t}y_i z_i,
+M_t=\sum_{i\le t}y_i x_i,
 \qquad
-x_t^{\mathrm{FTL}}=\frac{M_{t-1}}{\|M_{t-1}\|_2},
+w_t^{\mathrm{FTL}}=\frac{M_{t-1}}{\|M_{t-1}\|_2},
 \qquad
 L_t^*=\frac{t}{2}-\frac12\|M_t\|_2.
 $$
@@ -253,10 +253,10 @@ The correct complexity is $O(Td)$ per trial. Experiment 5 keeps the useful insig
 The closed form applies only to this restricted regret-accounting objective:
 
 $$
-\min_{\|x\|_2\le1}\sum_{t=1}^T\frac12|\langle z_t,x\rangle-y_t|.
+\min_{\|w\|_2\le1}\sum_{t=1}^T\frac12|\langle w,x_t\rangle-y_t|.
 $$
 
-Under $\|z_t\|\le1$ and $\|x\|\le1$, that objective collapses to a signed-average direction. SVMs and Pegasos-style methods solve different margin-regularized hinge-loss objectives, often with bias terms, kernels, and support-vector structure. Passive-Aggressive algorithms are also different: they are margin-driven online updates, not the quadratic-FTRL robust baseline used here.
+Under $\|x_t\|\le1$ and $\|w\|\le1$, that objective collapses to a signed-average direction. SVMs and Pegasos-style methods solve different margin-regularized hinge-loss objectives, often with bias terms, kernels, and support-vector structure. Passive-Aggressive algorithms are also different: they are margin-driven online updates, not the quadratic-FTRL robust baseline used here.
 
 ## Sequence Design
 
@@ -285,16 +285,16 @@ Feder, Merhav, and Gutman, and later de Rooij, van Erven, Grunwald, and Koolen, 
 All sequences must be valid OLC streams:
 
 $$
-\|z_t\|_2\le1,\qquad y_t\in\{-1,+1\}.
+\|x_t\|_2\le1,\qquad y_t\in\{-1,+1\}.
 $$
 
 The generator cannot directly specify arbitrary losses or arbitrary leader paths. It must specify feature-label pairs. The only lever that affects FTL and the comparator is the signed update
 
 $$
-y_tz_t.
+y_t x_t.
 $$
 
-This is why every sequence below is described through how it shapes $M_t=\sum_{i\le t}y_i z_i$.
+This is why every sequence below is described through how it shapes $M_t=\sum_{i\le t}y_i x_i$.
 
 ### Primary Sequence Families
 
@@ -309,13 +309,13 @@ Real-world analogue: a mature contextual pricing, allocation, triage, or recomme
 Generation: sample a unit separator $u$, labels $y_t\sim\mathrm{Unif}\{-1,+1\}$, and orthogonal unit noise $v_t\perp u$. Then set
 
 $$
-z_t=y_t\operatorname{unit}(0.72u+0.58v_t).
+x_t=y_t\operatorname{unit}(0.72u+0.58v_t).
 $$
 
 The signed update is
 
 $$
-y_tz_t=\operatorname{unit}(0.72u+0.58v_t),
+y_t x_t=\operatorname{unit}(0.72u+0.58v_t),
 $$
 
 so $M_t$ has persistent positive drift toward $u$ with covariate variation around that direction.
@@ -331,7 +331,7 @@ Real-world analogue: a launch, new market, new advertising campaign, new clinica
 Generation: sample a latent separator $u$ and use a split at $0.45T$. Before the split, draw bounded covariates orthogonal to $u$ with independent random labels, so the prefix has no stable signed-feature drift toward the eventual separator. After the split, switch to the covariate-diverse margin model:
 
 $$
-z_t=y_t\operatorname{unit}(0.72u+0.58v_t).
+x_t=y_t\operatorname{unit}(0.72u+0.58v_t).
 $$
 
 Why it is appropriate: this models a launch or deployment where early feedback is uninformative but later feedback becomes structured. It is application-driven but graphically different from the stationary benign stream: FTL must recover from an unhelpful prefix, while SMART should avoid switching merely because the early data are noisy.
@@ -342,12 +342,12 @@ Purpose: paper-facing hardening sequence with an applied corruption story.
 
 Real-world analogue: a deployed model whose early feedback is reliable, followed by a sustained period of low-quality or strategically distorted feedback. Examples include click-fraud bursts in advertising, bot traffic in recommendation systems, sensor degradation, data pipeline failure, or users strategically changing behavior after learning the policy.
 
-Generation: sample a unit direction $u$. For the first $20\%$ of the horizon, set $z_t\approx u$ and $y_t=+1$, so $y_tz_t$ builds a stable leader. For the next $20\%$, keep $z_t\approx u$ but set $y_t=-1$, so $y_tz_t\approx-u$ erodes the trusted signal. For the final $60\%$, keep $z_t\approx u$ and alternate labels, keeping $M_t$ near the decision boundary and making FTL chase unstable leaders.
+Generation: sample a unit direction $u$. For the first $20\%$ of the horizon, set $x_t\approx u$ and $y_t=+1$, so $y_t x_t$ builds a stable leader. For the next $20\%$, keep $x_t\approx u$ but set $y_t=-1$, so $y_t x_t\approx-u$ erodes the trusted signal. For the final $60\%$, keep $x_t\approx u$ and alternate labels, keeping $M_t$ near the decision boundary and making FTL chase unstable leaders.
 
 Concretely, the implementation uses
 
 $$
-z_t=\operatorname{unit}(0.96u+0.04v_t),
+x_t=\operatorname{unit}(0.96u+0.04v_t),
 $$
 
 with $v_t\perp u$, and labels by phase:
@@ -369,13 +369,13 @@ Purpose: literature bridge to individual-sequence examples.
 
 Real-world analogue: none claimed as a calibrated application model. This is a deliberately stylized stress test that translates the classical individual-sequence "follow the leader if you can" construction into OLC feature-label form.
 
-Generation: fix $z_t=e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
+Generation: fix $x_t=e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
 
 Why it is appropriate: this is the direct one-dimensional OLC analogue of alternating-then-stable individual sequences used to show why one should follow the leader only when the leader is stable. The alternating prefix repeatedly cancels $M_t$; the stable suffix eventually creates a reliable leader. It is illustrative and literature-facing rather than a calibrated market data model.
 
 ### Diagnostic Sequence
 
-`switching_leaders` fixes $z_t=e_1$ and uses label blocks of length 20 with alternating signs. This is included because the same style of deterministic boundary-heavy stream produced invalid negative regret in experiment 2. Under exact $M_t$-based FTL, the diagnostic trace verifies non-negative FTL regret and monotone $\Sigma_t$.
+`switching_leaders` fixes $x_t=e_1$ and uses label blocks of length 20 with alternating signs. This is included because the same style of deterministic boundary-heavy stream produced invalid negative regret in experiment 2. Under exact $M_t$-based FTL, the diagnostic trace verifies non-negative FTL regret and monotone $\Sigma_t$.
 
 ### Acceptance Criteria
 
@@ -439,7 +439,6 @@ The optional dimension-sweep figure fixes the horizon at $T=10000$ and evaluates
 Generated outputs:
 
 - `outputs/figures/exp05_olc_regret_by_horizon_benign.png`
-- `outputs/figures/exp05_olc_regret_by_horizon_benign.pdf`
 - `outputs/figures/exp05_olc_regret_by_horizon_hard.png`
 - `outputs/figures/exp05_olc_empirical_threshold.png`
 - `outputs/figures/exp05_olc_switch_diagnostics.png`
@@ -455,7 +454,6 @@ Optional dimension diagnostic outputs:
 Curated dashboard figures:
 
 - `figures/fig_exp05_olc_regret_by_horizon_benign.png`
-- `figures/fig_exp05_olc_regret_by_horizon_benign.pdf`
 - `figures/fig_exp05_olc_regret_by_horizon_hard.png`
 - `figures/fig_exp05_olc_empirical_threshold.png`
 - `figures/fig_exp05_olc_switch_diagnostics.png`

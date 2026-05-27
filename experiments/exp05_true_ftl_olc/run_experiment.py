@@ -4,7 +4,6 @@ import argparse
 import csv
 import math
 import shutil
-from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -259,89 +258,39 @@ def plot_regret_grid(
     *,
     title: str,
     out_path: Path,
-    paper_style: bool = False,
 ) -> None:
     scenarios = [scenario for scenario in scenarios if scenario in stats_by_scenario]
     if not scenarios:
         return
     cols = 2
     rows = int(math.ceil(len(scenarios) / cols))
-    figsize = (7.2, 2.75) if paper_style and len(scenarios) == 2 else (12.4, 4.1 * rows)
-    rc_settings = {
-        "font.family": "sans-serif",
-        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
-        "pdf.fonttype": 42,
-        "ps.fonttype": 42,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-    }
-    with plt.rc_context(rc_settings) if paper_style else nullcontext():
-        fig, axes = plt.subplots(
-            rows,
-            cols,
-            figsize=figsize,
-            squeeze=False,
-            constrained_layout=paper_style,
-        )
-        axes = axes.flatten()
+    fig, axes = plt.subplots(rows, cols, figsize=(12.4, 4.1 * rows), squeeze=False)
+    axes = axes.flatten()
 
-        for idx, scenario in enumerate(scenarios):
-            ax = axes[idx]
-            stats = stats_by_scenario[scenario]
-            is_benign_panel = scenario in BENIGN_REGRET_SCENARIOS
-            for key in ALGO_ORDER:
-                marker_offset_mask = _benign_overlap_mask(stats, key) if is_benign_panel else None
-                _plot_with_band(
-                    ax,
-                    horizons,
-                    stats.regret[key],
-                    ALGO_LABELS[key],
-                    marker=ALGO_MARKERS[key],
-                    markersize=ALGO_MARKER_SIZES[key],
-                    marker_offset=ALGO_MARKER_OFFSETS[key],
-                    marker_offset_mask=marker_offset_mask,
-                    color=ALGO_COLORS[key],
-                )
-            min_lo = min(float(np.min(stats.regret[key]["lo"])) for key in ALGO_ORDER)
-            max_hi = max(float(np.max(stats.regret[key]["hi"])) for key in ALGO_ORDER)
-            pad = 0.05 * max(1.0, max_hi - min_lo)
-            ax.set_title(_scenario_title(scenario), fontsize=9 if paper_style else None)
-            ax.set_xlabel("Horizon", fontsize=8 if paper_style else None)
-            ax.set_ylabel("Regret", fontsize=8 if paper_style else None)
-            ax.set_ylim(bottom=min(0.0, min_lo - pad))
-            if paper_style:
-                ax.tick_params(axis="both", labelsize=7)
-                ax.grid(True, axis="y", color="#E5E5E5", linewidth=0.6)
-                ax.text(
-                    -0.13,
-                    1.06,
-                    chr(ord("a") + idx),
-                    transform=ax.transAxes,
-                    fontsize=8,
-                    fontweight="bold",
-                    va="bottom",
-                    ha="left",
-                )
-            else:
-                handles = [
-                    Line2D(
-                        [0],
-                        [0],
-                        color=ALGO_COLORS[key],
-                        linewidth=2.0,
-                        marker=ALGO_MARKERS[key],
-                        markersize=ALGO_MARKER_SIZES[key],
-                        markerfacecolor="white",
-                        markeredgewidth=1.2,
-                        label=ALGO_LABELS[key],
-                    )
-                    for key in ALGO_ORDER
-                ]
-                ax.legend(handles=handles, loc="best", fontsize=9)
-
-        for idx in range(len(scenarios), len(axes)):
-            axes[idx].axis("off")
-
+    for idx, scenario in enumerate(scenarios):
+        ax = axes[idx]
+        stats = stats_by_scenario[scenario]
+        is_benign_panel = scenario in BENIGN_REGRET_SCENARIOS
+        for key in ALGO_ORDER:
+            marker_offset_mask = _benign_overlap_mask(stats, key) if is_benign_panel else None
+            _plot_with_band(
+                ax,
+                horizons,
+                stats.regret[key],
+                ALGO_LABELS[key],
+                marker=ALGO_MARKERS[key],
+                markersize=ALGO_MARKER_SIZES[key],
+                marker_offset=ALGO_MARKER_OFFSETS[key],
+                marker_offset_mask=marker_offset_mask,
+                color=ALGO_COLORS[key],
+            )
+        min_lo = min(float(np.min(stats.regret[key]["lo"])) for key in ALGO_ORDER)
+        max_hi = max(float(np.max(stats.regret[key]["hi"])) for key in ALGO_ORDER)
+        pad = 0.05 * max(1.0, max_hi - min_lo)
+        ax.set_title(_scenario_title(scenario))
+        ax.set_xlabel("Horizon")
+        ax.set_ylabel("Regret")
+        ax.set_ylim(bottom=min(0.0, min_lo - pad))
         handles = [
             Line2D(
                 [0],
@@ -356,24 +305,15 @@ def plot_regret_grid(
             )
             for key in ALGO_ORDER
         ]
-        if paper_style:
-            fig.legend(
-                handles=handles,
-                loc="upper center",
-                ncol=len(ALGO_ORDER),
-                frameon=False,
-                fontsize=7,
-                bbox_to_anchor=(0.5, 1.08),
-                handlelength=1.8,
-                columnspacing=1.2,
-            )
-            fig.savefig(out_path, dpi=450, bbox_inches="tight")
-            fig.savefig(out_path.with_suffix(".pdf"), bbox_inches="tight")
-        else:
-            fig.suptitle(title, fontsize=16)
-            fig.tight_layout()
-            fig.savefig(out_path, dpi=240, bbox_inches="tight")
-        plt.close(fig)
+        ax.legend(handles=handles, loc="best", fontsize=9)
+
+    for idx in range(len(scenarios), len(axes)):
+        axes[idx].axis("off")
+
+    fig.suptitle(title, fontsize=16)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=240, bbox_inches="tight")
+    plt.close(fig)
 
 
 def plot_empirical_g(horizons: Array, g_emp: dict[int, float], out_path: Path) -> None:
@@ -618,18 +558,11 @@ def curate_figures(exp_dir: Path, generated: dict[str, tuple[Path, str, str]]) -
     for label, (source, title, curated_name) in generated.items():
         target = figures_dir / curated_name
         shutil.copy2(source, target)
-        pdf_source = source.with_suffix(".pdf")
-        pdf_line = ""
-        if pdf_source.exists():
-            pdf_name = Path(curated_name).with_suffix(".pdf").name
-            shutil.copy2(pdf_source, figures_dir / pdf_name)
-            pdf_line = f"  PDF: `{pdf_name}`"
         index_lines.extend(
             [
                 f"- Label: `{label}`",
                 f"  Title: `{title}`",
                 f"  File: `{curated_name}`",
-                *([pdf_line] if pdf_line else []),
                 f"  Source: `outputs/figures/{source.name}`",
                 "",
             ]
@@ -744,7 +677,6 @@ def main() -> None:
         BENIGN_REGRET_SCENARIOS,
         title="True-FTL OLC: Benign Regret by Horizon",
         out_path=regret_benign_path,
-        paper_style=True,
     )
     plot_regret_grid(
         horizons,
