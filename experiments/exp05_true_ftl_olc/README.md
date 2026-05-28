@@ -84,16 +84,6 @@ $$
 
 Adaptive algorithms such as FTRL or SMART can have negative static regret on some nonstationary synthetic streams. That is not a bug; it means the adaptive policy beat the best fixed comparator on that realized sequence.
 
-### Diagnostic note: why FTRL can have negative regret
-
-The dimension-robustness corruption check can show negative regret for FTRL. This is negative **static regret**, not negative loss. The regret is
-
-$$
-\mathrm{Reg}_T(\mathrm{FTRL})=L_T(\mathrm{FTRL})-L_T^*,
-$$
-
-where $L_T^*$ is the loss of the best single fixed vector over the whole horizon. In `strategic_corruption_suffix`, the reliable prefix, erosion phase, and alternating suffix can make the final signed sum $M_T$ small. Then the best fixed comparator is weak and has loss close to $T/2$. FTRL is adaptive: it can use the early signal, become cautious as the signal cancels, and end with cumulative loss slightly below the best fixed comparator. That produces a small negative static regret. This is allowed by the theory because worst-case regret bounds upper-bound how much worse FTRL can be than the comparator; they do not prevent FTRL from outperforming the best fixed action on a nonstationary sequence.
-
 ## Algorithms
 
 ### Exact FTL
@@ -211,15 +201,6 @@ $$
 
 where $g_{\mathrm{emp}}(T)$ is the largest observed FTRL regret across designated hard calibration streams. After switching, FTRL is reset and run only on the suffix. The reset is intentional: it matches the SMART proof decomposition into an FTL prefix and a robust-policy suffix.
 
-## Why This Does Not Replace SVMs
-
-The closed form applies only to this restricted regret-accounting objective:
-
-$$
-\min_{\|w\|_2\le1}\sum_{t=1}^T\frac12|\langle w,x_t\rangle-y_t|.
-$$
-
-Under $\|x_t\|\le1$ and $\|w\|\le1$, that objective collapses to a signed-average direction. SVMs and Pegasos-style methods solve different margin-regularized hinge-loss objectives, often with bias terms, kernels, and support-vector structure. Passive-Aggressive algorithms are also different: they are margin-driven online updates, not the quadratic-FTRL robust baseline used here.
 
 ## Sequence Design
 
