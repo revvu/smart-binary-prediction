@@ -1,6 +1,9 @@
 # Windows metadata sidecar files
 *:Zone.Identifier
 
+# macOS metadata sidecar files
+.DS_Store
+
 # Python cache artifacts
 **/__pycache__/
 **/.ipynb_checkpoints/
