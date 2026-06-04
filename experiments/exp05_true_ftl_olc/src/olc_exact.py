@@ -23,7 +23,7 @@ class OLCConfig:
     def threshold_value(self) -> float:
         if self.threshold is not None:
             return float(self.threshold)
-        return float(self.threshold_scale * math.sqrt(2.0 * self.horizon))
+        return float(self.threshold_scale * math.sqrt(0.5 * self.horizon))
 
 
 @dataclass(frozen=True)

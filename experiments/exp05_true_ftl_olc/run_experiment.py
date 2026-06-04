@@ -320,7 +320,7 @@ def plot_empirical_g(horizons: Array, g_emp: dict[int, float], out_path: Path) -
     g_vals = np.array([g_emp[int(h)] for h in horizons], dtype=float)
     fig, ax = plt.subplots(figsize=(7.8, 4.8))
     ax.plot(horizons, g_vals, marker="o", linewidth=2, label="Empirical FTRL g(T)")
-    ax.plot(horizons, np.sqrt(2.0 * horizons), linestyle="--", linewidth=2, label=r"$\sqrt{2T}$")
+    ax.plot(horizons, np.sqrt(0.5 * horizons), linestyle="--", linewidth=2, label=r"$\sqrt{T/2}$")
     ax.set_title("Empirical Robust Threshold for OLC")
     ax.set_xlabel("Horizon")
     ax.set_ylabel("Threshold")
@@ -529,10 +529,10 @@ def write_summary_csv(out_path: Path, horizons: Array, stats_by_scenario: dict[s
 def write_g_csv(out_path: Path, horizons: Array, g_emp: dict[int, float]) -> None:
     with out_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["horizon", "g_empirical", "sqrt_2T"])
+        writer.writerow(["horizon", "g_empirical", "sqrt_T_over_2"])
         for horizon in horizons:
             T = int(horizon)
-            writer.writerow([T, g_emp[T], math.sqrt(2.0 * T)])
+            writer.writerow([T, g_emp[T], math.sqrt(0.5 * T)])
 
 
 def write_dimension_csv(

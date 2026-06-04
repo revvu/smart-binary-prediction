@@ -117,7 +117,7 @@ This is implemented directly in `src/olc_exact.py`. No convex solver, generic pr
 The robust baseline is Follow-the-Regularized-Leader on the exact linear losses
 
 $$
-c_t=-\frac12 y_t x_t,\qquad \ell_t(w)=\frac12+\langle c_t,w\rangle.
+c_t=-\frac12 y_t z_t,\qquad \ell_t(w)=\frac12+\langle c_t,w\rangle.
 $$
 
 With the time-varying quadratic regularizer
@@ -167,6 +167,33 @@ $$
 
 with $V=\mathcal{W}$, $g_i=c_i$, and the increasing Euclidean quadratic regularizer above. It also matches Orabona's Chapter 8 online-linear-classification surrogate once the bounded-domain condition $|\langle w,x_t\rangle|\le1$ is enforced. The broader online-convex-optimization framing follows Zinkevich's static-regret setting, and the FTRL interpretation is standard in the McMahan FTRL/mirror-descent literature.
 
+Orabona's FTRL regret bound for Euclidean $L$-Lipschitz losses with
+
+$$
+\psi_t(w)=\frac{L\sqrt{t}}{2\alpha}\|w\|_2^2
+$$
+
+is
+
+$$
+\mathrm{Reg}_T(u)
+\le
+L\sqrt{T}\left(\frac{\|u\|_2^2}{2\alpha}+\alpha\right).
+$$
+
+In this experiment $\|z_t\|_2\le1$ and $y_t\in\{-1,+1\}$, so $\|c_t\|_2\le1/2$ and $L=1/2$ for the implemented half-scaled OLC loss. The implemented regularizer has coefficient $\sqrt{t}/(2\eta_0)$ with $\eta_0=\sqrt{2}$, so it matches Orabona's form with $\alpha=L\eta_0=1/\sqrt{2}$. For any comparator $u\in\mathcal{W}$, $\|u\|_2\le1$, hence
+
+$$
+\mathrm{Reg}_T^{\mathrm{FTRL}}(u)
+\le
+\frac12\sqrt{T}
+\left(\frac{1}{2(1/\sqrt{2})}+\frac{1}{\sqrt{2}}\right)
+=
+\sqrt{\frac{T}{2}}.
+$$
+
+Thus the paper-backed SMART robust-regret budget for this exact implementation is $g(T)=\sqrt{T/2}$. A threshold $\sqrt{2T}$ would still be a conservative valid bound for losses with $\|c_t\|_2\le1$, but it is not the scale-matched bound for the half-scaled loss used here.
+
 ### SMART
 
 SMART starts as exact FTL and computes the exact adapted FTL regret trace:
@@ -193,7 +220,7 @@ $$
 \Sigma_t\ge \theta.
 $$
 
-The theory threshold is $\theta=\sqrt{2T}$. The calibrated variant uses
+The theory threshold is $\theta=g(T)=\sqrt{T/2}$. The calibrated variant uses
 
 $$
 \theta=g_{\mathrm{emp}}(T),
