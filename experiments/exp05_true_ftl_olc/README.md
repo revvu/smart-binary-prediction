@@ -7,7 +7,7 @@ This experiment demonstrates SMART in a vector-valued online linear classificati
 1. FTL is computed exactly, not approximated by played-point subgradients.
 2. The robust baseline is a concrete quadratic-FTRL algorithm with a standard online-convex-optimization interpretation.
 3. The SMART switch statistic is the exact adapted FTL regret trace $\Sigma_t$.
-4. The sequence families are bounded OLC feature-label streams designed to show clean benign, delayed-signal, corrupted, and classical leader-instability regimes.
+4. The sequence families are bounded OLC feature-label streams designed to show clean benign, delayed-signal, corrupted, and slow-leader hard regimes.
 
 The paper-facing claim is:
 
@@ -233,11 +233,12 @@ where $g_{\mathrm{emp}}(T)$ is the largest observed FTRL regret across designate
 
 ### Behavior Claim
 
-The experiment must show three SMART behaviors:
+The experiment must show four SMART behaviors:
 
 1. **Preserve optimism:** on benign predictable streams, SMART should remain close to FTL and avoid FTRL's robustness tax.
 2. **Protect in hard regimes:** on high-variation or corrupted streams, SMART should switch and avoid FTL's large regret growth.
-3. **Explain the switch:** in mixed streams, the switch should be readable from $\Sigma_t$ crossing the calibrated threshold after sustained deterioration begins.
+3. **Avoid unnecessary robustness tax:** on streams with one slowly emerging but persistent leader, SMART should remain close to FTL even when FTRL is much worse than FTL.
+4. **Explain the switch:** in mixed streams, the switch should be readable from $\Sigma_t$ crossing the calibrated threshold after sustained deterioration begins.
 
 ### Literature Motivation
 
@@ -249,7 +250,7 @@ Dynamic pricing and revenue-management models motivate the delayed-signal stream
 
 Online advertising and platform feedback motivate the strategic-corruption stream. Choi, Mela, Balseiro, and Leary survey online display-advertising markets, where feedback quality and strategic behavior matter; corruption-robust online learning, including Lykouris, Mirrokni, and Paes Leme, motivates stress tests with reliable prefixes and harmful suffixes.
 
-Feder, Merhav, and Gutman, and later de Rooij, van Erven, Grunwald, and Koolen, motivate the OLC-FMG sequence. Their individual-sequence examples are designed to expose when it is safe to follow the leader and when a robust policy is needed. Here we build the vector-valued OLC analogue by controlling the signed feature sum $M_t$ through bounded feature-label pairs.
+Feder, Merhav, and Gutman, and later de Rooij, van Erven, Grunwald, and Koolen, motivate the individual-sequence stress tests. Their examples are designed to expose when it is safe to follow the leader and when a robust policy is needed. Here we build OLC analogues by controlling the signed feature sum $M_t$ through bounded feature-label pairs, including a loss-based slow-leader stream inspired by the older AdaHedge stress sequence.
 
 ### OLC Construction Rule
 
@@ -334,15 +335,21 @@ $$
 
 Why it is appropriate: this is the OLC analogue of a reliable deployment followed by manipulation, click fraud, sensor failure, or strategic response. It is exogenous and pre-specified, but adversarially structured. It should make FTL unsafe and trigger SMART after the trusted prefix has been eroded.
 
-**`olc_fmg_leader_gap`**
+**`loss_based_slow_leader_gap`**
 
-Purpose: literature bridge to individual-sequence examples.
+Purpose: primary FTRL-stress sequence with one slowly emerging leader.
 
-Real-world analogue: none claimed as a calibrated application model. This is a deliberately stylized stress test that translates the classical individual-sequence "follow the leader if you can" construction into OLC feature-label form.
+Real-world analogue: none claimed as a calibrated application model. This is a deliberately stylized stress test that translates the older loss-based AdaHedge stress construction into OLC feature-label form.
 
-Generation: fix $x_t=e_1$. For the first $40\%$ of the horizon, alternate labels $+1,-1,+1,-1,\ldots$ with an even prefix length. For the remaining $60\%$, use $y_t=+1$.
+Generation: fix $x_t=e_1$. Choose labels greedily so the signed one-dimensional leader gap
 
-Why it is appropriate: this is the direct one-dimensional OLC analogue of alternating-then-stable individual sequences used to show why one should follow the leader only when the leader is stable. The alternating prefix repeatedly cancels $M_t$; the stable suffix eventually creates a reliable leader. It is illustrative and literature-facing rather than a calibrated market data model.
+$$
+S_t=\sum_{i=1}^t y_i
+$$
+
+stays close to the target curve $t^{0.4}$. Equivalently, because $M_t=S_t e_1$, the OLC stream keeps one persistent leader but makes that leader's lead emerge sublinearly and slowly. At each step the generator chooses $y_t=-1$ or $y_t=+1$ according to which update makes $S_t$ closer to $t^{0.4}$.
+
+Why it is appropriate: this sequence separates FTL's optimism from FTRL's conservative shrinkage. Once the sign of $M_t$ is positive, FTL plays the stable leader direction and incurs only a small boundary cost. Quadratic FTRL instead plays with magnitude proportional to $\|M_{t-1}\|_2/\sqrt{t}\approx t^{-0.1}$, so it remains under-confident for a long time even though the leader is persistent. This tests whether SMART preserves FTL's advantage when the robust baseline is the poor choice.
 
 ### Diagnostic Sequence
 
@@ -355,7 +362,7 @@ A successful run should show:
 1. In `covariate_diverse_stationary`, SMART and FTL have nearly identical regret and FTRL is higher.
 2. In `delayed_signal_emergence`, SMART should not switch during the uninformative prefix if FTL regret remains within the calibrated budget; the curve should show a distinct cold-start cost.
 3. In `strategic_corruption_suffix`, SMART switches during the corrupted regime and materially reduces FTL's late-horizon regret.
-4. In `olc_fmg_leader_gap`, SMART improves on FTL by responding to leader instability, matching the classical "follow the leader if you can" lesson.
+4. In `loss_based_slow_leader_gap`, FTL and SMART stay near each other while FTRL is materially worse, showing that SMART avoids the robust baseline when the exact FTL trace remains small.
 5. The switch-diagnostic plot shows monotone $\Sigma_t$, the calibrated threshold, and interpretable switch timing.
 6. `switching_leaders` confirms that experiment 2's negative regret was an implementation artifact.
 
@@ -439,7 +446,7 @@ python experiments/dashboard/generate_dashboard.py
 
 The combined regret-by-horizon figure has four panels. The two benign panels cover immediate stable signal and cold-start signal emergence; in both, success means SMART remains visually close to FTL and avoids FTRL's robustness tax.
 
-The two hard-regime panels test the failure modes for FTL. In `strategic_corruption_suffix`, success means SMART switches after the reliable prefix has been eroded and reduces late-horizon regret. In `olc_fmg_leader_gap`, success means SMART improves on FTL by responding to leader instability, matching the classical individual-sequence intuition.
+The two hard-regime panels test different stress modes. In `strategic_corruption_suffix`, success means SMART switches after the reliable prefix has been eroded and reduces late-horizon regret. In `loss_based_slow_leader_gap`, success means SMART does not pay FTRL's robustness tax on a stream where the best leader emerges slowly but persistently.
 
 FTRL can have negative static regret in the corruption sequence because an adaptive policy can outperform the best fixed comparator on that nonstationary synthetic stream.
 
@@ -448,7 +455,7 @@ FTRL can have negative static regret in the corruption sequence because an adapt
 - The streams are synthetic and mechanism-oriented.
 - The delayed-signal sequence is not a dynamic-regret benchmark; all reported regrets are static regret against the best fixed comparator.
 - The strategic-corruption sequence is exogenous and pre-specified, but adversarially structured. It should be presented as a stress test, not as a calibrated empirical data model.
-- The OLC-FMG sequence is illustrative and literature-facing rather than representative of a specific market process.
+- The loss-based slow-leader sequence is illustrative and literature-facing rather than representative of a specific market process.
 - Empirical threshold calibration is a modeling choice and should be reported alongside regret results.
 
 ## Code Map

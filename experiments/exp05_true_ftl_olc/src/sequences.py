@@ -249,6 +249,31 @@ def olc_fmg_leader_gap(T: int, d: int, rng: np.random.Generator) -> Sequence:
     )
 
 
+def loss_based_slow_leader_gap(T: int, d: int, rng: np.random.Generator) -> Sequence:
+    del rng
+    z = np.tile(_basis(d, 0), (T, 1))
+    y = np.empty(T, dtype=np.float64)
+    signed_sum = 0.0
+
+    for t in range(T):
+        target = float((t + 1) ** 0.4)
+        next_negative = signed_sum - 1.0
+        next_positive = signed_sum + 1.0
+        if abs(target - next_negative) <= abs(target - next_positive):
+            y[t] = -1.0
+            signed_sum = next_negative
+        else:
+            y[t] = 1.0
+            signed_sum = next_positive
+
+    return Sequence(
+        z=z,
+        y=y,
+        name="loss_based_slow_leader_gap",
+        description="fixed feature direction with a slowly emerging t^0.4 signed leader gap",
+    )
+
+
 def iid_separable_margin(T: int, d: int, rng: np.random.Generator) -> Sequence:
     z, y, _ = _sample_margin_sequence(T, d, rng, label_noise=0.0)
     return Sequence(
@@ -393,6 +418,7 @@ def available_generators() -> dict[str, GeneratorFn]:
         "market_shift_change_point": market_shift_change_point,
         "strategic_corruption_suffix": strategic_corruption_suffix,
         "olc_fmg_leader_gap": olc_fmg_leader_gap,
+        "loss_based_slow_leader_gap": loss_based_slow_leader_gap,
         "iid_separable_margin": iid_separable_margin,
         "massart_10": massart_10,
         "alternating_antileader": alternating_antileader,
@@ -408,7 +434,7 @@ def primary_scenarios() -> list[str]:
         "covariate_diverse_stationary",
         "delayed_signal_emergence",
         "strategic_corruption_suffix",
-        "olc_fmg_leader_gap",
+        "loss_based_slow_leader_gap",
     ]
 
 
@@ -417,5 +443,6 @@ def hard_calibration_scenarios() -> list[str]:
         "alternating_antileader",
         "strategic_corruption_suffix",
         "olc_fmg_leader_gap",
+        "loss_based_slow_leader_gap",
         "random_labels_isotropic",
     ]

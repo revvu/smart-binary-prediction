@@ -58,9 +58,13 @@ BENIGN_REGRET_SCENARIOS = [
     "covariate_diverse_stationary",
     "delayed_signal_emergence",
 ]
+MARKER_OVERLAP_SCENARIOS = [
+    *BENIGN_REGRET_SCENARIOS,
+    "loss_based_slow_leader_gap",
+]
 HARD_REGRET_SCENARIOS = [
     "strategic_corruption_suffix",
-    "olc_fmg_leader_gap",
+    "loss_based_slow_leader_gap",
 ]
 
 
@@ -96,6 +100,7 @@ def _scenario_title(name: str) -> str:
         "market_shift_change_point": "Exogenous Market Shift",
         "strategic_corruption_suffix": "Strategic Corruption Suffix",
         "olc_fmg_leader_gap": "OLC FMG Leader Gap",
+        "loss_based_slow_leader_gap": "Loss-Based Slow Leader Gap",
         "iid_separable_margin": "I.I.D. Separable Margin",
         "massart_10": "Massart Noise (10%)",
         "alternating_antileader": "Alternating Anti-Leader",
@@ -238,7 +243,7 @@ def _plot_with_band(
         ax.fill_between(x, stats["lo"], stats["hi"], color=line.get_color(), alpha=0.18, linewidth=0)
 
 
-def _benign_overlap_mask(stats: ScenarioStats, key: str, *, tol: float = 1e-9) -> NDArray[np.bool_]:
+def _marker_overlap_mask(stats: ScenarioStats, key: str, *, tol: float = 1e-9) -> NDArray[np.bool_]:
     if key not in BENIGN_OVERLAP_ALGOS:
         return np.zeros_like(stats.regret[key]["mean"], dtype=bool)
 
@@ -270,9 +275,9 @@ def plot_regret_grid(
     for idx, scenario in enumerate(scenarios):
         ax = axes[idx]
         stats = stats_by_scenario[scenario]
-        is_benign_panel = scenario in BENIGN_REGRET_SCENARIOS
+        is_marker_overlap_panel = scenario in MARKER_OVERLAP_SCENARIOS
         for key in ALGO_ORDER:
-            marker_offset_mask = _benign_overlap_mask(stats, key) if is_benign_panel else None
+            marker_offset_mask = _marker_overlap_mask(stats, key) if is_marker_overlap_panel else None
             _plot_with_band(
                 ax,
                 horizons,
@@ -342,7 +347,7 @@ def plot_switch_diagnostics(
         "covariate_diverse_stationary",
         "delayed_signal_emergence",
         "strategic_corruption_suffix",
-        "olc_fmg_leader_gap",
+        "loss_based_slow_leader_gap",
         "switching_leaders",
     ]
     generators = available_generators()
@@ -564,6 +569,18 @@ def curate_figures(exp_dir: Path, generated: dict[str, tuple[Path, str, str]]) -
                 f"  Title: `{title}`",
                 f"  File: `{curated_name}`",
                 f"  Source: `outputs/figures/{source.name}`",
+                "",
+            ]
+        )
+
+    dimension_name = "fig_exp05_olc_dimension_sweep.png"
+    if "fig:exp05_olc_dimension_sweep" not in generated and (figures_dir / dimension_name).exists():
+        index_lines.extend(
+            [
+                "- Label: `fig:exp05_olc_dimension_sweep`",
+                "  Title: `OLC: Dimension Sweep at Horizon 10000`",
+                f"  File: `{dimension_name}`",
+                "  Source: `outputs/figures/exp05_olc_dimension_sweep.png`",
                 "",
             ]
         )
