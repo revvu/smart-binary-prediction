@@ -10,6 +10,16 @@
   File: `fig_exp05_olc_empirical_threshold.png`
   Source: `outputs/figures/exp05_olc_empirical_threshold.png`
 
+- Label: `fig:exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound`
+  Title: `Loss-Based Slow Leader Regret vs Robust Budget`
+  File: `fig_exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound.png`
+  Source: `outputs/figures/exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound.png`
+
+- Label: `fig:exp05_olc_calibrated_g_vs_sqrt_bound`
+  Title: `Calibrated Robust Budget vs Theory Bound`
+  File: `fig_exp05_olc_calibrated_g_vs_sqrt_bound.png`
+  Source: `outputs/figures/exp05_olc_calibrated_g_vs_sqrt_bound.png`
+
 - Label: `fig:exp05_olc_switch_diagnostics`
   Title: `SMART Switch Diagnostics in OLC`
   File: `fig_exp05_olc_switch_diagnostics.png`

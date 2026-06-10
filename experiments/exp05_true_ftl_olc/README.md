@@ -418,6 +418,8 @@ Generated outputs:
 
 - `outputs/figures/exp05_olc_regret_by_horizon.png`
 - `outputs/figures/exp05_olc_empirical_threshold.png`
+- `outputs/figures/exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound.png`
+- `outputs/figures/exp05_olc_calibrated_g_vs_sqrt_bound.png`
 - `outputs/figures/exp05_olc_switch_diagnostics.png`
 - `outputs/figures/exp05_olc_threshold_calibration.png`
 - `outputs/summary_regret.csv`
@@ -432,6 +434,8 @@ Curated dashboard figures:
 
 - `figures/fig_exp05_olc_regret_by_horizon.png`
 - `figures/fig_exp05_olc_empirical_threshold.png`
+- `figures/fig_exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound.png`
+- `figures/fig_exp05_olc_calibrated_g_vs_sqrt_bound.png`
 - `figures/fig_exp05_olc_switch_diagnostics.png`
 - `figures/fig_exp05_olc_threshold_calibration.png`
 - `figures/INDEX.md`

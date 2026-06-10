@@ -335,6 +335,77 @@ def plot_empirical_g(horizons: Array, g_emp: dict[int, float], out_path: Path) -
     plt.close(fig)
 
 
+def plot_loss_based_regret_with_sqrt_bound(
+    horizons: Array,
+    stats_by_scenario: dict[str, ScenarioStats],
+    out_path: Path,
+) -> None:
+    scenario = "loss_based_slow_leader_gap"
+    if scenario not in stats_by_scenario:
+        return
+
+    stats = stats_by_scenario[scenario]
+    fig, ax = plt.subplots(figsize=(8.2, 5.0))
+    for key in ALGO_ORDER:
+        _plot_with_band(
+            ax,
+            horizons,
+            stats.regret[key],
+            ALGO_LABELS[key],
+            marker=ALGO_MARKERS[key],
+            markersize=ALGO_MARKER_SIZES[key],
+            marker_offset=ALGO_MARKER_OFFSETS[key],
+            marker_offset_mask=_marker_overlap_mask(stats, key),
+            color=ALGO_COLORS[key],
+        )
+
+    sqrt_bound = np.sqrt(0.5 * horizons)
+    ax.plot(horizons, sqrt_bound, color="black", linestyle="--", linewidth=2.0, label=r"$\sqrt{n/2}$")
+
+    min_lo = min(float(np.min(stats.regret[key]["lo"])) for key in ALGO_ORDER)
+    max_hi = max(float(np.max(stats.regret[key]["hi"])) for key in ALGO_ORDER)
+    max_hi = max(max_hi, float(np.max(sqrt_bound)))
+    pad = 0.05 * max(1.0, max_hi - min_lo)
+    ax.set_title("Loss-Based Slow Leader Regret vs Robust Budget")
+    ax.set_xlabel("Horizon")
+    ax.set_ylabel("Regret")
+    ax.set_ylim(bottom=min(0.0, min_lo - pad), top=max_hi + pad)
+    handles = [
+        Line2D(
+            [0],
+            [0],
+            color=ALGO_COLORS[key],
+            linewidth=2.0,
+            marker=ALGO_MARKERS[key],
+            markersize=ALGO_MARKER_SIZES[key],
+            markerfacecolor="white",
+            markeredgewidth=1.2,
+            label=ALGO_LABELS[key],
+        )
+        for key in ALGO_ORDER
+    ]
+    handles.append(Line2D([0], [0], color="black", linestyle="--", linewidth=2.0, label=r"$\sqrt{n/2}$"))
+    ax.legend(handles=handles, loc="best", fontsize=9)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=240, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_calibrated_g_vs_sqrt_bound(horizons: Array, g_emp: dict[int, float], out_path: Path) -> None:
+    g_vals = np.array([g_emp[int(h)] for h in horizons], dtype=float)
+    sqrt_bound = np.sqrt(0.5 * horizons)
+    fig, ax = plt.subplots(figsize=(7.8, 4.8))
+    ax.plot(horizons, g_vals, marker="o", linewidth=2, label=r"Calibrated $g(n)$")
+    ax.plot(horizons, sqrt_bound, color="black", linestyle="--", linewidth=2, label=r"$\sqrt{n/2}$")
+    ax.set_title("Calibrated Robust Budget vs Theory Bound")
+    ax.set_xlabel("Horizon")
+    ax.set_ylabel("Threshold")
+    ax.legend(loc="best")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=240, bbox_inches="tight")
+    plt.close(fig)
+
+
 def plot_switch_diagnostics(
     *,
     t_max: int,
@@ -685,6 +756,8 @@ def main() -> None:
     g_path = figures_out / "exp05_olc_empirical_threshold.png"
     switch_path = figures_out / "exp05_olc_switch_diagnostics.png"
     calibration_path = figures_out / "exp05_olc_threshold_calibration.png"
+    loss_based_sqrt_path = figures_out / "exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound.png"
+    calibrated_sqrt_path = figures_out / "exp05_olc_calibrated_g_vs_sqrt_bound.png"
     dimension_path = figures_out / "exp05_olc_dimension_sweep.png"
 
     plot_regret_grid(
@@ -695,6 +768,8 @@ def main() -> None:
         out_path=regret_path,
     )
     plot_empirical_g(horizons, g_emp, g_path)
+    plot_loss_based_regret_with_sqrt_bound(horizons, stats_by_scenario, loss_based_sqrt_path)
+    plot_calibrated_g_vs_sqrt_bound(horizons, g_emp, calibrated_sqrt_path)
     plot_switch_diagnostics(t_max=args.t_max, d=args.d, seed=args.seed, g_emp=g_emp, out_path=switch_path)
     plot_threshold_calibration(
         t_max=args.t_max,
@@ -714,6 +789,16 @@ def main() -> None:
             g_path,
             "Empirical Robust Threshold for OLC",
             "fig_exp05_olc_empirical_threshold.png",
+        ),
+        "fig:exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound": (
+            loss_based_sqrt_path,
+            "Loss-Based Slow Leader Regret vs Robust Budget",
+            "fig_exp05_olc_loss_based_slow_leader_regret_vs_sqrt_bound.png",
+        ),
+        "fig:exp05_olc_calibrated_g_vs_sqrt_bound": (
+            calibrated_sqrt_path,
+            "Calibrated Robust Budget vs Theory Bound",
+            "fig_exp05_olc_calibrated_g_vs_sqrt_bound.png",
         ),
         "fig:exp05_olc_switch_diagnostics": (
             switch_path,
